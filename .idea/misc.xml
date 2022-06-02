@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="app/src/main/res/drawable-v24/cmt_left.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/close_selector.xml" value="0.108" />
+        <entry key="app/src/main/res/drawable/cmt_bg.xml" value="0.108" />
+        <entry key="app/src/main/res/drawable/col_bg.xml" value="0.1075" />
+        <entry key="app/src/main/res/drawable/compose_field_bg.xml" value="0.1115" />
+        <entry key="app/src/main/res/drawable/dots_selector.xml" value="0.1335" />
+        <entry key="app/src/main/res/drawable/drk_bg.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/etxt_bg.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.109" />
+        <entry key="app/src/main/res/drawable/msg_header_bg.xml" value="0.109" />
+        <entry key="app/src/main/res/drawable/nav_bg.xml" value="0.1335" />
+        <entry key="app/src/main/res/drawable/og_bg.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/tint_bg.xml" value="0.1625" />
+        <entry key="app/src/main/res/layout-v21/fragment_profile.xml" value="0.39463019250253295" />
+        <entry key="app/src/main/res/layout/activity_compose.xml" value="0.31357649442755825" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.46111111111111114" />
+        <entry key="app/src/main/res/layout/bin_view_holder.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/comment_view_holder.xml" value="0.39473684210526316" />
+        <entry key="app/src/main/res/layout/contact_layout.xml" value="0.30623100303951367" />
+        <entry key="app/src/main/res/layout/device_view_holder.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/dots_button.xml" value="0.25462962962962965" />
+        <entry key="app/src/main/res/layout/fragment_channel.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/fragment_compose.xml" value="0.43373493975903615" />
+        <entry key="app/src/main/res/layout/fragment_inbox.xml" value="0.2808988764044944" />
+        <entry key="app/src/main/res/layout/fragment_post.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/fragment_profile.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/fragment_profile_select.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/fragment_select.xml" value="0.31357649442755825" />
+        <entry key="app/src/main/res/layout/fragment_select_channel.xml" value="0.46111111111111114" />
+        <entry key="app/src/main/res/layout/home_button.xml" value="0.25462962962962965" />
+        <entry key="app/src/main/res/layout/nav_button.xml" value="0.25462962962962965" />
+        <entry key="app/src/main/res/layout/new_comment_view_holder.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/plus_button.xml" value="0.25462962962962965" />
+        <entry key="app/src/main/res/layout/post_view_holder.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/prof_button.xml" value="0.25462962962962965" />
+        <entry key="app/src/main/res/layout/suggestion_layout.xml" value="0.14342629482071714" />
+        <entry key="app/src/main/res/layout/suggestion_view_holder.xml" value="0.5294117647058824" />
+        <entry key="app/src/main/res/menu/nav_menu.xml" value="0.5" />
+        <entry key="app/src/main/res/xml/chip.xml" value="0.31357649442755825" />
+        <entry key="app/src/main/res/xml/standalone_chip.xml" value="0.17777777777777778" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:clickable="true"
+        android:id="@+id/post_card"
+        android:background="@drawable/wht_bg">
+
+    <RadioButton
+        android:id="@+id/radioButton"
+        android:layout_width="29dp"
+        android:layout_height="56dp"
+        android:layout_marginStart="4dp"
+        android:checked="false"
+        android:clickable="false"
+        android:ellipsize="none"
+        android:scaleX="1.25"
+        android:scaleY="1.25"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:padding="6dp"
+        android:text="Hello"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/hop_value"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintStart_toEndOf="@+id/radioButton"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/body"
+        android:layout_width="312dp"
+        android:layout_height="51dp"
+        android:layout_margin="8dp"
+        android:gravity="start"
+        android:padding="8dp"
+        android:text="World"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/hop_value"
+        app:layout_constraintStart_toEndOf="@+id/radioButton" />
+
+    <TextView
+        android:id="@+id/hop_value"
+        android:layout_width="50dp"
+        android:layout_height="46dp"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:layout_marginEnd="16dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="00"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

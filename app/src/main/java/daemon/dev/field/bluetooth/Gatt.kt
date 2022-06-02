@@ -1,0 +1,199 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package daemon.dev.field.bluetooth
+
+import android.app.Application
+import android.bluetooth.*
+import android.content.Context
+import android.os.Build
+import android.os.Handler
+import android.util.Log
+import androidx.annotation.RequiresApi
+import daemon.dev.field.*
+import daemon.dev.field.data.PostRAM
+import daemon.dev.field.data.objects.RemoteHost
+import daemon.dev.field.network.PeerRAM
+import daemon.dev.field.network.Socket
+import daemon.dev.field.util.Serializer
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+
+@RequiresApi(Build.VERSION_CODES.O)
+class Gatt(val app : Application, val resolver : Handler) : Thread() {
+
+    private val advertiser : BluetoothAdvertiser = BluetoothAdvertiser()
+    private var bluetoothManager: BluetoothManager? = null
+    var gattServer: BluetoothGattServer? = null
+    private var gattServerCallback: BluetoothGattServerCallback? = null
+
+    private var profileCharacteristic: BluetoothGattCharacteristic? = null
+    private var requestCharacteristic: BluetoothGattCharacteristic? = null
+
+   val host : RemoteHost = RemoteHost(null, PostRAM.me.uid)
+
+    val serializer = Serializer()
+
+    override fun run() {
+
+        if(bluetoothManager == null) {
+            bluetoothManager = app.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        }
+
+        setupGattServer(app)
+        advertiser.startAdvertisement()
+
+    }
+
+    fun stopServer() {
+        gattServer?.close()
+        advertiser.stopAdvertising()
+    }
+
+    private fun setupGattServer(app: Application) {
+        gattServerCallback = GattServerCallback()
+
+        gattServer = bluetoothManager!!.openGattServer(
+            app,
+            gattServerCallback
+        ).apply {
+            addService(setupGattService())
+        }
+        Log.d(GATT_TAG, "Server starting")
+
+    }
+
+    private fun setupGattService(): BluetoothGattService {
+
+        // Setup gatt service
+        val service = BluetoothGattService(SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY)
+
+        profileCharacteristic = BluetoothGattCharacteristic(
+            PROFILE_UUID,
+            BluetoothGattCharacteristic.PROPERTY_READ,
+            BluetoothGattCharacteristic.PERMISSION_READ
+        )
+        service.addCharacteristic(profileCharacteristic)
+
+        requestCharacteristic = BluetoothGattCharacteristic(
+            REQUEST_UUID,
+            BluetoothGattCharacteristic.PROPERTY_WRITE,
+            BluetoothGattCharacteristic.PERMISSION_WRITE
+        )
+        service.addCharacteristic(requestCharacteristic)
+
+        return service
+
+    }
+
+    private inner class GattServerCallback : BluetoothGattServerCallback() {
+
+        override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
+            val isSuccess = status == BluetoothGatt.GATT_SUCCESS
+            val isConnected = newState == BluetoothProfile.STATE_CONNECTED
+            Log.v(
+                GATT_TAG,
+                "onConnectionStateChange: Server $device ${device.name} success: $isSuccess connected: $isConnected"
+            )
+            if(!isConnected){
+                device.let{ device ->
+                    PeerRAM.getDeviceSid(device)?.let{
+                        Log.d(
+                            GATT_TAG,
+                            "killing DEVICE[$it]"
+                        )
+                        runBlocking{PeerRAM.disconnect(it,Socket.BLUETOOTH_DEVICE)}
+                    }
+                }
+            }
+
+        }
+
+        override fun onCharacteristicReadRequest(
+            device: BluetoothDevice?,
+            requestId: Int,
+            offset: Int,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
+
+            Log.v(GATT_TAG, "onCharacteristicRead")
+
+            device?.let {
+                gattServer?.sendResponse(
+                    it, requestId, 0, 0, serializer.hostToByte(host))
+            }
+
+        }
+
+        override fun onCharacteristicWriteRequest(
+            device: BluetoothDevice?,
+            requestId: Int,
+            characteristic: BluetoothGattCharacteristic?,
+            preparedWrite: Boolean,
+            responseNeeded: Boolean,
+            offset: Int,
+            value: ByteArray?
+        ) {
+            super.onCharacteristicWriteRequest(device,
+                requestId,
+                characteristic,
+                preparedWrite,
+                responseNeeded,
+                offset,
+                value)
+
+            var sid : Int? = null
+
+            Log.v(GATT_TAG, "onCharacteristicWrite: @${device!!.address}")
+
+            device.let{
+                sid = PeerRAM.getDeviceSid(it)
+            }
+
+            value?.let {
+
+                if (sid == null) {
+                    Log.d(GATT_TAG,"Have potential new host")
+                    Socket(serializer.getHost(it).uid,Socket.BLUETOOTH_DEVICE,null,null,device)
+                } else {
+                    Log.d(GATT_TAG,"Have message from sid[$sid]")
+                    resolver.obtainMessage(sid!!, 0, 0,
+                        it).sendToTarget()
+                }
+
+            }
+
+            device.let {
+                gattServer?.sendResponse(
+                    it, requestId, 0, 0, null)
+            }
+
+        }
+
+        override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
+            super.onNotificationSent(device, status)
+
+            device?.let{
+                    dev -> val sid = PeerRAM.getDeviceSid(dev)
+                    sid?.let{ _ -> PeerRAM.res.open()}
+            }
+
+        }
+
+    }
+
+}

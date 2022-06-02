@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav"
+    app:startDestination="@id/placeholder">
+    <fragment android:id="@+id/placeholder" >
+        <action
+            android:id="@+id/action_placeholder_to_postFragment"
+            app:destination="@id/postFragment" />
+        <action
+            android:id="@+id/action_placeholder_to_composeFragment"
+            app:destination="@id/composeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/composeFragment"
+        android:name="daemon.dev.field.fragments.ComposeFragment"
+        android:label="ComposeFragment"
+        tools:layout="@layout/fragment_compose">
+        <action
+            android:id="@+id/action_composeFragment_to_channelSelectFragment"
+            app:destination="@id/channelSelectFragment" />
+        <action
+            android:id="@+id/action_composeFragment_to_placeholder"
+            app:destination="@id/placeholder" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/channelSelectFragment"
+        android:name="daemon.dev.field.fragments.ChannelSelectFragment"
+        android:label="ChannelSelectFragment"
+        tools:layout="@layout/fragment_select_channel">
+        <action
+            android:id="@+id/action_channelSelectFragment_to_placeholder"
+            app:destination="@id/placeholder" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/postFragment"
+        android:name="daemon.dev.field.fragments.PostFragment"
+        android:label="PostFragment"
+        tools:layout="@layout/fragment_post">
+        <action
+            android:id="@+id/action_postFragment_to_placeholder"
+            app:destination="@id/placeholder" />
+    </fragment>
+</navigation>

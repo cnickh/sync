@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/profile"
+        android:enabled="true"
+        android:title="Profile"
+        android:icon="@drawable/prof"/>
+
+    <item
+        android:id="@+id/home"
+        android:enabled="true"
+        android:title="Home"
+        android:icon="@drawable/home"/>
+
+    <item
+        android:id="@+id/channel"
+        android:enabled="true"
+        android:title="Channels"
+        android:icon="@drawable/dots_d"/>
+
+</menu>

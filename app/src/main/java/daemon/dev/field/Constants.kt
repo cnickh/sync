@@ -1,0 +1,83 @@
+package daemon.dev.field
+
+import android.Manifest
+import java.util.UUID
+
+const val LOCATION_FINE_PERM = Manifest.permission.ACCESS_FINE_LOCATION
+const val READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE
+const val PERMISSION_REQUEST_STORAGE = 102
+const val PERMISSION_REQUEST_LOCATION = 101
+
+const val KILL_LOOPER = 86
+
+/*Class TAGs*/
+const val DB_OP = "PostDatabase.kt"
+const val AD_TAG = "BluetoothAdvertiser.kt"
+const val GATT_TAG = "BluetoothGATT.kt"
+const val MAIN_TAG = "MainActivity.kt"
+const val MANAGER_TAG = "PostRAM.kt"
+const val P2P_TAG = "PeerRAM.kt"
+const val MESH_TAG = "MeshService.kt"
+const val SERIAL_TAG = "Serializer.kt"
+const val SCANNER_TAG = "BluetoothScanner.kt"
+const val GATT_RESOLVER_TAG = "GattResolver.kt"
+const val RESOLVER_LOOPER = "Resolver.kt"
+const val SERVER_LOOPER = "Server.kt"
+const val FILE_IO = "AppDataIO.kt"
+const val SOCKET_TAG = "Socket.kt"
+const val PROFILE_TAG = "ProfileFragment.kt"
+const val INBOX_TAG = "InboxFragment.kt"
+const val PACKER_TAG = "Packer.kt"
+
+/*Channel Connection States*/
+const val NOTIFICATION_CHANNEL = "exampleServiceChannel"
+const val NOTIFICATION_ID = 1
+
+
+/*Handshake length max size of 512*/
+const val MTU = 512
+
+const val BLE_INTERVAL = 180L
+
+const val SERVER_PORT = 5555
+
+const val MAX_SOCKETS = 4
+
+/**
+ * service UUID, should be removed
+ */
+val SERVICE_UUID: UUID = UUID.fromString("0000b81d-0000-1000-8000-00805f9b34fb")
+/**
+ * UUID for the profile data
+ */
+val PROFILE_UUID: UUID = UUID.fromString("d3f751bc-12a1-4939-a91a-3fd976867a5b")
+/**
+ * UUID for requests to be made
+ */
+val REQUEST_UUID = UUID.fromString("61163941-2a11-459e-a447-53b3332004f3")
+/**
+ * UUIDs for 1-1 data transfers
+ */
+val TRANSFER_UUIDS : Array<UUID> = arrayOf(
+    UUID.fromString("a7c1a110-88eb-4709-ac11-99fa824bb3cc"),
+UUID.fromString("ad22b5f6-19f4-4f07-9388-ce4a75b464e1"),
+UUID.fromString("a4ab7967-93d5-479d-ae15-6a32eb25e6ed"),
+UUID.fromString("23dabe19-26ec-4b3d-8730-4d6a07787972"),
+UUID.fromString("a725b56a-5f1e-41ab-8d8e-abd7fd7530d2"),
+UUID.fromString("d8b8229b-a0ea-4432-9f3f-72361ccfab7d"),
+UUID.fromString("cb730beb-7c70-407a-bebd-65437f61265d"),
+UUID.fromString("379c5e48-8155-446f-bc3c-c7569b262766"),
+UUID.fromString("2fa86928-8410-47e0-9152-1c045f1eabe9"),
+UUID.fromString("cb4fe060-9b18-4829-8b64-9211d998f7a7"),
+UUID.fromString("e70b6254-d368-422b-8743-cb1a4def8c2d"),
+UUID.fromString("c38ab577-e0cc-4353-92c8-00e5729df04f"),
+UUID.fromString("29bd5b24-a47f-4d04-adaa-31af0239997c"),
+UUID.fromString("31ae8a40-2bca-456c-8a17-22e2a6881f56"),
+UUID.fromString("0dc6fa4e-7c24-4125-ba9a-b6b37b9a40f8"),
+UUID.fromString("7ec2290c-5e53-4414-a116-3f9974cec8cd")
+)
+/**
+ * UUID can be made here:
+ * https://www.guidgenerator.com/
+ *
+ */
