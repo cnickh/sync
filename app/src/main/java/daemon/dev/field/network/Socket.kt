@@ -1,5 +1,6 @@
 package daemon.dev.field.network
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattServer
@@ -10,17 +11,19 @@ import daemon.dev.field.PROFILE_UUID
 import daemon.dev.field.REQUEST_UUID
 import daemon.dev.field.SERVICE_UUID
 import daemon.dev.field.SOCKET_TAG
-import daemon.dev.field.nypt.Key
+import daemon.dev.field.cereal.objects.User
 import kotlinx.coroutines.runBlocking
 import java.net.Socket
 
+@SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
 class Socket(
-    val key : Key,
+    val user : User,
     val type : Int,
     private val socket: Socket?,
     private val gatt : BluetoothGatt?,
-    val device : BluetoothDevice?
+    val device : BluetoothDevice?,
+    val gattServer : BluetoothGattServer?
            ){
 
     companion object {
@@ -29,21 +32,30 @@ class Socket(
         const val WIFI=2
     }
 
-    var sid : Int? = null
-    lateinit var gattServer : BluetoothGattServer
+    var key : String
     var open : Boolean = true
+
+    override fun equals(other: Any?): Boolean {
+        val s = other as daemon.dev.field.network.Socket
+        if(s.key != key){return false}
+        if(s.type != type){return false}
+        return true
+    }
 
     init {
 
         when(type){
             BLUETOOTH_GATT -> {gatt!!}
-            BLUETOOTH_DEVICE -> {device!!;gattServer=PeerRAM.getGatt()}
+            BLUETOOTH_DEVICE -> {device!!;gattServer!!}
             WIFI -> {socket!!}
         }
 
-        sid = runBlocking{PeerRAM.connect(this@Socket)}
+        key = user.key
+        runBlocking{
+            Async.connect(this@Socket,user)
+        }
 
-        Log.d(SOCKET_TAG,"Peer[$sid] initialized successfully type[${type2String()}]")
+        Log.d(SOCKET_TAG,"Peer initialized successfully type[${type2String()}]")
     }
 
     fun write(buffer : ByteArray) {
@@ -52,7 +64,7 @@ class Socket(
             return
         }
 
-        Log.v(SOCKET_TAG,"type[${type2String()}], Write to $sid of size ${buffer.size}")
+        Log.v(SOCKET_TAG,"type[${type2String()}], Write to  of size ${buffer.size}")
         when (type) {
             BLUETOOTH_GATT -> {
                 writeGatt(buffer)
@@ -72,6 +84,8 @@ class Socket(
     }
 
     private fun writeGatt(buffer : ByteArray){
+        Log.d("Async","write GATT")
+
         val service = gatt!!.getService(SERVICE_UUID)
         val char = service.getCharacteristic(REQUEST_UUID)
         char.value = buffer
@@ -79,10 +93,12 @@ class Socket(
     }
 
     private fun writeDev(buffer : ByteArray){
-        val service = gattServer.getService(SERVICE_UUID)
-        val char = service.getCharacteristic(PROFILE_UUID)
-        char.value = buffer
-        gattServer.notifyCharacteristicChanged (device, char, true)
+        Log.d("Async","write BT_DEVICE")
+
+        val service = gattServer?.getService(SERVICE_UUID)
+        val char = service?.getCharacteristic(PROFILE_UUID)
+        char?.value = buffer
+        gattServer?.notifyCharacteristicChanged (device, char, true)
     }
 
     private fun type2String() : String{
@@ -96,6 +112,8 @@ class Socket(
 
     fun close(){
 
+        Log.i("Socket.kt","Close called on ${key}")
+
         open = false
 
         when (type) {
@@ -104,7 +122,7 @@ class Socket(
                 gatt?.close()
             }
             BLUETOOTH_DEVICE -> {
-                gattServer.cancelConnection(device)
+                gattServer?.cancelConnection(device)
             }
             WIFI -> {
                 //TODO

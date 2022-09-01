@@ -1,5 +1,6 @@
 package daemon.dev.field.bluetooth
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
@@ -10,9 +11,11 @@ import android.os.ParcelUuid
 import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.AD_TAG
+import daemon.dev.field.CHARSET
+import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.SERVICE_UUID
-import daemon.dev.field.data.PostRAM
 
+@SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class BluetoothAdvertiser {
     private val adapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -64,7 +67,7 @@ class BluetoothAdvertiser {
          */
         val dataBuilder = AdvertiseData.Builder()
             .addServiceUuid(ParcelUuid(SERVICE_UUID))
-            //.addServiceData(ParcelUuid(SERVICE_UUID),"POST=$uid".toByteArray(Charsets.UTF_8))
+//            .addServiceData(ParcelUuid(SERVICE_UUID), PUBLIC_KEY.toByteArray(CHARSET))
             .setIncludeDeviceName(false)
 
         /* For example - this will cause advertising to fail (exceeds size limit) */

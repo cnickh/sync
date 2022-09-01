@@ -1,11 +1,14 @@
-package daemon.dev.field.data.objects
+package daemon.dev.field.cereal.objects
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 class MeshRaw(val type : Int,
-              val nodeInfo : NodeInfo?,
-              val requests : List<ULong>?,
-              val newData : HashMap<ULong,String>?,
+              val nodeInfo : User?,
+              val requests : List<String>?, //List<Address>
+              val newData : HashMap<String,String>?, //HashMap<Address,HashCode>
               val posts : List<Post>?,
-              val extraData : ByteArray?
+              val misc : ByteArray?
                     ){
 
     companion object{

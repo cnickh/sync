@@ -15,6 +15,7 @@
  */
 package daemon.dev.field.bluetooth
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.*
 import android.content.Context
@@ -23,18 +24,21 @@ import android.os.Handler
 import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.*
-import daemon.dev.field.data.PostRAM
-import daemon.dev.field.data.objects.RemoteHost
-import daemon.dev.field.network.PeerRAM
+import daemon.dev.field.cereal.objects.User
+import daemon.dev.field.network.Async
+import daemon.dev.field.network.NetworkLooper
+import daemon.dev.field.network.NetworkLooper.Companion.DISCONNECT
+import daemon.dev.field.network.NetworkLooper.Companion.HANDSHAKE
+import daemon.dev.field.network.NetworkLooper.Companion.PACKET
 import daemon.dev.field.network.Socket
-import daemon.dev.field.util.Serializer
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
-
+@SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
-class Gatt(val app : Application, val resolver : Handler) : Thread() {
+class Gatt(val app : Application, val handler : Handler) {
 
     private val advertiser : BluetoothAdvertiser = BluetoothAdvertiser()
     private var bluetoothManager: BluetoothManager? = null
@@ -44,11 +48,13 @@ class Gatt(val app : Application, val resolver : Handler) : Thread() {
     private var profileCharacteristic: BluetoothGattCharacteristic? = null
     private var requestCharacteristic: BluetoothGattCharacteristic? = null
 
-   val host : RemoteHost = RemoteHost(null, PostRAM.me.uid)
+    private fun sendEvent(type :Int, device: BluetoothDevice, bytes : ByteArray?, gattServer: BluetoothGattServer?, req : Int?){
+        handler.obtainMessage(
+            NetworkLooper.GATT,
+            NetworkLooper.GattEvent(type,device,bytes,gattServer,req)).sendToTarget()
+    }
 
-    val serializer = Serializer()
-
-    override fun run() {
+    fun start() {
 
         if(bluetoothManager == null) {
             bluetoothManager = app.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -111,13 +117,7 @@ class Gatt(val app : Application, val resolver : Handler) : Thread() {
             )
             if(!isConnected){
                 device.let{ device ->
-                    PeerRAM.getDeviceSid(device)?.let{
-                        Log.d(
-                            GATT_TAG,
-                            "killing DEVICE[$it]"
-                        )
-                        runBlocking{PeerRAM.disconnect(it,Socket.BLUETOOTH_DEVICE)}
-                    }
+                    sendEvent(DISCONNECT,device,null,null,null)
                 }
             }
 
@@ -130,11 +130,10 @@ class Gatt(val app : Application, val resolver : Handler) : Thread() {
             characteristic: BluetoothGattCharacteristic?
         ) {
 
-            Log.v(GATT_TAG, "onCharacteristicRead")
+//            Log.v(GATT_TAG, "onCharacteristicRead")
 
             device?.let {
-                gattServer?.sendResponse(
-                    it, requestId, 0, 0, serializer.hostToByte(host))
+                sendEvent(HANDSHAKE,device,null,gattServer!!,requestId)
             }
 
         }
@@ -156,31 +155,14 @@ class Gatt(val app : Application, val resolver : Handler) : Thread() {
                 offset,
                 value)
 
-            var sid : Int? = null
-
-            Log.v(GATT_TAG, "onCharacteristicWrite: @${device!!.address}")
-
-            device.let{
-                sid = PeerRAM.getDeviceSid(it)
-            }
-
             value?.let {
 
-                if (sid == null) {
-                    Log.d(GATT_TAG,"Have potential new host")
-                    Socket(serializer.getHost(it).uid,Socket.BLUETOOTH_DEVICE,null,null,device)
-                } else {
-                    Log.d(GATT_TAG,"Have message from sid[$sid]")
-                    resolver.obtainMessage(sid!!, 0, 0,
-                        it).sendToTarget()
-                }
+                gattServer?.sendResponse(device!!, requestId, 0, 0, null)
+                sendEvent(PACKET,device!!,it,gattServer,requestId)
 
             }
 
-            device.let {
-                gattServer?.sendResponse(
-                    it, requestId, 0, 0, null)
-            }
+
 
         }
 
@@ -188,8 +170,8 @@ class Gatt(val app : Application, val resolver : Handler) : Thread() {
             super.onNotificationSent(device, status)
 
             device?.let{
-                    dev -> val sid = PeerRAM.getDeviceSid(dev)
-                    sid?.let{ _ -> PeerRAM.res.open()}
+                    dev -> val socket = runBlocking { Async.getSocket(dev) }
+                socket?.let{ _ -> Async.response.open()}
             }
 
         }

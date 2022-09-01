@@ -13,7 +13,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
-import daemon.dev.field.data.PostRAM
 import daemon.dev.field.databinding.FragmentChannelBinding
 import daemon.dev.field.fragments.adapter.ChannelAdapter
 
@@ -42,13 +41,13 @@ class ChannelFragment : Fragment() {
         binding.channelList.adapter = channelAdapter
         binding.channelList.layoutManager = GridLayoutManager(requireContext(),2)
 
-        channelAdapter.updateView(PostRAM.channelList.value!!)
-
-        PostRAM.channelList.observe(viewLifecycleOwner, Observer { new_bin_list ->
-
-            channelAdapter.updateView(new_bin_list)
-
-        })
+//        channelAdapter.updateView(PostRAM.channelList.value!!)
+//
+//        PostRAM.channelList.observe(viewLifecycleOwner, Observer { new_bin_list ->
+//
+//            channelAdapter.updateView(new_bin_list)
+//
+//        })
 
         binding.create.text="Create Channel"
 
@@ -67,7 +66,7 @@ class ChannelFragment : Fragment() {
             .setTitle("Enter Name")
             .setView(taskEditText)
             .setPositiveButton("Create",
-                DialogInterface.OnClickListener { a0, a1 -> PostRAM.createBin(taskEditText.text.toString()) })
+                DialogInterface.OnClickListener { a0, a1 -> /*create channel*/ })
             .setNegativeButton("Cancel", null)
             .create()
 

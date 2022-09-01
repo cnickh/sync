@@ -10,7 +10,7 @@ class KeyMap() {
 
     fun put(key: Key, item : Any) : Int{
         for(k in keys.indices) {
-            if (keys[k].cmp(key)) {
+            if (keys[k] == key) {
                 keys.removeAt(k)
                 map.removeAt(k)
             }
@@ -22,7 +22,7 @@ class KeyMap() {
 
     fun get(key : Key) : Any?{
         for(k in keys.indices){
-            if(keys[k].cmp(key)){
+            if(keys[k] == key){
                 return map[k]
             }
         }
@@ -34,10 +34,8 @@ class KeyMap() {
     }
 
     fun getKeyIndex(key : Key) : Int? {
-        Log.i("KeyMap.kt","Have ${key.toHex()}")
         for(k in keys.indices){
-            Log.i("KeyMap.kt","Checking ${keys[k].toHex()}")
-            if(keys[k].cmp(key)){
+            if(keys[k] == key){
                 return k
             }
         }
@@ -50,7 +48,7 @@ class KeyMap() {
 
     fun remove(key : Key) : Int{
         for(k in keys.indices){
-            if(keys[k].cmp(key)){
+            if(keys[k] == key){
                 keys.removeAt(k)
                 map.removeAt(k)
                 return 0

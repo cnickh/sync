@@ -8,16 +8,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.transition.TransitionInflater
 import daemon.dev.field.R
 import daemon.dev.field.databinding.FragmentComposeBinding
-import daemon.dev.field.fragments.model.TempPost
+import daemon.dev.field.fragments.model.SyncModel
 
 class ComposeFragment : Fragment() {
-    private val tempPost : TempPost by activityViewModels()
+    private val livePost : SyncModel by activityViewModels()
 
     lateinit var binding : FragmentComposeBinding
 
@@ -53,12 +52,11 @@ class ComposeFragment : Fragment() {
 
             val body = binding.body.text.toString()
             val title = binding.subject.text.toString()
-            tempPost.setBody(body)
-            tempPost.setSubject(title)
+            livePost.create(title,body)
 
             exitTransition = TransitionInflater.from(requireContext()).inflateTransition(R.transition.slide_down)
             parentFragmentManager.beginTransaction().remove(this).commit()
-            parentFragmentManager.beginTransaction().replace(R.id.container_view,ChannelSelectFragment()).commit()
+            parentFragmentManager.beginTransaction().replace(R.id.fragment_view,InboxFragment()).commit()
         }
 
 

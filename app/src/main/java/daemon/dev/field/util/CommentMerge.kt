@@ -1,17 +1,34 @@
 package daemon.dev.field.util
 
-import daemon.dev.field.data.objects.Comment
+
+import android.util.Log
+import daemon.dev.field.cereal.objects.Comment
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
 
 class CommentMerge(a : String, b : String) {
 
-    private var ret : String
-    private val cereal = Serializer()
+    var ret : String
     private val composed : MutableList<Comment> = mutableListOf()
 
-
     init {
-        val list0 = cereal.commentListFromString(a)
-        val list1 = cereal.commentListFromString(b)
+
+        Log.i("merge.kt","Have a: $a and b: $b")
+
+        val list0 = if(a == "null"){
+            mutableListOf()
+        }else{
+            Json.decodeFromString<List<Comment>>(a)
+        }
+
+        val list1 = if(b == "null"){
+            mutableListOf()
+        }else{
+            Json.decodeFromString<List<Comment>>(b)
+        }
+
 
         for (c in list0){
             composed.add(c)
@@ -22,17 +39,17 @@ class CommentMerge(a : String, b : String) {
             for(comp in composed){
                 if(hash(c) == hash(comp)){
                     here = true
-                    compose(c.commentList,comp.commentList)
+                    compose(c.sub,comp.sub)
                 }
-
             }
             if(!here){
-                composed.add(c)
+                place(composed,c)
             }
         }
 
+        ret = Json.encodeToString(composed)
 
-        ret = cereal.commentListToString(composed)
+        Log.i("merge.kt","Have res: $ret")
     }
 
     private fun compose(from : List<Comment>, to : MutableList<Comment>){
@@ -43,24 +60,39 @@ class CommentMerge(a : String, b : String) {
 
                 if(hash(c) == hash(comp)){
                     here = true
-                    compose(c.commentList,comp.commentList)
+                    compose(c.sub,comp.sub)
                 }
 
             }
             if(!here){
-                to.add(c)
+                place(to,c)
             }
         }
 
     }
 
+    fun place(list : MutableList<Comment>, item : Comment){
+        if(list.size==0){list.add(item);return}
+
+        val time = item.time
+        for(i in list.indices){
+            val t = list[i].time
+
+            if(time < t){
+                list.add(i,item)
+                break
+            }else if(i==list.size-1){
+                list.add(item)
+            }
+        }
+    }
+
     private fun hash(cmnt : Comment) : Int{
-
-        val i = cmnt.user.uid.get().toString()
+        val k = cmnt.key
         val c = cmnt.comment
-        val t = cmnt.time_created.toString()
+        val t = cmnt.time.toString()
 
-        return (i+c+t).hashCode()
+        return (k+c+t).hashCode()
     }
 
     fun getResult() : String{

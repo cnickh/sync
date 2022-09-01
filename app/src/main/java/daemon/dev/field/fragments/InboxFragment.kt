@@ -1,5 +1,6 @@
 package daemon.dev.field.fragments
 
+import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -7,20 +8,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
-import androidx.fragment.app.replace
+import androidx.fragment.app.*
 import androidx.lifecycle.Observer
-import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import daemon.dev.field.INBOX_TAG
 import daemon.dev.field.R
-import daemon.dev.field.data.PostRAM
 import daemon.dev.field.databinding.FragmentInboxBinding
 import daemon.dev.field.fragments.adapter.PostAdapter
+import daemon.dev.field.fragments.model.SyncModel
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class InboxFragment : Fragment() {
+
+    private val sync : SyncModel by activityViewModels()
 
     private lateinit var binding: FragmentInboxBinding
 
@@ -34,19 +34,22 @@ class InboxFragment : Fragment() {
         return binding.root
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        val postAdapter = PostAdapter(view, requireActivity())
+        val postAdapter = PostAdapter(requireActivity())
 
         binding.postInbox.adapter = postAdapter
         binding.postInbox.layoutManager = LinearLayoutManager(requireContext())
 
-        PostRAM.postList.observe(viewLifecycleOwner, Observer { new_post_list ->
-            Log.i(INBOX_TAG,"NEW LIST: $new_post_list")
+        sync.posts.observe(viewLifecycleOwner, Observer { new_post_list ->
             postAdapter.updateView(new_post_list)
         })
 
+        sync.peers.observe(viewLifecycleOwner, Observer { new_post_list ->
+            postAdapter.notifyDataSetChanged()
+        })
 
         binding.create.setOnClickListener {
 

@@ -14,8 +14,6 @@ import androidx.core.app.NotificationCompat
 import daemon.dev.field.*
 import daemon.dev.field.bluetooth.BluetoothScanner
 import daemon.dev.field.bluetooth.Gatt
-import daemon.dev.field.data.Resolver
-import daemon.dev.field.data.Server
 import kotlinx.coroutines.runBlocking
 
 
@@ -27,8 +25,7 @@ class MeshService : Service() {
 
     private lateinit var bluetoothLeScanner: BluetoothScanner
     private lateinit var gatt : Gatt
-    private lateinit var server: Server
-    private lateinit var resolver: Resolver
+    private lateinit var looper : NetworkLooper
 
     override fun onBind(p0: Intent?): IBinder? {
         return null
@@ -36,15 +33,16 @@ class MeshService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        looper = NetworkLooper(this)
+        looper.start()
         Log.i(MESH_TAG,"Created successfully")
-        bluetoothLeScanner = BluetoothScanner(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(MESH_TAG,"Started successfully")
 
+        runBlocking{ Async.ready(context) }
         enableNotification()
-
         launchNetworkProcesses()
 
         return START_NOT_STICKY
@@ -52,15 +50,13 @@ class MeshService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        bluetoothLeScanner.stopScanning()
-        runBlocking{PeerRAM.disconnectAll()}
-        gatt.stopServer()
-        PeerRAM.setGatt(null)
-        PeerRAM.setResolver(null)
-        PeerRAM.setServer(null)
-        resolver.kill()
-        server.kill()
 
+        runBlocking{
+            Async.idle()
+            bluetoothLeScanner.stopScanning()
+        }
+        gatt.stopServer()
+        looper.kill()
         Log.i(MESH_TAG,"Killed successfully")
     }
 
@@ -83,27 +79,10 @@ class MeshService : Service() {
     private fun launchNetworkProcesses(){
         Log.d(MESH_TAG,"launchNetworkProcesses() called")
 
-        if (PeerRAM.isServer()) {
-            Log.v(MESH_TAG,"Starting Server")
-            server = Server()
-            server.start()
-            PeerRAM.setServer(server.getHandler())
-        }
+        gatt = Gatt(this.application,looper.getHandler())
+        gatt.start()
 
-        if (PeerRAM.isResolver()) {
-            Log.v(MESH_TAG,"Starting Resolver")
-            resolver = Resolver(server.getHandler())
-            resolver.start()
-            PeerRAM.setResolver(resolver.getHandler())
-        }
-
-        if (PeerRAM.isGatt()) {
-            gatt = Gatt(this.application, resolver.getHandler())
-            gatt.start()
-            while (gatt.gattServer == null) {}
-            PeerRAM.setGatt(gatt.gattServer!!)
-        }
-
+        bluetoothLeScanner = BluetoothScanner(this, looper.getHandler())
         bluetoothLeScanner.startScanning()
 
     }

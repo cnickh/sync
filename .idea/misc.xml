@@ -8,6 +8,7 @@
         <entry key="app/src/main/res/drawable/cmt_bg.xml" value="0.108" />
         <entry key="app/src/main/res/drawable/col_bg.xml" value="0.1075" />
         <entry key="app/src/main/res/drawable/compose_field_bg.xml" value="0.1115" />
+        <entry key="app/src/main/res/drawable/device_selector.xml" value="0.1995" />
         <entry key="app/src/main/res/drawable/dots_selector.xml" value="0.1335" />
         <entry key="app/src/main/res/drawable/drk_bg.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/etxt_bg.xml" value="0.1" />
@@ -16,6 +17,7 @@
         <entry key="app/src/main/res/drawable/nav_bg.xml" value="0.1335" />
         <entry key="app/src/main/res/drawable/og_bg.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/tint_bg.xml" value="0.1625" />
+        <entry key="app/src/main/res/drawable/wht_bg.xml" value="0.1995" />
         <entry key="app/src/main/res/layout-v21/fragment_profile.xml" value="0.39463019250253295" />
         <entry key="app/src/main/res/layout/activity_compose.xml" value="0.31357649442755825" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.46111111111111114" />
@@ -40,6 +42,7 @@
         <entry key="app/src/main/res/layout/prof_button.xml" value="0.25462962962962965" />
         <entry key="app/src/main/res/layout/suggestion_layout.xml" value="0.14342629482071714" />
         <entry key="app/src/main/res/layout/suggestion_view_holder.xml" value="0.5294117647058824" />
+        <entry key="app/src/main/res/layout/user_actions.xml" value="0.35" />
         <entry key="app/src/main/res/menu/nav_menu.xml" value="0.5" />
         <entry key="app/src/main/res/xml/chip.xml" value="0.31357649442755825" />
         <entry key="app/src/main/res/xml/standalone_chip.xml" value="0.17777777777777778" />

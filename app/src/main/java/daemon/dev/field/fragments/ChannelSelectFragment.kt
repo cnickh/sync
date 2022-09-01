@@ -11,14 +11,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import daemon.dev.field.R
-import daemon.dev.field.data.PostRAM
 import daemon.dev.field.databinding.FragmentChannelBinding
 import daemon.dev.field.databinding.FragmentSelectChannelBinding
 import daemon.dev.field.fragments.adapter.SelectAdapter
-import daemon.dev.field.fragments.model.TempPost
 
 class ChannelSelectFragment  : Fragment() {
-    private val tempPost : TempPost by activityViewModels()
+//    private val tempPost : TempPost by activityViewModels()
 
     private lateinit var binding: FragmentSelectChannelBinding
 
@@ -43,18 +41,18 @@ class ChannelSelectFragment  : Fragment() {
 
         val list = mutableListOf<String>()
 
-        for(c in PostRAM.channelList.value!!){
-            if(c != "all"){
-                list.add(c)
-            }
-        }
+//        for(c in PostRAM.channelList.value!!){
+//            if(c != "all"){
+//                list.add(c)
+//            }
+//        }
         channelAdapter.updateView(list)
 
         binding.done.setOnClickListener {
 
             val selected = channelAdapter.getSelected()
-            tempPost.setTargets(selected)
-            tempPost.create()
+//            tempPost.setTargets(selected)
+//            tempPost.create()
             parentFragmentManager.beginTransaction().remove(this).commit()
 
         }

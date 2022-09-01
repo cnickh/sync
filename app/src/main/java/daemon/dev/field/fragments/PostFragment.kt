@@ -1,7 +1,6 @@
 package daemon.dev.field.fragments
 
 import android.content.Context
-import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -14,33 +13,37 @@ import android.widget.LinearLayout
 import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
-import daemon.dev.field.INBOX_TAG
+import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
-import daemon.dev.field.data.PostRAM
-import daemon.dev.field.data.objects.Comment
-import daemon.dev.field.data.objects.Post
+import daemon.dev.field.cereal.objects.Comment
+import daemon.dev.field.cereal.objects.Post
 import daemon.dev.field.databinding.CommentViewHolderBinding
 import daemon.dev.field.databinding.FragmentPostBinding
 import daemon.dev.field.databinding.NewCommentViewHolderBinding
+import daemon.dev.field.fragments.model.SyncModel
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 class PostFragment : Fragment() {
-
+    private val syncModel : SyncModel by activityViewModels()
     private lateinit var binding: FragmentPostBinding
     private lateinit var post : Post
-    private var pid : ULong = 0u
+    private lateinit var globalSub : MutableList<Comment>
+
+    private var pid : Int = 0
 
     private var commenting : Boolean = false
     private val maxDepth : Int = 4
 
     override fun onCreate(savedInstanceState: Bundle?){
         super.onCreate(savedInstanceState)
-        pid = requireArguments().getLong("pid").toULong()
+        pid = requireArguments().getInt("pid")
 
     }
 
@@ -56,53 +59,63 @@ class PostFragment : Fragment() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        post = PostRAM.getPost(pid)!!
+        Log.d("PostFragment.kt","Have $pid")
+        post = syncModel.get(pid)!!
 
-        binding.author.text = post.user.alias
         binding.hops.text = post.hops.toString()
         binding.subjectText.text = post.title
         binding.bodyText.text = post.body
 
-        var mediaPlayer = MediaPlayer.create(context, R.raw.shieldsup)
-        mediaPlayer.start()
+        syncModel.getUser(post.key).observe(viewLifecycleOwner, Observer { user ->
+            if(user != null) {
+                binding.author.text = user.alias
+            }
+        })
 
-        //ugly fix should improve |
-        //                        V
-        val placeholder = Comment(post.user,"place-holder",0,0)
-        placeholder.commentList = post.comments
+        syncModel.new_thread.observe(viewLifecycleOwner, Observer { address ->
+            Log.d("PostFragment.kt", "new_thread signal received")
 
-        addComments(binding.subComment,placeholder,0)
+            if(address == post.address().address){
+                post = syncModel.get(pid)!!
+                binding.subComment.removeAllViews()
+                Log.d("PostFragment.kt", "Updating thread with ${post.comment}")
 
-        binding.comment.setOnClickListener {
-            commentThis(placeholder, binding.subComment,0)
-        }
+                updateSub()
+            }
+        })
+
+//        var mediaPlayer = MediaPlayer.create(context, R.raw.shieldsup)
+//        mediaPlayer.start()
+
+        Log.d("PostFragment.kt", "comments ${post.comment}")
 
         binding.close.setOnClickListener {
             parentFragmentManager.beginTransaction().remove(this).commit()
         }
 
-        PostRAM.newChat.observe(viewLifecycleOwner, Observer { uid ->
+        updateSub()
+    }
 
-            if(uid == pid){
-
-                binding.subComment.removeAllViews()
-
-                //ugly fix should improve |
-                //                        V
-                val placeholder = Comment(post.user,"place-holder",0,0)
-                post = PostRAM.getPost(pid)!!
-                placeholder.commentList = post.comments
-                addComments(binding.subComment,placeholder,0)
-
+    private fun updateSub(){
+        globalSub =
+            if(post.comment!="null"){
+                Json.decodeFromString(post.comment)
+            }else{
+                mutableListOf()
             }
 
-        })
+        addComments(binding.subComment,globalSub,0)
+
+        binding.comment.setOnClickListener {
+            commentThis(globalSub, binding.subComment,0)
+        }
+
     }
 
 
-    private fun addComments(lLayout: LinearLayout, comment : Comment, depth : Int){
+    private fun addComments(lLayout: LinearLayout, sub : MutableList<Comment>, depth : Int){
 
-        for (c in comment.commentList){
+        for (c in sub){
             val card = CommentViewHolderBinding.inflate(LayoutInflater.from(context), null, false)
 //            card.user.text = c.user.alias
             card.text.text = c.comment
@@ -113,17 +126,16 @@ class PostFragment : Fragment() {
 
             params.gravity = Gravity.END
 
-            if(!c.user.uid.cmp(comment.user.uid)){
+            if(c.key != PUBLIC_KEY){
                 card.commentCard.setBackgroundResource(R.drawable.cmt_left)
                 params.gravity = Gravity.START
-
             }
 
             card.commentCard.setOnClickListener {
-                commentThis(c, card.subComment,depth+1)
+                commentThis(c.sub, card.subComment,depth+1)
             }
 
-            addComments(card.subComment,c,depth+1)
+            addComments(card.subComment,c.sub,depth+1)
 
             lLayout.addView(card.root)
 
@@ -133,7 +145,7 @@ class PostFragment : Fragment() {
 
     }
 
-    private fun commentThis(comment : Comment, lLayout: LinearLayout, depth : Int) {
+    private fun commentThis(sub : MutableList<Comment>, lLayout: LinearLayout, depth : Int) {
 
         if (!commenting && depth <= maxDepth) {
 
@@ -152,13 +164,15 @@ class PostFragment : Fragment() {
                 binding.comment.isVisible = true
                 binding.main.removeView(tempCard.root)
 
-                val nwComment = PostRAM.comment(post,comment.commentList,mesg,PostRAM.me)
+                val comment:String = tempCard.commentText.text.toString()
 
+                val nwComment = syncModel.comment(pid,sub,globalSub,comment)
                 val nwCard = CommentViewHolderBinding.inflate(LayoutInflater.from(context), null, false)
+
 //                nwCard.user.text = comment.user.alias
                 nwCard.text.text = nwComment.comment
                 nwCard.commentCard.setOnClickListener {
-                    commentThis(nwComment, nwCard.subComment,depth+1)
+                    commentThis(nwComment.sub, nwCard.subComment,depth+1)
                 }
                 lLayout.addView(nwCard.root)
                 val params = LinearLayout.LayoutParams(

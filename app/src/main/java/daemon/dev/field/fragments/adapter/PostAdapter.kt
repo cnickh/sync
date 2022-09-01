@@ -17,7 +17,6 @@
 package daemon.dev.field.fragments.adapter
 
 import android.os.Build
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,23 +24,20 @@ import androidx.annotation.RequiresApi
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentTransaction
-import androidx.fragment.app.commit
-import androidx.fragment.app.replace
 import androidx.recyclerview.widget.RecyclerView
-import daemon.dev.field.INBOX_TAG
 import daemon.dev.field.R
-import daemon.dev.field.data.PostRAM
-import daemon.dev.field.data.objects.Post
+import daemon.dev.field.cereal.objects.Post
+import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.PostViewHolderBinding
 import daemon.dev.field.fragments.PostFragment
-import daemon.dev.field.network.PeerRAM
+import daemon.dev.field.network.Async
 
 
 /**
  * Adapter for displaying remote Bluetooth devices that are being advertised
  */
 @RequiresApi(Build.VERSION_CODES.O)
-class PostAdapter(val view : View, val activity : FragmentActivity) : RecyclerView.Adapter<PostAdapter.PostVh>() {
+class PostAdapter(val activity : FragmentActivity) : RecyclerView.Adapter<PostAdapter.PostVh>() {
 
     val TAG = "PostAdapter"
 
@@ -71,31 +67,24 @@ class PostAdapter(val view : View, val activity : FragmentActivity) : RecyclerVi
     }
 
     override fun onBindViewHolder(holder: PostVh, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(position)
     }
 
     inner class PostVh(private val binding: PostViewHolderBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: Post?) {
+        fun bind(position: Int) {
+            val item = getItem(position)
             item?.let {
 
                 binding.title.text = it.title
                 binding.body.text = it.body
                 binding.hopValue.text = it.hops.toString()
-                Log.i(INBOX_TAG,"Have hops of ${it.hops}")
-
-                var here = false
-                for (i in PeerRAM.activeUsers.value!!){
-                    if(i.cmp(item.user.uid)){
-                        here = true
-                    }
-                }
-                binding.radioButton.isChecked = here
+                binding.radioButton.isChecked = Async.peers.value?.contains(User(it.key,"",0)) == true
 
                 binding.postCard.setOnClickListener{ _ ->
 
-                    val bundle = bundleOf("pid" to it.uid.toLong())
+                    val bundle = bundleOf("pid" to position)
 
                     val postFrag = PostFragment()
 

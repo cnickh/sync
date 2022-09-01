@@ -3,31 +3,31 @@ package daemon.dev.field
 import android.Manifest
 import java.util.UUID
 
+
+var PUBLIC_KEY = ""
+
+/**Character Encoding*/
+val CHARSET = Charsets.US_ASCII
+
 const val LOCATION_FINE_PERM = Manifest.permission.ACCESS_FINE_LOCATION
 const val READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE
 const val PERMISSION_REQUEST_STORAGE = 102
 const val PERMISSION_REQUEST_LOCATION = 101
-
-const val KILL_LOOPER = 86
 
 /*Class TAGs*/
 const val DB_OP = "PostDatabase.kt"
 const val AD_TAG = "BluetoothAdvertiser.kt"
 const val GATT_TAG = "BluetoothGATT.kt"
 const val MAIN_TAG = "MainActivity.kt"
-const val MANAGER_TAG = "PostRAM.kt"
 const val P2P_TAG = "PeerRAM.kt"
 const val MESH_TAG = "MeshService.kt"
-const val SERIAL_TAG = "Serializer.kt"
 const val SCANNER_TAG = "BluetoothScanner.kt"
 const val GATT_RESOLVER_TAG = "GattResolver.kt"
-const val RESOLVER_LOOPER = "Resolver.kt"
-const val SERVER_LOOPER = "Server.kt"
-const val FILE_IO = "AppDataIO.kt"
 const val SOCKET_TAG = "Socket.kt"
 const val PROFILE_TAG = "ProfileFragment.kt"
 const val INBOX_TAG = "InboxFragment.kt"
 const val PACKER_TAG = "Packer.kt"
+const val MERGE_TAG = "CommentMerge.kt"
 
 /*Channel Connection States*/
 const val NOTIFICATION_CHANNEL = "exampleServiceChannel"
@@ -37,7 +37,7 @@ const val NOTIFICATION_ID = 1
 /*Handshake length max size of 512*/
 const val MTU = 512
 
-const val BLE_INTERVAL = 180L
+const val BLE_INTERVAL = 1000L
 
 const val SERVER_PORT = 5555
 

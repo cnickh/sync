@@ -5,30 +5,49 @@ import android.app.NotificationManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
-import daemon.dev.field.data.PostRAM
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import daemon.dev.field.cereal.objects.User
+import daemon.dev.field.data.db.SyncDatabase
 import daemon.dev.field.databinding.ActivityMainBinding
 import daemon.dev.field.fragments.ChannelFragment
 import daemon.dev.field.fragments.InboxFragment
 import daemon.dev.field.fragments.ProfileFragment
+import daemon.dev.field.fragments.model.SyncModel
+import daemon.dev.field.fragments.model.SyncModelFactory
+import daemon.dev.field.nypt.KEY_TAG
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.security.SecureRandom
+import kotlin.random.Random
 
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding : ActivityMainBinding
+    lateinit var syncModel : SyncModel
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        PostRAM.static_init(this)
+        val key = ByteArray(8)
+        val random = SecureRandom()
+        random.nextBytes(key)
 
-        PostRAM.createMyPost("post0","Whats good", listOf(),null)
-        PostRAM.createMyPost("post1","Whats good", listOf(),null)
+        PUBLIC_KEY = key.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
+        Log.v("Main","set key $PUBLIC_KEY")
 
+        val viewModelFactory = SyncModelFactory(this)
+        syncModel = ViewModelProvider(this, viewModelFactory)[SyncModel::class.java]
+
+        check_init()
 
         requestPermissions(
             arrayOf(LOCATION_FINE_PERM),
@@ -70,6 +89,14 @@ class MainActivity : AppCompatActivity() {
             return@setOnItemSelectedListener true
         }
 
+        syncModel.ping.observe(this, Observer {
+            val text = "Ping from $it"
+            val duration = Toast.LENGTH_SHORT
+
+            val toast = Toast.makeText(this, text, duration)
+            toast.show()
+        })
+
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
@@ -83,30 +110,35 @@ class MainActivity : AppCompatActivity() {
             PERMISSION_REQUEST_LOCATION -> {
                 Log.v(MAIN_TAG,"Checking MeshService")
             }
-//            PERMISSION_REQUEST_STORAGE -> {
-//
-//                ImageRAM.loadThumbnails(this, 8, null)
-//                requestPermissions(
-//                    arrayOf(LOCATION_FINE_PERM),
-//                    PERMISSION_REQUEST_LOCATION
-//                )
-//
-//            }
             else -> Log.e(MAIN_TAG,"Permissions denied")
         }
     }
 
     private fun createNotificationChannel() {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                NOTIFICATION_CHANNEL,
-                "Mesh Service Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            val manager = getSystemService(
-                NotificationManager::class.java)
-            manager.createNotificationChannel(serviceChannel)
+        val serviceChannel = NotificationChannel(
+            NOTIFICATION_CHANNEL,
+            "Mesh Service Channel",
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+        val manager = getSystemService(
+            NotificationManager::class.java)
+        manager.createNotificationChannel(serviceChannel)
+    }
+
+    private fun check_init(){
+        val userDao = SyncDatabase.getInstance(this).userDao
+
+        CoroutineScope(Dispatchers.IO).launch {
+            userDao.clear()
+            if(userDao.wait(PUBLIC_KEY) == null){
+                val num = Random.nextInt(999)
+                val user = User(PUBLIC_KEY,"anon#$num",0)
+                userDao.insert(user)
+                Log.v("Main", "${userDao.wait(PUBLIC_KEY)} inserted")
+            }else{
+                Log.v("Main","user already exists")
+            }
         }
     }
 

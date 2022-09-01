@@ -1,48 +1,29 @@
 package daemon.dev.field.bluetooth
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.le.*
 import android.content.Context
 import android.os.Build
+import android.os.Handler
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.SCANNER_TAG
 import daemon.dev.field.SERVICE_UUID
-import daemon.dev.field.network.PeerRAM
+import daemon.dev.field.network.NetworkLooper
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+@SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
-class BluetoothScanner(val context : Context) {
+class BluetoothScanner(val context : Context, val handler: Handler) {
 
     private val adapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
     private var bluetoothLeScanner : BluetoothLeScanner? = null
     private lateinit var scanCallback: DaemonScanCallback
     private val ScanFilterServiceUUID : ParcelUuid = ParcelUuid(SERVICE_UUID)
-
-    val deviceLock = Mutex()
-    val scannedDevices = mutableListOf<String>()
-
-    private suspend fun getDevice(device: String) : Boolean{
-        deviceLock.withLock {
-            return if (scannedDevices.contains(device)) {
-                false
-            } else {
-                scannedDevices.add(device)
-                true
-            }
-        }
-    }
-
-    suspend fun removeDev(device : String){
-        deviceLock.withLock {
-            if (scannedDevices.contains(device)) {
-                scannedDevices.remove(device)
-            }
-        }
-    }
 
     fun startScanning() {
         Log.d(SCANNER_TAG, "startScanning")
@@ -77,16 +58,15 @@ class BluetoothScanner(val context : Context) {
         /*onScanResults passes one result to our viewModel via addSingleItems method*/
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
-            var gattCallback =
-                GattResolver(result.device.address,this@BluetoothScanner,
-                    PeerRAM.getResolver())
-            //send message to resolver
-            runBlocking {
-                if (getDevice(result.device.address)) {
-                    Log.d(SCANNER_TAG, "Calling connect...")
-                    result.device.connectGatt(context, false, gattCallback)
-                }
-            }
+//            var gattCallback =
+//                GattResolver(result.device.address,this@BluetoothScanner)
+//            runBlocking {
+//                if (getDevice(result.device.address)) {
+//                    Log.d(SCANNER_TAG, "Calling connect...")
+//                    result.device.connectGatt(context, false, gattCallback)
+//                }
+//            }
+            handler.obtainMessage(NetworkLooper.SCANNER,NetworkLooper.ScanEvent(result.device)).sendToTarget()
         }
 
         /*onScanFailed logs an error if the scan was a failure*/

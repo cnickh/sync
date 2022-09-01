@@ -1,0 +1,47 @@
+package daemon.dev.field.data.db
+
+import androidx.lifecycle.LiveData
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import daemon.dev.field.cereal.objects.Post
+
+
+@Dao
+interface PostDao {
+
+    @Insert
+    suspend fun insert(item: Post)
+
+    @Query("SELECT * from post_table WHERE `index` = :index")
+    suspend fun get(index: Int): Post
+
+    @Query("SELECT * FROM post_table WHERE `key` = :key AND `time` = :time")
+    suspend fun getAt(key : String, time : Long) : Post?
+
+    @Query("DELETE FROM post_table WHERE `index` = :index")
+    fun del(index: Int)
+
+    @Query("DELETE FROM post_table")
+    fun clear()
+
+    @Query("SELECT * FROM post_table ORDER BY time DESC LIMIT 1")
+    suspend fun getMostRecentItem(): Post?
+
+    @Query("SELECT * FROM post_table ORDER BY time DESC")
+    fun getPosts(): LiveData<List<Post>>
+
+    @Query("SELECT * from post_table WHERE `key` = :key")
+    fun getByKey(key: String): LiveData<List<Post>>
+
+    @Query("SELECT COUNT(*) FROM post_table WHERE `key` = :key")
+    suspend fun getKey(key: String) : Int
+
+    @Query("UPDATE post_table SET comment=:nwComment WHERE `index` = :index")
+    suspend fun updateComment(nwComment: String?, index: Int)
+
+    @Update
+    suspend fun update(post : Post)
+
+}

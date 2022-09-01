@@ -1,67 +1,64 @@
 package daemon.dev.field.bluetooth
 
+import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.os.*
 import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.*
-import daemon.dev.field.data.PostRAM
-import daemon.dev.field.data.objects.RemoteHost
-import daemon.dev.field.network.PeerRAM
+import daemon.dev.field.cereal.objects.HandShake
+import daemon.dev.field.cereal.objects.User
+import daemon.dev.field.network.Async
+import daemon.dev.field.network.NetworkLooper
+import daemon.dev.field.network.NetworkLooper.Companion.DISCONNECT
+import daemon.dev.field.network.NetworkLooper.Companion.HANDSHAKE
+import daemon.dev.field.network.NetworkLooper.Companion.PACKET
 import daemon.dev.field.network.Socket
-import daemon.dev.field.util.Serializer
 import kotlinx.coroutines.runBlocking
-import java.nio.charset.Charset
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
+@SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
-class GattResolver(val addr : String, val scanner: BluetoothScanner, val resolver : Handler) : BluetoothGattCallback() {
-        private val serializer = Serializer()
-        var sid : Int? = null
-        private val host : RemoteHost = RemoteHost(null, PostRAM.me.uid)
+class GattResolver(val address : String, val handler: Handler) : BluetoothGattCallback() {
+        var socket : Socket? = null
         var remoteHost : ByteArray? = null
 
+        private fun sendEvent(type : Int,socket : Socket?, bytes : ByteArray?, address: String?, gatt: BluetoothGatt?, res : GattResolver?){
+            handler.obtainMessage(NetworkLooper.RESOLVER,
+                NetworkLooper.ResolverEvent(type,socket,bytes,address,gatt,res)).sendToTarget()
+        }
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
-            Log.d(GATT_RESOLVER_TAG, "onConnectionStateChange: @$addr success: $isSuccess connected: $isConnected")
+            Log.d(GATT_RESOLVER_TAG, "onConnectionStateChange: @$address success: $isSuccess connected: $isConnected")
 
-            // try to send a message to the other device as a test
             if (isSuccess && isConnected) {
-                // discover services
                 gatt.requestMtu(MTU)
-
             } else {
-                Log.d(GATT_RESOLVER_TAG,"Failed with status = $status and state = $newState")
-                Log.d(GATT_RESOLVER_TAG,"Freeing address")
-
-                runBlocking {
-                    sid?.let { PeerRAM.disconnect(it,Socket.BLUETOOTH_GATT);sid==null }
-                    scanner.removeDev(addr)
-                }
+                sendEvent(DISCONNECT,socket,null,address,null,null)
             }
         }
+
         override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
             super.onMtuChanged(gatt, mtu, status)
             gatt?.discoverServices()
         }
+
         override fun onServicesDiscovered(discoveredGatt: BluetoothGatt, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.v(GATT_RESOLVER_TAG, "onServicesDiscovered: Have gatt $discoveredGatt")
+//                Log.v(GATT_RESOLVER_TAG, "onServicesDiscovered: Have gatt $discoveredGatt")
 
                 try {
 
                     val service = discoveredGatt.getService(SERVICE_UUID)
-                    Log.v(GATT_RESOLVER_TAG, "onServicesDiscovered: Have service $service")
 
                     if(service == null){
-                        runBlocking {
-                            sid?.let { PeerRAM.disconnect(it,Socket.BLUETOOTH_GATT);sid==null }
-                            scanner.removeDev(addr)
-                        }
+                        sendEvent(DISCONNECT,socket,null,address,null,null)
                     } else {
-                        Log.d(GATT_RESOLVER_TAG, "Reading Characteristic")
+//                        Log.d(GATT_RESOLVER_TAG, "Reading Characteristic")
                         val characteristic = service.getCharacteristic(PROFILE_UUID)
                         discoveredGatt.readCharacteristic(characteristic)
                     }
@@ -73,7 +70,6 @@ class GattResolver(val addr : String, val scanner: BluetoothScanner, val resolve
 
                 }
 
-
             }
         }
 
@@ -82,26 +78,20 @@ class GattResolver(val addr : String, val scanner: BluetoothScanner, val resolve
             characteristic: BluetoothGattCharacteristic?,
             status: Int,
         ) {
-            Log.v(GATT_RESOLVER_TAG, "onCharacteristicRead called")
-            var data : ByteArray? = null
+//            Log.v(GATT_RESOLVER_TAG, "onCharacteristicRead called")
 
             try {
 
                 remoteHost = characteristic?.value
 
-                Log.d(GATT_RESOLVER_TAG, "Sending handshake packet")
-                val service = gatt!!.getService(SERVICE_UUID)
-                val char = service.getCharacteristic(REQUEST_UUID)
-                char.value = serializer.hostToByte(host)
-                gatt.writeCharacteristic(char)
-
+                sendEvent(HANDSHAKE,null,null,null,gatt!!,null)
 
             } catch (e : Exception){
                 val msg = e.message
                 val cas = e.cause
                 Log.e(GATT_RESOLVER_TAG,"Error onCharacteristicRead: $msg : $cas")
             }
-            Log.d(GATT_RESOLVER_TAG, "onCharacteristicRead: Have $data")
+
         }
 
         override fun onCharacteristicWrite(
@@ -111,23 +101,30 @@ class GattResolver(val addr : String, val scanner: BluetoothScanner, val resolve
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
 
-            Log.v(GATT_RESOLVER_TAG,"onCharacteristicWrite called")
+            Log.i(GATT_RESOLVER_TAG,"onCharacteristicWrite called")
 
-
-            sid?.let{ _ ->
-                PeerRAM.res.open()
+            socket?.let{ _ ->
+                Async.response.open()
             }
 
             remoteHost?.let { bytes ->
 
-                val service = gatt!!.getService(SERVICE_UUID)
-                val char = service.getCharacteristic(PROFILE_UUID)
-                gatt.setCharacteristicNotification (char, true)
-
-                serializer.getHost(bytes).let{
-                    val peer = Socket(it.uid, Socket.BLUETOOTH_GATT, null, gatt, null)
-                    sid = peer.sid
-                }
+                sendEvent(HANDSHAKE,null,bytes,null,gatt,this)
+//                Log.i(GATT_RESOLVER_TAG,"Socket being initialized")
+//
+//                val service = gatt!!.getService(SERVICE_UUID)
+//                val char = service.getCharacteristic(PROFILE_UUID)
+//                gatt.setCharacteristicNotification (char, true)
+//
+//                val json = bytes.toString(CHARSET)
+//
+//                Json.decodeFromString<HandShake>(json).let{
+//                    if(it.state == Async.READY){
+//                        socket = Socket(it.me, Socket.BLUETOOTH_GATT, null, gatt, null,null)
+//                    } else {
+//                        gatt.disconnect()
+//                    }
+//                }
 
             }
             remoteHost = null
@@ -138,19 +135,19 @@ class GattResolver(val addr : String, val scanner: BluetoothScanner, val resolve
             characteristic: BluetoothGattCharacteristic?
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            Log.d(GATT_RESOLVER_TAG, "onCharacteristicChanged called sid:$sid")
+//            Log.d(GATT_RESOLVER_TAG, "onCharacteristicChanged called")
             var data: ByteArray? = null
 
             try {
 
-                if(sid!=null) {
+                if(socket!=null) {
 
                     data = characteristic?.value
 
                     data?.let { bytes ->
-                        resolver.obtainMessage(sid!!, 0, 0,
-                            bytes).sendToTarget()
+                        sendEvent(PACKET,socket,bytes,null,null,null)
                     }
+
                 } else {
                     //do something
                 }
@@ -160,7 +157,7 @@ class GattResolver(val addr : String, val scanner: BluetoothScanner, val resolve
                 val cas = e.cause
                 Log.e(GATT_RESOLVER_TAG,"Error onCharacteristicChanged: $msg : $cas")
             }
-            Log.d(GATT_RESOLVER_TAG, "onCharacteristicChanged: Have ${data?.toString(Charset.defaultCharset())}")
+//            Log.d(GATT_RESOLVER_TAG, "onCharacteristicChanged: Have ${data?.toString(Charsets.US_ASCII)}")
         }
 }
 
