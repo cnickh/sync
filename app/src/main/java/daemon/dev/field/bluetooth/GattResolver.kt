@@ -110,21 +110,6 @@ class GattResolver(val address : String, val handler: Handler) : BluetoothGattCa
             remoteHost?.let { bytes ->
 
                 sendEvent(HANDSHAKE,null,bytes,null,gatt,this)
-//                Log.i(GATT_RESOLVER_TAG,"Socket being initialized")
-//
-//                val service = gatt!!.getService(SERVICE_UUID)
-//                val char = service.getCharacteristic(PROFILE_UUID)
-//                gatt.setCharacteristicNotification (char, true)
-//
-//                val json = bytes.toString(CHARSET)
-//
-//                Json.decodeFromString<HandShake>(json).let{
-//                    if(it.state == Async.READY){
-//                        socket = Socket(it.me, Socket.BLUETOOTH_GATT, null, gatt, null,null)
-//                    } else {
-//                        gatt.disconnect()
-//                    }
-//                }
 
             }
             remoteHost = null

@@ -54,12 +54,12 @@ object Async {
         return ds.userDao.wait(PUBLIC_KEY)
     }
 
-    suspend fun checkKey(key : String) : Boolean {
-        state_lock.lock()
-        val ret = active_connections[key] != null
-        state_lock.unlock()
-        return ret
-    }
+//    suspend fun checkKey(key : String) : Boolean {
+//        state_lock.lock()
+//        val ret = active_connections[key] != null
+//        state_lock.unlock()
+//        return ret
+//    }
 
     suspend fun handshake() : HandShake {
         state_lock.lock()
@@ -83,16 +83,18 @@ object Async {
         state_lock.unlock()
     }
 
-    suspend fun connect(socket : Socket, user : User){
+    suspend fun connect(socket : Socket, user : User) : Boolean{
         state_lock.lock()
 
         Log.d("Async","Calling connect on ${socket.key}")
         op.insertUser(user)
-        if(state != READY){state_lock.unlock();return}
 
         if(socket.key in active_connections.keys){
             active_connections[socket.key]!!.add(socket)
         }else{
+            if(state != READY){state_lock.unlock();return false}
+
+
             active_connections[socket.key] = mutableListOf(socket)
             _peers.add(socket.user)
             peers.postValue(_peers)
@@ -103,6 +105,7 @@ object Async {
         }
 
         state_lock.unlock()
+        return true
     }
 
     suspend fun getSocket(device : BluetoothDevice) : Socket?{
@@ -147,8 +150,6 @@ object Async {
 
     suspend fun disconnect(user : User){
         state_lock.lock()
-
-//        Log.d("Async","Calling disconnect on ${user.key}")
 
         active_connections[user.key]?.let{
             for(socket in it){
@@ -206,8 +207,6 @@ object Async {
                 Log.d("Async.kt","Message received ${socket.key}")
             } else {
                 Log.e("Async.kt","Message failed to send")
-//                disconnectSocket(socket)
-//                return
             }
             response.close()
         }

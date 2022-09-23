@@ -41,8 +41,10 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
     }
 
     data class ScanEvent(val device : BluetoothDevice)
+
     data class GattEvent(val type : Int,
         val device: BluetoothDevice, val bytes : ByteArray?, val gattServer: BluetoothGattServer?, val req : Int?)
+
     data class ResolverEvent(val type : Int,
         val socket: Socket?, val bytes : ByteArray?, val address : String?, val gatt: BluetoothGatt?, val res : GattResolver?)
 
@@ -127,7 +129,7 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
         var gattCallback =
             GattResolver(event.device.address, getHandler())
 
-        if (getDevice(event.device.address)) {
+        if (getDevice(event.device.address) && (Async.live_state.value!! == Async.READY)) {
             event.device.connectGatt(context, false, gattCallback)
         }
 
@@ -156,11 +158,9 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
                     val json = event.bytes!!.toString(CHARSET)
                     val shake = Json.decodeFromString<HandShake>(json)
 
-                    if(shake.state == Async.READY){
-                        Socket(shake.me,Socket.BLUETOOTH_DEVICE,null,null,event.device,event.gattServer)
-                    } else if(Async.checkKey(shake.me.key)){
-                        Socket(shake.me,Socket.BLUETOOTH_DEVICE,null,null,event.device,event.gattServer)
-                    } else{
+                    val sock = Socket(shake.me,Socket.BLUETOOTH_DEVICE,null,null,event.device,event.gattServer)
+
+                    if(Async.connect(sock,shake.me)){
                         event.gattServer?.cancelConnection(event.device)
                     }
 
@@ -207,13 +207,14 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
                     val json = event.bytes.toString(CHARSET)
 
                     Json.decodeFromString<HandShake>(json).let{
-                        if(it.state == Async.READY){
-                            event.res!!.socket = Socket(it.me, Socket.BLUETOOTH_GATT, null, gatt, null,null)
-                        } else if(Async.checkKey(it.me.key)){
-                            event.res!!.socket = Socket(it.me, Socket.BLUETOOTH_GATT, null, gatt, null,null)
-                        } else {
+
+                        val sock = Socket(it.me, Socket.BLUETOOTH_GATT, null, gatt, null,null)
+                        event.res!!.socket = sock
+
+                        if(!Async.connect(sock,it.me)){
                             gatt.disconnect()
                         }
+
                     }
                 }
 

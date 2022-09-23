@@ -51,9 +51,6 @@ class Socket(
         }
 
         key = user.key
-        runBlocking{
-            Async.connect(this@Socket,user)
-        }
 
         Log.d(SOCKET_TAG,"Peer initialized successfully type[${type2String()}]")
     }
