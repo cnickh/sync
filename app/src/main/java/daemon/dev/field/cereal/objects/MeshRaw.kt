@@ -20,6 +20,7 @@ class MeshRaw(val type : Int,
         const val NEW_DATA = 4
         const val PING = 5
         const val DISCONNECT = 6
+        const val CONFIRM = 7
 
     }
 

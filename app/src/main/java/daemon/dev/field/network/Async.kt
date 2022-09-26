@@ -149,6 +149,9 @@ object Async {
     }
 
     suspend fun disconnect(user : User){
+        val raw = MeshRaw(DISCONNECT, null, null, null, null, null)
+        send(raw,user.key)
+
         state_lock.lock()
 
         active_connections[user.key]?.let{

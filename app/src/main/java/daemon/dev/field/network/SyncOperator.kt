@@ -114,12 +114,25 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                 mtype = "DISCONNECT"
                 Async.disconnect(socket.user)
             }
+            MeshRaw.CONFIRM->{
+                mtype = "CONFIRM"
+                raw.hashCode().toString()
+            }
             else ->{
                 mtype = "NO_TYPE"
             }
+
         }
 
         Log.i("Op.kt","Received $mtype from peer[${socket.key}]")
+        if(raw.type != MeshRaw.CONFIRM){
+
+
+
+
+//            Async.send()
+        }
+
 
     }
 

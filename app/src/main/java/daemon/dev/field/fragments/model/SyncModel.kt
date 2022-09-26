@@ -10,6 +10,7 @@ import daemon.dev.field.cereal.objects.*
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.network.Async
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -27,8 +28,14 @@ class SyncModel internal constructor(
     val new_thread = Async.new_thread
     val ping = Async.ping
 
+    fun disconnect(user : User){
+        viewModelScope.launch(Dispatchers.IO) {
+            Async.disconnect(user)
+        }
+    }
+
     fun sendToTarget(raw : MeshRaw, key : String){
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             Async.send(raw, key)
         }
     }
@@ -61,7 +68,7 @@ class SyncModel internal constructor(
             null
         )
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             Log.i("SyncModel.kt","Created post $post")
             postRepository.add(post)
             Async.sendAll(raw)
@@ -89,7 +96,7 @@ class SyncModel internal constructor(
             null
         )
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             postRepository.stage(listOf(post))
             postRepository.commit()
             Async.sendAll(raw)

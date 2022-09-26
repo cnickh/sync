@@ -63,11 +63,14 @@ class DeviceAdapter(val view : View, val vm : SyncModel) : RecyclerView.Adapter<
             false
         )
 
+
+
         @RequiresApi(Build.VERSION_CODES.O)
         fun bind(item: User?) {
             item?.let {
                 binding.name.text = it.alias
                 val dev = it.key
+                val user = it
                 binding.card.setOnClickListener {
 
                     if(!open) {
@@ -82,6 +85,15 @@ class DeviceAdapter(val view : View, val vm : SyncModel) : RecyclerView.Adapter<
                         open = false
                     }
 
+                }
+
+                card.ping.setOnClickListener {
+                    val raw = MeshRaw(MeshRaw.PING,null,null,null,null,null)
+                    vm.sendToTarget(raw,dev)
+                }
+
+                card.disconnect.setOnClickListener {
+                    vm.disconnect(user)
                 }
 
             }
