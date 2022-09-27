@@ -22,7 +22,7 @@ class Socket(
     val type : Int,
     private val socket: Socket?,
     private val gatt : BluetoothGatt?,
-    val device : BluetoothDevice?,
+    val device : BluetoothDevice,
     val gattServer : BluetoothGattServer?
            ){
 

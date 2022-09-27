@@ -41,7 +41,7 @@ class MeshService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(MESH_TAG,"Started successfully")
 
-        runBlocking{ Async.ready(context) }
+        runBlocking{ Async.ready(context,looper.getHandler()) }
         enableNotification()
         launchNetworkProcesses()
 

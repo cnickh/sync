@@ -21,24 +21,24 @@ import kotlinx.serialization.json.Json
 
 @SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
-class GattResolver(val address : String, val handler: Handler) : BluetoothGattCallback() {
+class GattResolver(val device : BluetoothDevice, val handler: Handler) : BluetoothGattCallback() {
         var socket : Socket? = null
         var remoteHost : ByteArray? = null
 
-        private fun sendEvent(type : Int,socket : Socket?, bytes : ByteArray?, address: String?, gatt: BluetoothGatt?, res : GattResolver?){
+        private fun sendEvent(type : Int,socket : Socket?, bytes : ByteArray?, device: BluetoothDevice?, gatt: BluetoothGatt?, res : GattResolver?){
             handler.obtainMessage(NetworkLooper.RESOLVER,
-                NetworkLooper.ResolverEvent(type,socket,bytes,address,gatt,res)).sendToTarget()
+                NetworkLooper.ResolverEvent(type,socket,bytes,device,gatt,res)).sendToTarget()
         }
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
-            Log.d(GATT_RESOLVER_TAG, "onConnectionStateChange: @$address success: $isSuccess connected: $isConnected")
+            Log.d(GATT_RESOLVER_TAG, "onConnectionStateChange: @${device.address} success: $isSuccess connected: $isConnected")
 
             if (isSuccess && isConnected) {
                 gatt.requestMtu(MTU)
             } else {
-                sendEvent(DISCONNECT,socket,null,address,null,null)
+                sendEvent(DISCONNECT,socket,null,device,null,null)
             }
         }
 
@@ -56,7 +56,7 @@ class GattResolver(val address : String, val handler: Handler) : BluetoothGattCa
                     val service = discoveredGatt.getService(SERVICE_UUID)
 
                     if(service == null){
-                        sendEvent(DISCONNECT,socket,null,address,null,null)
+                        sendEvent(DISCONNECT,socket,null,device,null,null)
                     } else {
 //                        Log.d(GATT_RESOLVER_TAG, "Reading Characteristic")
                         val characteristic = service.getCharacteristic(PROFILE_UUID)
@@ -109,7 +109,7 @@ class GattResolver(val address : String, val handler: Handler) : BluetoothGattCa
 
             remoteHost?.let { bytes ->
 
-                sendEvent(HANDSHAKE,null,bytes,null,gatt,this)
+                sendEvent(HANDSHAKE,null,bytes,device,gatt,this)
 
             }
             remoteHost = null

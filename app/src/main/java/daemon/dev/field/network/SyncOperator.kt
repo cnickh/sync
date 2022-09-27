@@ -90,7 +90,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                 )
 //                Log.i("op.kt", "Requests: ${raw.requests}")
 //                Log.i("op.kt", "Send post ${list[0]} with comments ${list[0].comment}")
-                Async.send(newRaw,socket.key)
+                Async.send(newRaw,socket)
             }
 
             MeshRaw.NEW_DATA -> {
@@ -106,7 +106,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                             null
                         )
                         if(posts.isNotEmpty()){
-                            Async.send(newRaw,socket.key)
+                            Async.send(newRaw,socket)
                         }
                     }
                 }
@@ -137,7 +137,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
             val sig_bytes = raw.hash().toByteArray(CHARSET)
             val nw_raw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
 
-            Async.send(nw_raw,socket.key)
+            Async.send(nw_raw,socket)
         }
 
 

@@ -33,11 +33,11 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
         const val SCANNER = 0
         const val GATT = 1
         const val RESOLVER = 2
+        const val APP = 3
 
-        const val HANDSHAKE = 3
-        const val PACKET = 4
-        const val DISCONNECT = 5
-        const val CONNECTION = 6
+        const val HANDSHAKE = 4
+        const val PACKET = 5
+        const val DISCONNECT = 6
     }
 
     data class ScanEvent(val device : BluetoothDevice)
@@ -46,7 +46,9 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
         val device: BluetoothDevice, val bytes : ByteArray?, val gattServer: BluetoothGattServer?, val req : Int?)
 
     data class ResolverEvent(val type : Int,
-        val socket: Socket?, val bytes : ByteArray?, val address : String?, val gatt: BluetoothGatt?, val res : GattResolver?)
+        val socket: Socket?, val bytes : ByteArray?, val device: BluetoothDevice?, val gatt: BluetoothGatt?, val res : GattResolver?)
+
+    data class AppEvent(val socket : Socket)
 
     var mHandler: Handler? = null
     var mLooper: Looper? = null
@@ -115,6 +117,9 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
                 RESOLVER -> {
                     handleResolverEvent(msg.obj as ResolverEvent)
                 }
+                APP -> {
+                    handleAppEvent(msg.obj as AppEvent)
+                }
             }
         }
         return false
@@ -124,10 +129,14 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
         mLooper?.quit()
     }
 
+    private fun handleAppEvent(event: AppEvent){
+        removeDev(event.socket.device.address)
+    }
+
     private fun handleScanEvent(event : ScanEvent){
 
         var gattCallback =
-            GattResolver(event.device.address, getHandler())
+            GattResolver(event.device, getHandler())
 
         if (getDevice(event.device.address) && (Async.live_state.value!! == Async.READY)) {
             event.device.connectGatt(context, false, gattCallback)
@@ -160,7 +169,7 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
 
                     val sock = Socket(shake.me,Socket.BLUETOOTH_DEVICE,null,null,event.device,event.gattServer)
 
-                    if(Async.connect(sock,shake.me)){
+                    if(!Async.connect(sock,shake.me)){
                         event.gattServer?.cancelConnection(event.device)
                     }
 
@@ -183,7 +192,7 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
         when(event.type){
             DISCONNECT ->{
                 Log.i("handleResolverEvent","Got disconnect event")
-                event.address?.let { removeDev(it) }
+                event.device?.address?.let { removeDev(it) }
                 event.socket?.let{Async.disconnectSocket(it)}
             }
             PACKET ->{
@@ -208,7 +217,7 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
 
                     Json.decodeFromString<HandShake>(json).let{
 
-                        val sock = Socket(it.me, Socket.BLUETOOTH_GATT, null, gatt, null,null)
+                        val sock = Socket(it.me, Socket.BLUETOOTH_GATT, null, gatt, event.device!!,null)
                         event.res!!.socket = sock
 
                         if(!Async.connect(sock,it.me)){

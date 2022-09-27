@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.os.Build
 import android.os.ConditionVariable
+import android.os.Handler
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
@@ -50,6 +51,7 @@ object Async {
     private lateinit var ds : SyncDatabase
     private lateinit var op : SyncOperator
     private lateinit var vr : Verifier
+    private lateinit var nl : Handler
 
     private suspend fun me() : User?{
         return ds.userDao.wait(PUBLIC_KEY)
@@ -62,10 +64,11 @@ object Async {
         return shake!!
     }
 
-    suspend fun ready(context : Context){
+    suspend fun ready(context : Context, nl : Handler){
         state_lock.lock()
         if(state != IDLE){state_lock.unlock();return}
 
+        this.nl = nl
         vr = Verifier()
 
         ds = SyncDatabase.getInstance(context)
@@ -88,7 +91,14 @@ object Async {
         op.insertUser(user)
 
         if(socket.key in active_connections.keys){
-            active_connections[socket.key]!!.add(socket)
+            val socks = active_connections[socket.key]!!//.add(socket)
+            for(s in socks){
+                if(s.type == socket.type){
+                    socks.remove(s)
+                    break
+                }
+            }
+            socks.add(socket)
         }else{
             if(state != READY){state_lock.unlock();return false}
 
@@ -131,6 +141,11 @@ object Async {
         state_lock.lock()
 
         socket.close()
+
+        if(socket.type == Socket.BLUETOOTH_GATT){
+            nl.obtainMessage(NetworkLooper.APP,
+                NetworkLooper.AppEvent(socket)).sendToTarget()
+        }
 
         Log.i("Async.kt","disconnectSocket() called")
 
@@ -188,7 +203,7 @@ object Async {
         }
     }
 
-    private suspend fun send(raw : MeshRaw, socket : Socket){
+    suspend fun send(raw : MeshRaw, socket : Socket){
         state_lock.lock()
         if(state == IDLE){state_lock.unlock();return}
 
@@ -211,11 +226,14 @@ object Async {
             }
             response.close()
         }
-        if(raw.type != MeshRaw.CONFIRM){
-            vr.add(raw.hash(),3)
-        }
 
         state_lock.unlock()
+
+
+        if(raw.type != MeshRaw.CONFIRM){
+            vr.add(socket, raw.hash(),3)
+        }
+
     }
 
     suspend fun sendAll(raw : MeshRaw){
