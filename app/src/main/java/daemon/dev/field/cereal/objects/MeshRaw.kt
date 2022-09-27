@@ -1,5 +1,6 @@
 package daemon.dev.field.cereal.objects
 
+import daemon.dev.field.CHARSET
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -22,6 +23,11 @@ class MeshRaw(val type : Int,
         const val DISCONNECT = 6
         const val CONFIRM = 7
 
+    }
+
+    fun hash() : String {
+        val sting = type.toString() + nodeInfo?.hash() + requests?.toString() + newData?.toString() + posts?.toString() + misc?.toString(CHARSET)
+        return sting
     }
 
 }

@@ -18,5 +18,9 @@ data class User(
         val user = other as User
         return user.key == key
     }
+
+    fun hash() : String{
+        return key
+    }
 }
 

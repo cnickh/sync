@@ -49,17 +49,11 @@ object Async {
 
     private lateinit var ds : SyncDatabase
     private lateinit var op : SyncOperator
+    private lateinit var vr : Verifier
 
     private suspend fun me() : User?{
         return ds.userDao.wait(PUBLIC_KEY)
     }
-
-//    suspend fun checkKey(key : String) : Boolean {
-//        state_lock.lock()
-//        val ret = active_connections[key] != null
-//        state_lock.unlock()
-//        return ret
-//    }
 
     suspend fun handshake() : HandShake {
         state_lock.lock()
@@ -72,10 +66,14 @@ object Async {
         state_lock.lock()
         if(state != IDLE){state_lock.unlock();return}
 
+        vr = Verifier()
+
         ds = SyncDatabase.getInstance(context)
         op = SyncOperator(PostRepository(ds.postDao), UserBase(ds.userDao))
+
         op.setLiveData(new_thread)
         op.setPing(ping)
+        op.setVerifier(vr)
 
         state = READY
         live_state.postValue(state)
@@ -213,6 +211,9 @@ object Async {
             }
             response.close()
         }
+        if(raw.type != MeshRaw.CONFIRM){
+            vr.add(raw.hash(),3)
+        }
 
         state_lock.unlock()
     }
@@ -285,6 +286,11 @@ object Async {
             DISCONNECT->{
                 mtype = "DISCONNECT"
             }
+
+            MeshRaw.CONFIRM->{
+                mtype = "CONFIRM"
+            }
+
             else ->{
                 mtype = "NO_TYPE"
             }

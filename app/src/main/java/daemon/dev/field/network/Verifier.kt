@@ -7,7 +7,7 @@ import daemon.dev.field.BLE_INTERVAL
 
 class Verifier {
 
-    val waiting = mutableListOf<String>()
+    private val waiting = mutableListOf<String>()
 
     fun add(hash : String, hops : Int){
 
@@ -15,7 +15,7 @@ class Verifier {
 
         Handler(Looper.getMainLooper()).postDelayed({
             //post delayed check and throw error
-            confirm(hash)
+            checkConfirm(hash)
         }, BLE_INTERVAL*hops)
 
     }
@@ -24,11 +24,21 @@ class Verifier {
 
         if(waiting.contains(hash)){
             waiting.remove(hash)
+            Log.w("V","Message $hash was received :)")
+
         }else{
-            Log.e("Async","Message $hash not received :(")
+            Log.e("V","Message $hash already removed")
         }
 
     }
 
+    private fun checkConfirm(hash : String){
+
+        if(waiting.contains(hash)){
+            Log.e("V","Message $hash not received :(")
+            waiting.remove(hash)
+        }
+
+    }
 
 }

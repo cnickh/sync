@@ -2,6 +2,7 @@ package daemon.dev.field.network
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
+import daemon.dev.field.CHARSET
 import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.data.PostRepository
@@ -16,7 +17,13 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
     lateinit var new_thread : MutableLiveData<String>
     lateinit var livePing : MutableLiveData<String>
 
+    lateinit var vr : Verifier
+
     private val sorter = Sorter()
+
+    fun setVerifier(verifier: Verifier){
+        vr = verifier
+    }
 
     fun setLiveData(thread : MutableLiveData<String>){
         new_thread = thread
@@ -116,7 +123,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
             }
             MeshRaw.CONFIRM->{
                 mtype = "CONFIRM"
-                raw.hashCode().toString()
+                vr.confirm(raw.misc!!.toString(CHARSET))
             }
             else ->{
                 mtype = "NO_TYPE"
@@ -127,10 +134,10 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
         Log.i("Op.kt","Received $mtype from peer[${socket.key}]")
         if(raw.type != MeshRaw.CONFIRM){
 
+            val sig_bytes = raw.hash().toByteArray(CHARSET)
+            val nw_raw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
 
-
-
-//            Async.send()
+            Async.send(nw_raw,socket.key)
         }
 
 
