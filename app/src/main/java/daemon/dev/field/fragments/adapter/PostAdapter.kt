@@ -80,7 +80,7 @@ class PostAdapter(val activity : FragmentActivity) : RecyclerView.Adapter<PostAd
                 binding.title.text = it.title
                 binding.body.text = it.body
                 binding.hopValue.text = it.hops.toString()
-                binding.radioButton.isChecked = Async.peers.value?.contains(User(it.key,"",0)) == true
+                binding.radioButton.isChecked = Async.peers.value?.contains(User(it.key,"",0,"")) == true
 
                 binding.postCard.setOnClickListener{ _ ->
 

@@ -12,7 +12,7 @@ data class User(
     @PrimaryKey(autoGenerate = false) val key : String,
     var alias : String,
     val clout : Int,
-    val channels : List<String>
+    val channels : String
 
     ){
     override fun equals(other: Any?): Boolean {

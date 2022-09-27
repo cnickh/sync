@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
             userDao.clear()
             if(userDao.wait(PUBLIC_KEY) == null){
                 val num = Random.nextInt(999)
-                val user = User(PUBLIC_KEY,"anon#$num",0, listOf())
+                val user = User(PUBLIC_KEY,"anon#$num",0, "listOf()")
                 userDao.insert(user)
                 Log.v("Main", "${userDao.wait(PUBLIC_KEY)} inserted")
             }else{
