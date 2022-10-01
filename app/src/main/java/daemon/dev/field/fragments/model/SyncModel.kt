@@ -6,7 +6,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import daemon.dev.field.PUBLIC_KEY
+import daemon.dev.field.UNIVERSAL_KEY
 import daemon.dev.field.cereal.objects.*
+import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.network.Async
@@ -19,12 +21,16 @@ import kotlinx.serialization.json.Json
 
 class SyncModel internal constructor(
     private val postRepository: PostRepository,
-    private val userBase: UserBase
+    private val userBase: UserBase,
+    private val channelAccess: ChannelAccess
 ) : ViewModel()  {
 
     val posts: LiveData<List<Post>> = postRepository.posts
     val peers: MutableLiveData<MutableList<User>> = Async.peers
+    val channels = channelAccess.channels
+
     val state : LiveData<Int> = Async.live_state
+
     val new_thread = Async.new_thread
     val ping = Async.ping
 
@@ -47,6 +53,16 @@ class SyncModel internal constructor(
     fun get(position : Int) : Post?{
         return posts.value?.get(position)
     }
+
+    fun addChannel(string : String){
+
+        viewModelScope.launch(Dispatchers.IO){
+            userBase.addChannel(string)
+            channelAccess.createChannel(string, UNIVERSAL_KEY)
+        }
+
+    }
+
 
     fun create(
         title: String,

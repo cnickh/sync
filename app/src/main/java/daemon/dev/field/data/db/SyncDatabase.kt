@@ -15,6 +15,7 @@ internal abstract class SyncDatabase : RoomDatabase() {
 
     abstract val postDao: PostDao
     abstract val userDao : UserDao
+    abstract val channelDao : ChannelDao
 
     companion object {
 

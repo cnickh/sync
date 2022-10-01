@@ -11,12 +11,16 @@ import android.widget.EditText
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import daemon.dev.field.databinding.FragmentChannelBinding
 import daemon.dev.field.fragments.adapter.ChannelAdapter
+import daemon.dev.field.fragments.model.SyncModel
 
 class ChannelFragment : Fragment() {
+
+    private val syncModel : SyncModel by activityViewModels()
 
     private lateinit var binding: FragmentChannelBinding
 
@@ -41,13 +45,11 @@ class ChannelFragment : Fragment() {
         binding.channelList.adapter = channelAdapter
         binding.channelList.layoutManager = GridLayoutManager(requireContext(),2)
 
-//        channelAdapter.updateView(PostRAM.channelList.value!!)
-//
-//        PostRAM.channelList.observe(viewLifecycleOwner, Observer { new_bin_list ->
-//
-//            channelAdapter.updateView(new_bin_list)
-//
-//        })
+        syncModel.channels.observe(viewLifecycleOwner, Observer { list ->
+
+            channelAdapter.updateView(list)
+
+        })
 
         binding.create.text="Create Channel"
 
@@ -66,7 +68,11 @@ class ChannelFragment : Fragment() {
             .setTitle("Enter Name")
             .setView(taskEditText)
             .setPositiveButton("Create",
-                DialogInterface.OnClickListener { a0, a1 -> /*create channel*/ })
+                DialogInterface.OnClickListener { a0, a1 -> /*create channel*/
+
+                    syncModel.addChannel(taskEditText.text.toString())
+
+                })
             .setNegativeButton("Cancel", null)
             .create()
 

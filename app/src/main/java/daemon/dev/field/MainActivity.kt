@@ -127,13 +127,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun check_init(){
-        val userDao = SyncDatabase.getInstance(this).userDao
+
+        val sync = SyncDatabase.getInstance(this)
+
+        val userDao = sync.userDao
 
         CoroutineScope(Dispatchers.IO).launch {
             userDao.clear()
             if(userDao.wait(PUBLIC_KEY) == null){
                 val num = Random.nextInt(999)
-                val user = User(PUBLIC_KEY,"anon#$num",0, "listOf()")
+                val user = User(PUBLIC_KEY,"anon#$num",0, "null")
                 userDao.insert(user)
                 Log.v("Main", "${userDao.wait(PUBLIC_KEY)} inserted")
             }else{

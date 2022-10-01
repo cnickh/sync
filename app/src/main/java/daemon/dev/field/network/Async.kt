@@ -53,15 +53,18 @@ object Async {
     private lateinit var vr : Verifier
     private lateinit var nl : Handler
 
-    private suspend fun me() : User?{
-        return ds.userDao.wait(PUBLIC_KEY)
+    private suspend fun me() : User{
+        val me = ds.userDao.wait(PUBLIC_KEY)
+        me!!.channels = "null"
+        return me
     }
 
     suspend fun handshake() : HandShake {
         state_lock.lock()
-        val shake = me()?.let { HandShake(state, it, null) }
+        val shake = HandShake(state, me(), null)
         state_lock.unlock()
-        return shake!!
+
+        return shake
     }
 
     suspend fun ready(context : Context, nl : Handler){
@@ -102,7 +105,6 @@ object Async {
         }else{
             if(state != READY){state_lock.unlock();return false}
 
-
             active_connections[socket.key] = mutableListOf(socket)
             _peers.add(socket.user)
             peers.postValue(_peers)
@@ -110,7 +112,7 @@ object Async {
             if(num_connections == MAX_CONNECTIONS){
                 state = INSYNC;live_state.postValue(state)
             }
-        }
+    }
 
         state_lock.unlock()
         return true
@@ -124,7 +126,7 @@ object Async {
         for(key in active_connections.keys){
             for(socket in active_connections[key]!!){
                 if(socket.type == BLUETOOTH_DEVICE){
-                    if(socket.device!!.address == device.address){
+                    if(socket.device.address == device.address){
                         ret = socket
                         break
                     }

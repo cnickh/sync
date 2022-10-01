@@ -92,6 +92,10 @@ class DeviceAdapter(val view : View, val vm : SyncModel) : RecyclerView.Adapter<
                     vm.sendToTarget(raw,dev)
                 }
 
+                card.sync.setOnClickListener {
+
+                }
+
                 card.disconnect.setOnClickListener {
                     vm.disconnect(user)
                 }
