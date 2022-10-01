@@ -14,6 +14,7 @@ class Sorter {
     fun resolve(bytes : ByteArray) : MeshRaw? {
         val json = bytes.toString(CHARSET)
 //        Log.i("Sorter.kt","Unwrapping - $json")
+
         val wrap = Json.decodeFromString<Wrapper>(json)
 
         return wrap.let{
