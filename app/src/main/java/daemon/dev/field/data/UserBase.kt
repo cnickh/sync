@@ -8,6 +8,10 @@ class UserBase(private val sync : UserDao) {
 
     val users = sync.getAll()
 
+    suspend fun setAlias(alias : String){
+        sync.setAlias(alias)
+    }
+
     suspend fun add(user : User){
         sync.insert(user)
     }
@@ -18,23 +22,6 @@ class UserBase(private val sync : UserDao) {
 
     suspend fun wait(key : String) : User?{
         return sync.wait(key)
-    }
-
-    suspend fun addChannel(string : String){
-        val ch : MutableList<String>
-        var channels = sync.getChannels()
-        if(channels == "null"){
-            channels = string
-        }else{
-            ch = channels.split(',') as MutableList<String>
-            ch.add(string)
-            channels = ch.joinToString(",")
-        }
-        sync.setChannel(channels)
-    }
-
-    suspend fun getChannels() : List<String>{
-        return sync.getChannels().split(',')
     }
 
     fun getUsers(list : List<String>) : LiveData<List<User>>{

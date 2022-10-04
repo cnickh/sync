@@ -6,6 +6,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.widget.TextView.OnEditorActionListener
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -16,6 +18,9 @@ import daemon.dev.field.fragments.adapter.DeviceAdapter
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.network.Async
 import daemon.dev.field.util.ServiceLauncher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class ProfileFragment : Fragment() {
@@ -44,11 +49,15 @@ class ProfileFragment : Fragment() {
         }
 
         binding.mesh.setOnCheckedChangeListener { mesh, _ ->
-            if(mesh.isChecked){
-                ServiceLauncher(view.context).checkStartMesh()
-            } else if (!mesh.isChecked){
-                ServiceLauncher(view.context).checkKillMesh()
+
+            CoroutineScope(Dispatchers.IO).launch {
+                if (mesh.isChecked) {
+                    ServiceLauncher(view.context).checkStartMesh()
+                } else if (!mesh.isChecked) {
+                    ServiceLauncher(view.context).checkKillMesh()
+                }
             }
+
         }
 
         binding.signature.text = PUBLIC_KEY
@@ -70,6 +79,23 @@ class ProfileFragment : Fragment() {
                 binding.alias.hint = user.alias
             }
         }
+
+
+        binding.alias.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+            when (actionId) {
+                EditorInfo.IME_ACTION_DONE, EditorInfo.IME_ACTION_NEXT, EditorInfo.IME_ACTION_PREVIOUS -> {
+
+                    val alias = binding.alias.text.toString()
+                    if(alias != "") syncModel.setAlias(binding.alias.text.toString())
+
+                    return@OnEditorActionListener true
+                }
+            }
+            false
+        })
+
+
+
 
         syncModel.peers.observe(viewLifecycleOwner) { keys ->
             deviceAdapter.updateView(keys)

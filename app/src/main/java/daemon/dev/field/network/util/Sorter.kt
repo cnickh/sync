@@ -1,4 +1,4 @@
-package daemon.dev.field.network
+package daemon.dev.field.network.util
 
 import android.util.Log
 import daemon.dev.field.CHARSET
@@ -15,9 +15,14 @@ class Sorter {
         val json = bytes.toString(CHARSET)
 //        Log.i("Sorter.kt","Unwrapping - $json")
 
-        val wrap = Json.decodeFromString<Wrapper>(json)
+        val wrap = try {
+            Json.decodeFromString<Wrapper>(json)
+        } catch (e : Exception) {
+            Log.e("Sorter.kt","Could not decode wrapper, possibly handshake")
+            null
+        }
 
-        return wrap.let{
+        return wrap?.let{
 
             val mid = wrap.mid
             val cur = wrap.cur

@@ -14,9 +14,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
+import daemon.dev.field.R
 import daemon.dev.field.databinding.FragmentChannelBinding
 import daemon.dev.field.fragments.adapter.ChannelAdapter
 import daemon.dev.field.fragments.model.SyncModel
+import daemon.dev.field.network.Sync
 
 class ChannelFragment : Fragment() {
 
@@ -51,6 +53,8 @@ class ChannelFragment : Fragment() {
 
         })
 
+        addPublic()
+
         binding.create.text="Create Channel"
 
         binding.create.setOnClickListener {
@@ -78,5 +82,26 @@ class ChannelFragment : Fragment() {
 
         dialog.show()
     }
+
+    private fun addPublic(){
+        val bin_id = "Public"
+
+        binding.binName.text = bin_id
+
+        if(Sync.open_channels.contains(bin_id)){
+            binding.publicBin.setBackgroundResource(R.drawable.col_bg)
+        }else{
+            binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
+        }
+
+        binding.publicBin.setOnClickListener {
+            if(Sync.selectChannel(bin_id)){
+                binding.publicBin.setBackgroundResource(R.drawable.col_bg)
+            }else{
+                binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
+            }
+        }
+    }
+
 
 }

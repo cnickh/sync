@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import daemon.dev.field.cereal.objects.Channel
 import daemon.dev.field.cereal.objects.Post
 import daemon.dev.field.data.db.ChannelDao
+import daemon.dev.field.network.Sync
 
 class ChannelAccess(private val sync : ChannelDao) {
 
@@ -37,6 +38,18 @@ class ChannelAccess(private val sync : ChannelDao) {
         return sync.getKey(name)
     }
 
+    suspend fun resolveChannels(channels : List<String>) : List<String>{
+        val posts = mutableListOf<String>()
+
+        for(c in channels){
+            if(Sync.open_channels.contains(c)){
+
+            }
+        }
+
+
+        return posts
+    }
 
 
 }

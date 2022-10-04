@@ -1,18 +1,21 @@
-package daemon.dev.field.network
+package daemon.dev.field.network.util
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import daemon.dev.field.CHARSET
 import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.User
+import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
+import daemon.dev.field.network.Async
+import daemon.dev.field.network.Socket
 
 
 /**@brief this class implements the handling of network packets. The packets are constructed from
  * segments by the Sorter class. The raw data is then handled by message type via the switch statement.*/
 
-class SyncOperator(private val postRepository: PostRepository, private val userBase: UserBase) {
+class SyncOperator(private val postRepository: PostRepository, private val userBase: UserBase, private val channelAccess : ChannelAccess) {
 
     lateinit var new_thread : MutableLiveData<String>
     lateinit var livePing : MutableLiveData<String>
@@ -57,7 +60,11 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
         when(raw.type){
             MeshRaw.INFO ->{
                 mtype = "INFO"
-                userBase.update(raw.nodeInfo!!)
+                val info = raw.nodeInfo!!
+                val channels = info.channels.split(",")
+                info.channels = "null"
+                userBase.update(info)
+
             }
 
             MeshRaw.POST_LIST->{
@@ -90,7 +97,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                 )
 //                Log.i("op.kt", "Requests: ${raw.requests}")
 //                Log.i("op.kt", "Send post ${list[0]} with comments ${list[0].comment}")
-                Async.send(newRaw,socket)
+                Async.send(newRaw, socket)
             }
 
             MeshRaw.NEW_DATA -> {
@@ -106,7 +113,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                             null
                         )
                         if(posts.isNotEmpty()){
-                            Async.send(newRaw,socket)
+                            Async.send(newRaw, socket)
                         }
                     }
                 }
@@ -137,7 +144,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
             val sig_bytes = raw.hash().toByteArray(CHARSET)
             val nw_raw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
 
-            Async.send(nw_raw,socket)
+            Async.send(nw_raw, socket)
         }
 
 

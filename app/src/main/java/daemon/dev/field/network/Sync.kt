@@ -1,29 +1,52 @@
 package daemon.dev.field.network
 
-import kotlinx.coroutines.sync.Mutex
+import daemon.dev.field.SYNC_INTERVAL
+import daemon.dev.field.cereal.objects.MeshRaw
+import kotlinx.coroutines.runBlocking
 
 object Sync {
 
     val open_channels = mutableListOf<String>()
-    val channel_lock = Mutex()
 
-    val broadcast_posts = mutableListOf<String>()
-    val post_lock = Mutex()
-
-    suspend fun openChannel(){
-
+    fun init_connection(key : String){
+        val sync = SyncThread(key)
+        sync.start()
     }
 
-    suspend fun closeChannel(){
-
+    fun selectChannel(name : String) : Boolean{
+        return if(open_channels.contains(name)){
+            open_channels.remove(name)
+            false
+        }else{
+            open_channels.add(name)
+            true
+        }
     }
 
-    suspend fun getOpen(){
+    class SyncThread(val key : String) : Thread() {
 
-    }
+        var active = true
 
-    suspend fun init_connection(key : String){
+        override fun run() {
+            while(active){
 
+                runBlocking {
+
+                    val info = Async.me()
+
+                    info.channels = open_channels.joinToString(",")
+
+                    val raw = MeshRaw(MeshRaw.INFO, info, null, null, null, null)
+
+                    active = Async.checkKey(key)
+                    if(active){
+                        Async.send(raw, key)
+                    }
+                }
+
+                sleep(SYNC_INTERVAL)
+            }
+        }
     }
 
 }

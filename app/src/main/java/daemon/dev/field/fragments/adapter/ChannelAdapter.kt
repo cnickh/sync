@@ -8,6 +8,7 @@ import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import daemon.dev.field.R
 import daemon.dev.field.databinding.BinViewHolderBinding
+import daemon.dev.field.network.Sync
 
 @RequiresApi(Build.VERSION_CODES.O)
 class ChannelAdapter(val view : View)  : RecyclerView.Adapter<ChannelAdapter.BinVh>(){
@@ -45,19 +46,19 @@ class ChannelAdapter(val view : View)  : RecyclerView.Adapter<ChannelAdapter.Bin
 
                 binding.binName.text = bin_id
 
-//                if(PostRAM.binSel.contains(bin_id)){
-//                    binding.bin.setBackgroundResource(R.drawable.col_bg)
-//                }else{
-//                    binding.bin.setBackgroundResource(R.drawable.wht_bg)
-//                }
-//
-//                binding.bin.setOnClickListener {
-//                    if(PostRAM.selectChannel(bin_id)){
-//                        binding.bin.setBackgroundResource(R.drawable.col_bg)
-//                    }else{
-//                        binding.bin.setBackgroundResource(R.drawable.wht_bg)
-//                    }
-//                }
+                if(Sync.open_channels.contains(bin_id)){
+                    binding.bin.setBackgroundResource(R.drawable.col_bg)
+                }else{
+                    binding.bin.setBackgroundResource(R.drawable.wht_bg)
+                }
+
+                binding.bin.setOnClickListener {
+                    if(Sync.selectChannel(bin_id)){
+                        binding.bin.setBackgroundResource(R.drawable.col_bg)
+                    }else{
+                        binding.bin.setBackgroundResource(R.drawable.wht_bg)
+                    }
+                }
 
             }
         }

@@ -46,6 +46,12 @@ class SyncModel internal constructor(
         }
     }
 
+    fun setAlias(alias : String){
+        viewModelScope.launch(Dispatchers.IO) {
+            userBase.setAlias(alias)
+        }
+    }
+
     fun getUser(key : String) : LiveData<User> {
         return userBase.getUser(key)
     }
@@ -57,7 +63,6 @@ class SyncModel internal constructor(
     fun addChannel(string : String){
 
         viewModelScope.launch(Dispatchers.IO){
-            userBase.addChannel(string)
             channelAccess.createChannel(string, UNIVERSAL_KEY)
         }
 

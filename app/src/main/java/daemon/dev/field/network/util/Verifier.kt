@@ -1,9 +1,11 @@
-package daemon.dev.field.network;
+package daemon.dev.field.network.util;
 
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import daemon.dev.field.BLE_INTERVAL
+import daemon.dev.field.network.Async
+import daemon.dev.field.network.Socket
 import kotlinx.coroutines.runBlocking
 
 class Verifier {

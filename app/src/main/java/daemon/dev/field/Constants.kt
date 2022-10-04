@@ -40,9 +40,7 @@ const val MTU = 512
 
 const val BLE_INTERVAL = 1000L
 
-const val SERVER_PORT = 5555
-
-const val MAX_SOCKETS = 4
+const val SYNC_INTERVAL = 6000L
 
 /**
  * service UUID, should be removed

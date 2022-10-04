@@ -2,22 +2,22 @@ package daemon.dev.field.network
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
-import android.os.Build
 import android.os.ConditionVariable
 import android.os.Handler
 import android.util.Log
-import androidx.annotation.RequiresApi
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import daemon.dev.field.BLE_INTERVAL
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.cereal.objects.*
 import daemon.dev.field.cereal.objects.MeshRaw.Companion.DISCONNECT
+import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.data.db.SyncDatabase
 import daemon.dev.field.network.Socket.Companion.BLUETOOTH_DEVICE
-import kotlinx.coroutines.runBlocking
+import daemon.dev.field.network.util.Packer
+import daemon.dev.field.network.util.SyncOperator
+import daemon.dev.field.network.util.Verifier
 import kotlinx.coroutines.sync.Mutex
 
 /**@brief this object implements a singleton instance that preserves network state between
@@ -53,10 +53,8 @@ object Async {
     private lateinit var vr : Verifier
     private lateinit var nl : Handler
 
-    private suspend fun me() : User{
-        val me = ds.userDao.wait(PUBLIC_KEY)
-        me!!.channels = "null"
-        return me
+    suspend fun me() : User{
+        return ds.userDao.wait(PUBLIC_KEY)!!
     }
 
     suspend fun handshake() : HandShake {
@@ -75,7 +73,7 @@ object Async {
         vr = Verifier()
 
         ds = SyncDatabase.getInstance(context)
-        op = SyncOperator(PostRepository(ds.postDao), UserBase(ds.userDao))
+        op = SyncOperator(PostRepository(ds.postDao), UserBase(ds.userDao), ChannelAccess(ds.channelDao))
 
         op.setLiveData(new_thread)
         op.setPing(ping)
@@ -86,6 +84,14 @@ object Async {
 
         state_lock.unlock()
     }
+
+    suspend fun checkKey(key : String) : Boolean {
+        state_lock.lock()
+        val ret = active_connections.containsKey(key)
+        state_lock.unlock()
+        return ret
+    }
+
 
     suspend fun connect(socket : Socket, user : User) : Boolean{
         state_lock.lock()
@@ -112,7 +118,8 @@ object Async {
             if(num_connections == MAX_CONNECTIONS){
                 state = INSYNC;live_state.postValue(state)
             }
-    }
+            Sync.init_connection(user.key)
+        }
 
         state_lock.unlock()
         return true
@@ -167,23 +174,23 @@ object Async {
         val raw = MeshRaw(DISCONNECT, null, null, null, null, null)
         send(raw,user.key)
 
-        state_lock.lock()
+        val socks = active_connections[user.key]
 
-        active_connections[user.key]?.let{
-            for(socket in it){
-                socket.close()
+
+        socks?.let{
+
+            if(socks.size == 1){
+                disconnectSocket(socks[0])
+            }else if(socks.size == 2){
+                val sock0 = socks[0]
+                val sock1 = socks[1]
+                disconnectSocket(sock0)
+                disconnectSocket(sock1)
+
             }
+
         }
 
-        active_connections.remove(user.key)
-        num_connections--
-        _peers.remove(user)
-        peers.postValue(_peers)
-        if(state == INSYNC){
-            state = READY;live_state.postValue(state)
-        }
-
-        state_lock.unlock()
     }
 
     private fun disconnectInsync(user : User){

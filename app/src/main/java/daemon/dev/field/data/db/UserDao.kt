@@ -14,11 +14,8 @@ interface UserDao {
     @Update
     suspend fun update(item: User)
 
-    @Query("UPDATE user_table SET channels=:nwChannel WHERE `key` = :key")
-    suspend fun setChannel( nwChannel : String, key : String = PUBLIC_KEY)
-
-    @Query("SELECT channels FROM user_table WHERE `key` = :key")
-    suspend fun getChannels(key : String = PUBLIC_KEY) : String
+    @Query("UPDATE user_table SET alias=:nwAlias WHERE `key` = :key")
+    suspend fun setAlias( nwAlias : String, key : String = PUBLIC_KEY)
 
     @Query("SELECT * FROM user_table WHERE `key` IN (:list)")
     fun getUsers(list : List<String>) : LiveData<List<User>>

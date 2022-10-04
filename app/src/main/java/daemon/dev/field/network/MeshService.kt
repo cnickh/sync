@@ -53,8 +53,9 @@ class MeshService : Service() {
 
         runBlocking{
             Async.idle()
-            bluetoothLeScanner.stopScanning()
         }
+
+        bluetoothLeScanner.stopScanning()
         gatt.stopServer()
         looper.kill()
         Log.i(MESH_TAG,"Killed successfully")
