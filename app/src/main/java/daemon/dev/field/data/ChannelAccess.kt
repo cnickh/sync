@@ -10,6 +10,19 @@ class ChannelAccess(private val sync : ChannelDao) {
 
     val channels = sync.getChannels()
 
+    suspend fun getOpenContents() : List<String>{
+        val posts = mutableListOf<String>()
+
+        for(c in Sync.open_channels){
+            val content = sync.waitContents(c).split(",")
+            for(p in content) {
+                if(!posts.contains(p)) posts.add(p)
+            }
+        }
+
+        return posts
+    }
+
     fun contents(name : String) : LiveData<String>{
         return sync.getContents(name)
     }
@@ -43,10 +56,12 @@ class ChannelAccess(private val sync : ChannelDao) {
 
         for(c in channels){
             if(Sync.open_channels.contains(c)){
-
+                val content = sync.waitContents(c).split(",")
+                for(p in content) {
+                    if(!posts.contains(p)) posts.add(p)
+                }
             }
         }
-
 
         return posts
     }

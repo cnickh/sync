@@ -12,6 +12,7 @@ import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.network.Async
+import daemon.dev.field.network.Sync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -25,14 +26,34 @@ class SyncModel internal constructor(
     private val channelAccess: ChannelAccess
 ) : ViewModel()  {
 
-    val posts: LiveData<List<Post>> = postRepository.posts
-    val peers: MutableLiveData<MutableList<User>> = Async.peers
+    val posts = postRepository.posts
+    val peers = Async.peers
     val channels = channelAccess.channels
 
     val state : LiveData<Int> = Async.live_state
 
     val new_thread = Async.new_thread
     val ping = Async.ping
+
+    var filter : List<String>? = null
+
+    fun filter(posts : List<Post>) : List<Post> {
+
+        val ret = mutableListOf<Post>()
+
+
+
+
+        return ret
+    }
+
+    fun selectChannel(name : String) : Boolean {
+        val ret = Sync.selectChannel(name)
+        viewModelScope.launch(Dispatchers.IO) {
+           filter = channelAccess.getOpenContents()
+        }
+        return ret
+    }
 
     fun disconnect(user : User){
         viewModelScope.launch(Dispatchers.IO) {
@@ -69,6 +90,7 @@ class SyncModel internal constructor(
     }
 
 
+
     fun create(
         title: String,
         body: String,
@@ -78,21 +100,23 @@ class SyncModel internal constructor(
         val post = Post(PUBLIC_KEY,time,title,body,"null",0)
 
         //Packeting
-        val data = hashMapOf<String,String>()
-        data[post.address().address] = post.hash()
-        val raw = MeshRaw(
-            MeshRaw.NEW_DATA,
-            null,
-            null,
-            data,
-            null,
-            null
-        )
+//        val data = hashMapOf<String,String>()
+//        data[post.address().address] = post.hash()
+//        val raw = MeshRaw(
+//            MeshRaw.NEW_DATA,
+//            null,
+//            null,
+//            data,
+//            null,
+//            null
+//        )
 
         viewModelScope.launch(Dispatchers.IO) {
             Log.i("SyncModel.kt","Created post $post")
             postRepository.add(post)
-            Async.sendAll(raw)
+            for(c in Sync.open_channels){
+                channelAccess.addPost(c,post)
+            }
         }
 
     }

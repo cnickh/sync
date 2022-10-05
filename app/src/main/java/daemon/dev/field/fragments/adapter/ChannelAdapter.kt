@@ -8,10 +8,11 @@ import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import daemon.dev.field.R
 import daemon.dev.field.databinding.BinViewHolderBinding
+import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.network.Sync
 
 @RequiresApi(Build.VERSION_CODES.O)
-class ChannelAdapter(val view : View)  : RecyclerView.Adapter<ChannelAdapter.BinVh>(){
+class ChannelAdapter(val view : View, val vm : SyncModel)  : RecyclerView.Adapter<ChannelAdapter.BinVh>(){
 
     private var itemsList: MutableList<String> = arrayListOf()
 
@@ -53,7 +54,7 @@ class ChannelAdapter(val view : View)  : RecyclerView.Adapter<ChannelAdapter.Bin
                 }
 
                 binding.bin.setOnClickListener {
-                    if(Sync.selectChannel(bin_id)){
+                    if(vm.selectChannel(bin_id)){
                         binding.bin.setBackgroundResource(R.drawable.col_bg)
                     }else{
                         binding.bin.setBackgroundResource(R.drawable.wht_bg)

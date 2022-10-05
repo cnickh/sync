@@ -64,7 +64,12 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                 val channels = info.channels.split(",")
                 info.channels = "null"
                 userBase.update(info)
-
+                val posts = channelAccess.resolveChannels(channels)
+                if(posts.isNotEmpty()){
+                    val hash = postRepository.hashList(posts)
+                    val raw = MeshRaw(MeshRaw.NEW_DATA,null,null,hash,null,null)
+                    Async.send(raw,socket)
+                }
             }
 
             MeshRaw.POST_LIST->{

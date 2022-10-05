@@ -42,7 +42,7 @@ class ChannelFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        val channelAdapter = ChannelAdapter(view)
+        val channelAdapter = ChannelAdapter(view,syncModel)
 
         binding.channelList.adapter = channelAdapter
         binding.channelList.layoutManager = GridLayoutManager(requireContext(),2)
@@ -95,7 +95,7 @@ class ChannelFragment : Fragment() {
         }
 
         binding.publicBin.setOnClickListener {
-            if(Sync.selectChannel(bin_id)){
+            if(syncModel.selectChannel(bin_id)){
                 binding.publicBin.setBackgroundResource(R.drawable.col_bg)
             }else{
                 binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
