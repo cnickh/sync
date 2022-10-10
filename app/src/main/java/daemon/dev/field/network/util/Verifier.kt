@@ -27,9 +27,9 @@ class Verifier {
 
         if(waiting.contains(hash)){
             waiting.remove(hash)
-            Log.w("V","Message $hash was received :)")
+            Log.w("Verifier.kt","[was received :)] Message $hash")
         }else{
-            Log.e("V","Message $hash already removed")
+            Log.e("Verifier.kt","[already removed] Message $hash")
         }
 
     }
@@ -37,7 +37,7 @@ class Verifier {
     private suspend fun checkConfirm(socket : Socket, hash : String){
 
         if(waiting.contains(hash)){
-            Log.e("V","Message $hash not received :(")
+            Log.e("Verifier.kt","[not received :(] Message $hash")
             waiting.remove(hash)
             Async.disconnectSocket(socket)
         }

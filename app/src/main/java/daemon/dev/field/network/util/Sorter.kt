@@ -29,15 +29,18 @@ class Sorter {
             val data = wrap.bytes
 
 //            Log.d("Sorter","Have $cur / ${wrap.max}")
+//            Log.d("Sorter","Have slots: $slots")
 
             if(slots.keys.contains(mid)){
-                slots[mid]!!.add(cur, data)
-            } else {
-                slots[mid] = mutableListOf()
                 slots[mid]!!.add(cur,data)
+            } else {
+                if(cur == 0){
+                    slots[mid] = mutableListOf()
+                    slots[mid]!!.add(cur,data)
+                }
             }
 
-            if(slots[mid]!!.size == wrap.max+1){
+            if(slots[mid]?.size == wrap.max+1){
 
 //                Log.d("Sorter","cur == max")
 
@@ -48,6 +51,7 @@ class Sorter {
                 }
 
 //                Log.w("Sorter","Decoding:\n $raw")
+                slots.remove(mid)
                 Json.decodeFromString<MeshRaw>(raw)
 
             } else {

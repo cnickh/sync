@@ -7,6 +7,9 @@ import daemon.dev.field.cereal.objects.Channel
 @Dao
 interface ChannelDao {
 
+    @Query("DELETE FROM channel_table")
+    fun clear()
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: Channel)
 
@@ -24,6 +27,9 @@ interface ChannelDao {
 
     @Query("SELECT name FROM channel_table")
     fun getChannels() : LiveData<List<String>>
+
+    @Query("SELECT name FROM channel_table")
+    suspend fun waitChannels() : List<String>
 
     @Query("SELECT `key` FROM channel_table WHERE `name` = :name")
     suspend fun getKey(name : String) : String

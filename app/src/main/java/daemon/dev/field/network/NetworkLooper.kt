@@ -169,6 +169,8 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
                          Json.decodeFromString<HandShake>(json)
                     }catch(e : Exception){
                         Log.e("NetLooper","Error decoding handshake")
+                        Log.e("NetLooper","$json")
+
                         null
                     }
 

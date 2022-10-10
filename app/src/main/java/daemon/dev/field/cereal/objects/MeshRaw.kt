@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 class MeshRaw(val type : Int,
               val nodeInfo : User?,
               val requests : List<String>?, //List<Address>
-              val newData : HashMap<String,String>?, //HashMap<Address,HashCode>
+              val newData : HashMap<String,HashMap<String,String>>?, //HashMap<Address,HashCode>
               val posts : List<Post>?,
               val misc : ByteArray?
                     ){
@@ -25,9 +25,10 @@ class MeshRaw(val type : Int,
 
     }
 
-    fun hash() : String {
-        val sting = type.toString() + nodeInfo?.hash() + requests?.toString() + newData?.toString() + posts?.toString() + misc?.toString(CHARSET)
-        return sting
+    fun hash(): String {
+        return type.toString() + nodeInfo?.hash() + requests?.toString() + newData?.toString() + posts?.toString() + misc?.toString(
+            CHARSET
+        )
     }
 
 }

@@ -19,6 +19,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
 
     lateinit var new_thread : MutableLiveData<String>
     lateinit var livePing : MutableLiveData<String>
+    lateinit var filter : MutableLiveData<Int>
 
     lateinit var vr : Verifier
 
@@ -36,19 +37,20 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
         livePing = ping
     }
 
+    fun setLiveFilter(filter : MutableLiveData<Int>){
+        this.filter = filter
+    }
+
     suspend fun insertUser(user : User){
         userBase.add(user)
-        Log.i("op.kt"," got user: ${userBase.wait(user.key)}")
+//        Log.i("op.kt"," got user: ${userBase.wait(user.key)}")
     }
 
     suspend fun receive(bytes : ByteArray, socket : Socket){
         val msg = sorter.resolve(bytes)
         if(msg != null){
-            Log.e("Op.kt", "Packet construction success -\n $msg")
-
+//            Log.e("Op.kt", "Packet construction success -\n $msg")
             dataToReceive(msg,socket)
-        }else{
-            Log.e("Op.kt", "Packet construction failed")
         }
     }
 
@@ -64,12 +66,23 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                 val channels = info.channels.split(",")
                 info.channels = "null"
                 userBase.update(info)
+
                 val posts = channelAccess.resolveChannels(channels)
+
                 if(posts.isNotEmpty()){
-                    val hash = postRepository.hashList(posts)
-                    val raw = MeshRaw(MeshRaw.NEW_DATA,null,null,hash,null,null)
+//                    Log.d("Op.kt", "INFO have resolved :: $posts")
+
+                    val data_map = hashMapOf<String,HashMap<String,String>>()
+
+                    for((channel,list) in posts){
+                        val hash = postRepository.hashList(list)
+                        data_map[channel] = hash
+                    }
+
+                    val raw = MeshRaw(MeshRaw.NEW_DATA,null,null,data_map,null,null)
                     Async.send(raw,socket)
                 }
+
             }
 
             MeshRaw.POST_LIST->{
@@ -79,8 +92,8 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                     p.hops++
                     postRepository.add(p)
                     val test = postRepository.getAt(p.address())
-                    Log.d("Op.kt", "Test comments : ${test?.comment}")
-                    Log.d("Op.kt", "Sending signal on new_thread")
+//                    Log.d("Op.kt", "Test comments : ${test?.comment}")
+//                    Log.d("Op.kt", "Sending signal on new_thread")
                     new_thread.postValue(p.address().address)
                 }
             }
@@ -108,7 +121,19 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
             MeshRaw.NEW_DATA -> {
                 mtype = "NEW_DATA"
                 raw.newData?.let {
-                    postRepository.compare(it).let { posts ->
+//                    Log.i("op.kt", "Got NEW_DATA adding posts to channel and comparing")
+                    val list = hashMapOf<String,String>()
+
+                    for((channel,posts) in it){
+                        for((address,hash) in posts){
+                            channelAccess.addPost(channel,address)
+                            list[address] = hash
+                        }
+                    }
+
+                    filter.postValue(1)
+
+                    postRepository.compare(list).let { posts ->
                         val newRaw = MeshRaw(
                             MeshRaw.REQUEST,
                             null,

@@ -68,4 +68,8 @@ class Packer(private val raw : MeshRaw) {
         }
     }
 
+    fun count() : Int {
+        return max
+    }
+
 }

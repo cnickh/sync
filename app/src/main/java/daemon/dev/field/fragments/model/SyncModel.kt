@@ -29,6 +29,7 @@ class SyncModel internal constructor(
     val posts = postRepository.posts
     val peers = Async.peers
     val channels = channelAccess.channels
+    val live_filter = Async.filter
 
     val state : LiveData<Int> = Async.live_state
 
@@ -39,18 +40,47 @@ class SyncModel internal constructor(
 
     fun filter(posts : List<Post>) : List<Post> {
 
-        val ret = mutableListOf<Post>()
+        viewModelScope.launch(Dispatchers.IO) {
+            filter = channelAccess.getOpenContents()
+        }
 
+        var ret = mutableListOf<Post>()
 
+        Log.i("SyncModel","Have post list $posts")
 
+        Log.i("SyncModel","filter is $filter")
+        if(posts.isNotEmpty()){
+            Log.i("SyncModel","addres is ${posts[0].address().address}")
+        }
+
+        if(filter == null){
+            ret = posts as MutableList<Post>
+        }else{
+            for(p in posts){
+                if(filter!!.contains(p.address().address)){
+                    ret.add(p)
+                }
+            }
+        }
+        Log.i("SyncModel","Have new list $ret")
 
         return ret
+    }
+
+    fun listContent2Log(channels : List<String>) {
+        viewModelScope.launch(Dispatchers.IO){
+            for (c in channels){
+                val contents = channelAccess.waitContents(c)
+                Log.i("SyncModel","$c :: $contents")
+            }
+        }
     }
 
     fun selectChannel(name : String) : Boolean {
         val ret = Sync.selectChannel(name)
         viewModelScope.launch(Dispatchers.IO) {
            filter = channelAccess.getOpenContents()
+            Log.i("SyncModel","Have filter $filter")
         }
         return ret
     }
@@ -89,7 +119,13 @@ class SyncModel internal constructor(
 
     }
 
+    fun updateFilter(){
+        viewModelScope.launch(Dispatchers.IO) {
 
+            filter = channelAccess.getOpenContents()
+
+        }
+    }
 
     fun create(
         title: String,
@@ -115,8 +151,10 @@ class SyncModel internal constructor(
             Log.i("SyncModel.kt","Created post $post")
             postRepository.add(post)
             for(c in Sync.open_channels){
-                channelAccess.addPost(c,post)
+                channelAccess.addPost(c,post.address().address)
             }
+            filter = channelAccess.getOpenContents()
+
         }
 
     }
@@ -130,21 +168,21 @@ class SyncModel internal constructor(
 
         val post = get(position)!!
         post.comment = Json.encodeToString(globalSub)
-        val data = hashMapOf<String,String>()
-        data[post.address().address] = post.hash()
-        val raw = MeshRaw(
-            MeshRaw.NEW_DATA,
-            null,
-            null,
-            data,
-            null,
-            null
-        )
+//        val data = hashMapOf<String,String>()
+//        data[post.address().address] = post.hash()
+//        val raw = MeshRaw(
+//            MeshRaw.NEW_DATA,
+//            null,
+//            null,
+//            data,
+//            null,
+//            null
+//        )
 
         viewModelScope.launch(Dispatchers.IO) {
             postRepository.stage(listOf(post))
             postRepository.commit()
-            Async.sendAll(raw)
+//            Async.sendAll(raw)
         }
 
         return comment

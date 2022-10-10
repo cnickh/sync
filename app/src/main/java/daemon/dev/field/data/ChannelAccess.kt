@@ -1,5 +1,6 @@
 package daemon.dev.field.data
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import daemon.dev.field.cereal.objects.Channel
 import daemon.dev.field.cereal.objects.Post
@@ -10,14 +11,30 @@ class ChannelAccess(private val sync : ChannelDao) {
 
     val channels = sync.getChannels()
 
+    suspend fun waitContents(name : String) : String {
+        return sync.waitContents(name)
+    }
+
+    suspend fun waitChannels() : List<String> {
+        return sync.waitChannels()
+    }
+
     suspend fun getOpenContents() : List<String>{
         val posts = mutableListOf<String>()
 
         for(c in Sync.open_channels){
-            val content = sync.waitContents(c).split(",")
-            for(p in content) {
-                if(!posts.contains(p)) posts.add(p)
+
+            val content = sync.waitContents(c)
+//            Log.i("ChannelAccess","$c :: $content")
+
+            if(content == null){return listOf()}
+
+            if(content!="null") {
+                for (p in content.split(",")) {
+                    if (!posts.contains(p)) posts.add(p)
+                }
             }
+
         }
 
         return posts
@@ -32,14 +49,21 @@ class ChannelAccess(private val sync : ChannelDao) {
         sync.insert(ch)
     }
 
-    suspend fun addPost(name : String, post : Post){
+    suspend fun addPost(name : String, address : String){
         var content = sync.waitContents(name)
 
         content = if(content == "null"){
-            post.address().address
+            address
         }else{
-            val cnt = content.split(",") as MutableList<String>
-            cnt.add(post.address().address)
+            val cnt : MutableList<String> = mutableListOf()
+
+            for(c in content.split(",")){
+               cnt.add(c)
+            }
+
+//            Log.i("ChannelAccess","$cnt adding $address")
+
+            if(!cnt.contains(address)){ cnt.add(address)}
             cnt.joinToString(",")
         }
 
@@ -51,19 +75,29 @@ class ChannelAccess(private val sync : ChannelDao) {
         return sync.getKey(name)
     }
 
-    suspend fun resolveChannels(channels : List<String>) : List<String>{
-        val posts = mutableListOf<String>()
+    suspend fun resolveChannels(channels : List<String>) : HashMap<String,MutableList<String>>{
+
+        val ch_map = hashMapOf<String,MutableList<String>>()
 
         for(c in channels){
             if(Sync.open_channels.contains(c)){
                 val content = sync.waitContents(c).split(",")
-                for(p in content) {
-                    if(!posts.contains(p)) posts.add(p)
+
+                if(content[0] != "null") {
+                    for (p in content) {
+
+                        if(ch_map[c]==null){
+                            ch_map[c] = mutableListOf(p)
+                        }else{
+                            if(!ch_map[c]!!.contains(p)) ch_map[c]!!.add(p)
+                        }
+                    }
                 }
+
             }
         }
 
-        return posts
+        return ch_map
     }
 
 

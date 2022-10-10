@@ -44,9 +44,10 @@ object Async {
     private var active_connections = hashMapOf<String,MutableList<Socket>>()
 
     private val _peers = mutableListOf<User>()
+    val filter = MutableLiveData<Int>()
     val peers = MutableLiveData<MutableList<User>>(mutableListOf())
-    val new_thread : MutableLiveData<String> = MutableLiveData<String>()
-    val ping : MutableLiveData<String> = MutableLiveData<String>()
+    val new_thread  = MutableLiveData<String>()
+    val ping = MutableLiveData<String>()
 
     private lateinit var ds : SyncDatabase
     private lateinit var op : SyncOperator
@@ -78,6 +79,7 @@ object Async {
         op.setLiveData(new_thread)
         op.setPing(ping)
         op.setVerifier(vr)
+        op.setLiveFilter(filter)
 
         state = READY
         live_state.postValue(state)
@@ -96,7 +98,7 @@ object Async {
     suspend fun connect(socket : Socket, user : User) : Boolean{
         state_lock.lock()
 
-        Log.d("Async","Calling connect on ${socket.key}")
+//        Log.d("Async","Calling connect on ${socket.key}")
         op.insertUser(user)
 
         if(socket.key in active_connections.keys){
@@ -156,7 +158,7 @@ object Async {
                 NetworkLooper.AppEvent(socket)).sendToTarget()
         }
 
-        Log.i("Async.kt","disconnectSocket() called")
+//        Log.i("Async.kt","disconnectSocket() called")
 
         active_connections[socket.key]?.let{
 
@@ -194,7 +196,7 @@ object Async {
     }
 
     private fun disconnectInsync(user : User){
-        Log.i("Async.kt","disconnectInsync() called")
+//        Log.i("Async.kt","disconnectInsync() called")
 
         active_connections.remove(user.key)
         num_connections--
@@ -216,23 +218,22 @@ object Async {
         state_lock.lock()
         if(state == IDLE){state_lock.unlock();return}
 
-        Log.d("Async","Sending ${type2string(raw.type)} to ${socket.key}")
+        Log.d("Async","Sending ${type2string(raw.type)} hash ${raw.hash()}")
 
         val packer = Packer(raw)
         var buffer = packer.next()
 
         var count = 0
         while(buffer != null){
-            Log.i("Async.kt", "sending packet ${count++}")
+            Log.i("Async.kt", "sending packet ${count++} / ${packer.count()}")
 
             socket.write(buffer)
             buffer = packer.next()
 
             if(!response.block(BLE_INTERVAL)){
-                Log.d("Async.kt","Message received ${socket.key}")
-            } else {
-                Log.e("Async.kt","Message failed to send")
+                Log.e("Async.kt","Message failed to send ${count++} / ${packer.count()}")
             }
+
             response.close()
         }
 
@@ -240,7 +241,7 @@ object Async {
 
 
         if(raw.type != MeshRaw.CONFIRM){
-            vr.add(socket, raw.hash(),3)
+            vr.add(socket, raw.hash(),6)
         }
 
     }

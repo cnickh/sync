@@ -37,14 +37,14 @@ class PostRepository(private val sync : PostDao) {
         val data = hashMapOf<String,String>()
         val address = post.address().address
         data[address] = post.hash()
-        val raw = MeshRaw(
-            MeshRaw.NEW_DATA,
-            null,
-            null,
-            data,
-            null,
-            null
-        )
+//        val raw = MeshRaw(
+//            MeshRaw.NEW_DATA,
+//            null,
+//            null,
+//            data,
+//            null,
+//            null
+//        )
 //        Async.sendAll(raw)
 
         Log.d("PostRepository.kt","Inserted address: ${post.address()}")

@@ -44,11 +44,15 @@ class InboxFragment : Fragment() {
         binding.postInbox.layoutManager = LinearLayoutManager(requireContext())
 
         sync.posts.observe(viewLifecycleOwner, Observer { new_post_list ->
-            postAdapter.updateView(new_post_list)
+            postAdapter.updateView(sync.filter(new_post_list))
         })
 
         sync.peers.observe(viewLifecycleOwner, Observer { new_post_list ->
             postAdapter.notifyDataSetChanged()
+        })
+
+        sync.live_filter.observe(viewLifecycleOwner, Observer { _ ->
+            sync.updateFilter()
         })
 
         binding.create.setOnClickListener {
