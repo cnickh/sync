@@ -231,7 +231,7 @@ object Async {
             buffer = packer.next()
 
             if(!response.block(BLE_INTERVAL)){
-                Log.e("Async.kt","Message failed to send ${count++} / ${packer.count()}")
+                Log.e("Async.kt","Message failed to send $count / ${packer.count()}")
             }
 
             response.close()
