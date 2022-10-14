@@ -3,43 +3,57 @@ package daemon.dev.field.network.util;
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import daemon.dev.field.BLE_INTERVAL
+import daemon.dev.field.CONFIRMATION_TIMEOUT
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Socket
 import kotlinx.coroutines.runBlocking
 
 class Verifier {
 
-    private val waiting = mutableListOf<String>()
+    private val pending_message = mutableListOf<Int>()
+    private val pending_socket = hashMapOf<Socket,Long>()
 
-    fun add(socket : Socket, hash : String, hops : Int){
+    fun add(socket : Socket, mid : Int){
 
-        waiting.add(hash)
+        pending_message.add(mid)
 
         Handler(Looper.getMainLooper()).postDelayed({
             //post delayed check and throw error
-            runBlocking {checkConfirm(socket, hash)}
-        }, BLE_INTERVAL*hops)
+            runBlocking {checkConfirm(socket, mid)}
+        }, CONFIRMATION_TIMEOUT)
 
     }
 
-    fun confirm(hash : String){
+    fun confirm(socket : Socket, mid : Int){
 
-        if(waiting.contains(hash)){
-            waiting.remove(hash)
-            Log.w("Verifier.kt","[was received :)] Message $hash")
+        pending_socket[socket] = System.currentTimeMillis()
+
+        if(pending_message.contains(mid)){
+            pending_message.remove(mid)
+            Log.w("Verifier.kt","[was received :)] Message $mid")
         }else{
-            Log.e("Verifier.kt","[already removed] Message $hash")
+            Log.e("Verifier.kt","[already removed] Message $mid")
         }
 
     }
 
-    private suspend fun checkConfirm(socket : Socket, hash : String){
+    private suspend fun checkConfirm(socket : Socket, mid : Int){
 
-        if(waiting.contains(hash)){
-            Log.e("Verifier.kt","[not received :(] Message $hash")
-            waiting.remove(hash)
+        val dif = pending_socket[socket]?.minus(System.currentTimeMillis())
+
+        if (dif == null) {
+            Log.e("Verifier.kt","peer not responding dif == null")
             Async.disconnectSocket(socket)
+        }else{
+            if(dif > CONFIRMATION_TIMEOUT){
+                Log.e("Verifier.kt","peer not responding dif == $dif")
+                Async.disconnectSocket(socket)
+            }
+        }
+
+        if(pending_message.contains(mid)){
+            Log.e("Verifier.kt","[not received :(] Message $mid")
+            pending_message.remove(mid)
         }
 
     }

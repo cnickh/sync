@@ -42,6 +42,8 @@ const val BLE_INTERVAL = 1000L
 
 const val SYNC_INTERVAL = 6000L
 
+const val CONFIRMATION_TIMEOUT = 15000L
+
 /**
  * service UUID, should be removed
  */

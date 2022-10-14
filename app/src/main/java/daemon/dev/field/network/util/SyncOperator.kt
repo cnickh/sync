@@ -160,7 +160,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
             }
             MeshRaw.CONFIRM->{
                 mtype = "CONFIRM"
-                vr.confirm(raw.misc!!.toString(CHARSET))
+                vr.confirm(socket, bytesFromBuffer(raw.misc!!))
             }
             else ->{
                 mtype = "NO_TYPE"
@@ -168,16 +168,28 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
 
         }
 
-        Log.i("Op.kt","Received $mtype from peer[${socket.key}]")
         if(raw.type != MeshRaw.CONFIRM){
+            Log.i("Op.kt","Received $mtype , mid: ${raw.mid} from peer[${socket.key}]")
 
-            val sig_bytes = raw.hash().toByteArray(CHARSET)
+            val sig_bytes = ByteArray(4)
+            bytesToBuffer(sig_bytes, raw.mid)
             val nw_raw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
 
             Async.send(nw_raw, socket)
+        }else{
+            Log.i("Op.kt","Received $mtype for mid: ${bytesFromBuffer(raw.misc!!)}")
+
         }
 
 
     }
-
+    private fun bytesToBuffer(buffer: ByteArray, data: Int) {
+        for (i in 0..3) buffer[i] = (data shr (i * 8)).toByte()
+    }
+    fun bytesFromBuffer(buffer: ByteArray): Int {
+        return (buffer[3].toInt() shl 24) or
+                (buffer[2].toInt() and 0xff shl 16) or
+                (buffer[1].toInt() and 0xff shl 8) or
+                (buffer[0].toInt() and 0xff)
+    }
 }

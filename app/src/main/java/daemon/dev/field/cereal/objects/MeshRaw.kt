@@ -12,6 +12,8 @@ class MeshRaw(val type : Int,
               val misc : ByteArray?
                     ){
 
+    var mid : Int = 0
+
     companion object{
 
         const val INFO = 0

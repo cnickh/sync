@@ -42,6 +42,7 @@ object Async {
 
     private var num_connections = 0
     private var active_connections = hashMapOf<String,MutableList<Socket>>()
+    private var message_number = 0
 
     private val _peers = mutableListOf<User>()
     val filter = MutableLiveData<Int>()
@@ -218,30 +219,35 @@ object Async {
         state_lock.lock()
         if(state == IDLE){state_lock.unlock();return}
 
-        Log.d("Async","Sending ${type2string(raw.type)} hash ${raw.hash()}")
-
+        if(raw.type != MeshRaw.CONFIRM) {
+            raw.mid = message_number++
+            Log.d("Async", "Sending ${type2string(raw.type)} mid ${raw.mid}")
+        }else{
+            Log.d("Async", "Sending ${type2string(raw.type)} for mid ${op.bytesFromBuffer(raw.misc!!)}")
+        }
         val packer = Packer(raw)
         var buffer = packer.next()
 
         var count = 0
         while(buffer != null){
-            Log.i("Async.kt", "sending packet ${count++} / ${packer.count()}")
+            Log.i("Async.kt", "sending packet $count / ${packer.count()}")
 
             socket.write(buffer)
             buffer = packer.next()
 
             if(!response.block(BLE_INTERVAL)){
-                Log.e("Async.kt","Message failed to send $count / ${packer.count()}")
+                Log.e("Async.kt","response timeout for $count / ${packer.count()}")
             }
 
             response.close()
+            count++
         }
 
         state_lock.unlock()
 
 
         if(raw.type != MeshRaw.CONFIRM){
-            vr.add(socket, raw.hash(),6)
+            vr.add(socket, raw.mid)
         }
 
     }
