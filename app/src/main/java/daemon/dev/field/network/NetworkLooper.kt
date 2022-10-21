@@ -57,6 +57,15 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
     val scannedDevices = mutableListOf<String>()
     val disconnectCount = hashMapOf<String,Int>()
 
+    private fun suspendConnection(device : String){
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            //Run delayed code here
+            scannedDevices.remove(device)
+        }, CONFIRMATION_TIMEOUT)
+
+    }
+
     private fun getDevice(device: String) : Boolean{
 
         if(disconnectCount.containsKey(device)){
@@ -64,7 +73,6 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
                 return false
             }
         }
-
 
         return if (scannedDevices.contains(device)) {
             false
@@ -133,12 +141,12 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
         removeDev(event.socket.device.address)
     }
 
-    private fun handleScanEvent(event : ScanEvent){
+    private suspend fun handleScanEvent(event : ScanEvent){
 
         var gattCallback =
             GattResolver(event.device, getHandler())
 
-        if (getDevice(event.device.address) && (Async.live_state.value!! == Async.READY)) {
+        if (getDevice(event.device.address) && (Async.state() == Async.READY)) {
             event.device.connectGatt(context, false, gattCallback)
         }
 
@@ -168,17 +176,27 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
                     val shake = try{
                          Json.decodeFromString<HandShake>(json)
                     }catch(e : Exception){
-                        Log.e("NetLooper","Error decoding handshake")
+                        Log.e("NetLooper","handleGattEvent: Error decoding handshake")
                         Log.e("NetLooper","$json")
 
                         null
                     }
 
-                    shake?.me?.let {
-                        val sock = Socket(it, Socket.BLUETOOTH_DEVICE, null, null, event.device, event.gattServer)
-                        if (!Async.connect(sock, it)) {
+                    shake?.let {
+                        val sock = Socket(it.me, Socket.BLUETOOTH_DEVICE, null, null, event.device, event.gattServer)
+
+                        if(it.state == Async.READY){
+
+                            val connected = Async.connect(sock,it.me)
+
+                            if(!connected){
+                                event.gattServer?.cancelConnection(event.device)
+                            }else{}
+
+                        } else {
                             event.gattServer?.cancelConnection(event.device)
                         }
+
                     }
 
                 }else{
@@ -207,7 +225,7 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
                 Async.receive(event.bytes!!,event.socket!!)
             }
             HANDSHAKE ->{
-                Log.i("NetworkLooper.kt","ResolverHandshake called")
+                Log.i("NetworkLooper.kt","handleGattEvent: ResolverHandshake called")
                 if(event.bytes == null){
                     val service = event.gatt!!.getService(SERVICE_UUID)
                     val char = service.getCharacteristic(REQUEST_UUID)
@@ -215,7 +233,7 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
                     char.value = json.toByteArray(CHARSET)
                     event.gatt.writeCharacteristic(char)
                 }else{
-                    Log.i("NetworkLooper.kt","Socket being initialized")
+                    Log.i("NetworkLooper.kt","handleResolverEvent: Socket being initialized")
                     val gatt = event.gatt!!
                     val service = gatt.getService(SERVICE_UUID)
                     val char = service.getCharacteristic(PROFILE_UUID)
@@ -225,17 +243,28 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
                     val shake = try{
                         Json.decodeFromString<HandShake>(json)
                     }catch(e : Exception){
-                        Log.e("NetLooper","Error decoding handshake")
+                        Log.e("NetLooper","handleResolverEvent: Error decoding handshake")
+                        Log.e("NetLooper","$json")
                         null
                     }
                     shake?.let{
 
                         val sock = Socket(it.me, Socket.BLUETOOTH_GATT, null, gatt, event.device!!,null)
                         event.res!!.socket = sock
+                        if(it.state == Async.READY){
 
-                        if(!Async.connect(sock,it.me)){
+                            val connected = Async.connect(sock,it.me)
+
+                            if(!connected){
+                                gatt.disconnect()
+                                event.device.address?.let { suspendConnection(it) }
+                            }else{}
+
+                        } else {
                             gatt.disconnect()
+                            event.device.address?.let { suspendConnection(it) }
                         }
+
 
                     }
                 }

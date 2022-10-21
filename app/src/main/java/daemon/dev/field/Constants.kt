@@ -20,7 +20,6 @@ const val DB_OP = "PostDatabase.kt"
 const val AD_TAG = "BluetoothAdvertiser.kt"
 const val GATT_TAG = "BluetoothGATT.kt"
 const val MAIN_TAG = "MainActivity.kt"
-const val P2P_TAG = "PeerRAM.kt"
 const val MESH_TAG = "MeshService.kt"
 const val SCANNER_TAG = "BluetoothScanner.kt"
 const val GATT_RESOLVER_TAG = "GattResolver.kt"
@@ -40,9 +39,9 @@ const val MTU = 512
 
 const val BLE_INTERVAL = 1000L
 
-const val SYNC_INTERVAL = 6000L
+const val SYNC_INTERVAL = 5000L
 
-const val CONFIRMATION_TIMEOUT = 15000L
+const val CONFIRMATION_TIMEOUT = 16000L
 
 /**
  * service UUID, should be removed

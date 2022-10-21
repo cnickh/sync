@@ -59,6 +59,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        supportFragmentManager.commit {
+            replace<ProfileFragment>(R.id.fragment_view)
+            addToBackStack(null)
+        }
+
         binding.navBar.setOnItemSelectedListener {
 
             when(it.itemId){

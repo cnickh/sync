@@ -58,14 +58,7 @@ class BluetoothScanner(val context : Context, val handler: Handler) {
         /*onScanResults passes one result to our viewModel via addSingleItems method*/
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
-//            var gattCallback =
-//                GattResolver(result.device.address,this@BluetoothScanner)
-//            runBlocking {
-//                if (getDevice(result.device.address)) {
-//                    Log.d(SCANNER_TAG, "Calling connect...")
-//                    result.device.connectGatt(context, false, gattCallback)
-//                }
-//            }
+
             handler.obtainMessage(NetworkLooper.SCANNER,NetworkLooper.ScanEvent(result.device)).sendToTarget()
         }
 

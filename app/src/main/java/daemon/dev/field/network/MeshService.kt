@@ -27,6 +27,21 @@ class MeshService : Service() {
     private lateinit var gatt : Gatt
     private lateinit var looper : NetworkLooper
 
+    class NetworkSwitch(val gatt: Gatt, val scanner : BluetoothScanner){
+
+        fun on(){
+            gatt.startAdvertising()
+            scanner.startScanning()
+        }
+
+        fun off(){
+            gatt.stopAdvertising()
+            scanner.stopScanning()
+        }
+
+
+    }
+
     override fun onBind(p0: Intent?): IBinder? {
         return null
     }
@@ -41,7 +56,6 @@ class MeshService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(MESH_TAG,"Started successfully")
 
-        runBlocking{ Async.ready(context,looper.getHandler()) }
         enableNotification()
         launchNetworkProcesses()
 
@@ -85,6 +99,11 @@ class MeshService : Service() {
 
         bluetoothLeScanner = BluetoothScanner(this, looper.getHandler())
         bluetoothLeScanner.startScanning()
+
+
+        val switch = NetworkSwitch(gatt,bluetoothLeScanner)
+
+        runBlocking{ Async.ready(context,looper.getHandler(),switch) }
 
     }
 

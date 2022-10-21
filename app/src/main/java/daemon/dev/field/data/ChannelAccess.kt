@@ -1,9 +1,7 @@
 package daemon.dev.field.data
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import daemon.dev.field.cereal.objects.Channel
-import daemon.dev.field.cereal.objects.Post
 import daemon.dev.field.data.db.ChannelDao
 import daemon.dev.field.network.Sync
 

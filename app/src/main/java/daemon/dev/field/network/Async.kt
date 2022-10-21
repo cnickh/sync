@@ -54,9 +54,17 @@ object Async {
     private lateinit var op : SyncOperator
     private lateinit var vr : Verifier
     private lateinit var nl : Handler
+    private lateinit var sw : MeshService.NetworkSwitch
 
     suspend fun me() : User{
         return ds.userDao.wait(PUBLIC_KEY)!!
+    }
+
+    suspend fun state() : Int{
+        state_lock.lock()
+        val ret = state
+        state_lock.unlock()
+        return ret
     }
 
     suspend fun handshake() : HandShake {
@@ -67,10 +75,11 @@ object Async {
         return shake
     }
 
-    suspend fun ready(context : Context, nl : Handler){
+    suspend fun ready(context : Context, nl : Handler, switch : MeshService.NetworkSwitch){
         state_lock.lock()
         if(state != IDLE){state_lock.unlock();return}
 
+        sw = switch
         this.nl = nl
         vr = Verifier()
 
@@ -97,19 +106,20 @@ object Async {
 
 
     suspend fun connect(socket : Socket, user : User) : Boolean{
+        Log.d("Async","Calling connect on ${socket.key}")
+
         state_lock.lock()
 
-//        Log.d("Async","Calling connect on ${socket.key}")
         op.insertUser(user)
 
         if(socket.key in active_connections.keys){
-            val socks = active_connections[socket.key]!!//.add(socket)
+
+            val socks = active_connections[socket.key]!!
+
             for(s in socks){
-                if(s.type == socket.type){
-                    socks.remove(s)
-                    break
-                }
+                if(s.type == socket.type){ socks.remove(s);break }
             }
+
             socks.add(socket)
         }else{
             if(state != READY){state_lock.unlock();return false}
@@ -120,10 +130,12 @@ object Async {
             num_connections++
             if(num_connections == MAX_CONNECTIONS){
                 state = INSYNC;live_state.postValue(state)
+                sw.off()
             }
-            Sync.init_connection(user.key)
+//            Sync.init_connection(user.key)
         }
 
+        print_state()
         state_lock.unlock()
         return true
     }
@@ -149,6 +161,8 @@ object Async {
     }
 
     suspend fun disconnectSocket(socket : Socket){
+        Log.i("Async.kt","disconnectSocket() called")
+
 
         state_lock.lock()
 
@@ -159,8 +173,6 @@ object Async {
                 NetworkLooper.AppEvent(socket)).sendToTarget()
         }
 
-//        Log.i("Async.kt","disconnectSocket() called")
-
         active_connections[socket.key]?.let{
 
             it.remove(socket)
@@ -169,7 +181,7 @@ object Async {
             }
 
         }
-
+        print_state()
         state_lock.unlock()
     }
 
@@ -197,7 +209,6 @@ object Async {
     }
 
     private fun disconnectInsync(user : User){
-//        Log.i("Async.kt","disconnectInsync() called")
 
         active_connections.remove(user.key)
         num_connections--
@@ -205,6 +216,7 @@ object Async {
         peers.postValue(_peers)
         if(state == INSYNC){
             state = READY;live_state.postValue(state)
+            sw.on()
         }
 
     }
@@ -287,6 +299,27 @@ object Async {
         live_state.postValue(state)
 
         state_lock.unlock()
+    }
+
+    private fun print_state() {
+
+
+        Log.v("Async.kt","State == ${state2String()}")
+
+        for((k,sockets) in active_connections){
+            Log.v("Async.kt","$k == $sockets}")
+        }
+
+
+    }
+
+    private fun state2String() : String{
+        return when(state){
+            IDLE ->{"IDLE"}
+            READY->{"READY"}
+            INSYNC->{"INSYNC"}
+            else->{"ERROR STATE NO DEFINED"}
+        }
     }
 
     private fun type2string(type : Int) : String{

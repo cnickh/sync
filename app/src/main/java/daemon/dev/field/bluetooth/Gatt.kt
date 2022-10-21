@@ -70,6 +70,14 @@ class Gatt(val app : Application, val handler : Handler) {
         advertiser.stopAdvertising()
     }
 
+    fun startAdvertising(){
+        advertiser.startAdvertisement()
+    }
+
+    fun stopAdvertising(){
+        advertiser.stopAdvertising()
+    }
+
     private fun setupGattServer(app: Application) {
         gattServerCallback = GattServerCallback()
 
