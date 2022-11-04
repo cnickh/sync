@@ -46,8 +46,11 @@ class BluetoothAdvertiser {
      */
     fun stopAdvertising() {
         Log.d(AD_TAG, "Stopping Advertising with advertiser $advertiser")
-        advertiser?.stopAdvertising(advertiseCallback)
-        advertiseCallback = null
+        if(advertiseCallback != null){
+            advertiser?.stopAdvertising(advertiseCallback)
+            advertiseCallback = null
+        }
+
     }
 
     /**

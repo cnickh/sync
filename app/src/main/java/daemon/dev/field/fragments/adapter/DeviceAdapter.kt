@@ -45,7 +45,7 @@ class DeviceAdapter(val view : View, val vm : SyncModel) : RecyclerView.Adapter<
     }
 
     override fun onViewDetachedFromWindow(holder: deviceVh) {
-        holder.detach()
+        //holder.detach()
     }
 
 //    override fun onViewRecycled(holder: deviceVh) {
@@ -103,9 +103,9 @@ class DeviceAdapter(val view : View, val vm : SyncModel) : RecyclerView.Adapter<
             }
         }
 
-        fun detach(){
-            binding.card.removeView(card.root)
-        }
+//        fun detach(){
+//            //binding.card.removeView(card.root)
+//        }
 
     }
 

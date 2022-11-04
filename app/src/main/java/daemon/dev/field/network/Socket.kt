@@ -98,7 +98,7 @@ class Socket(
         gattServer?.notifyCharacteristicChanged (device, char, true)
     }
 
-    private fun type2String() : String{
+    fun type2String() : String{
         return when(type){
             BLUETOOTH_GATT -> {"BLUETOOTH_GATT"}
             BLUETOOTH_DEVICE -> {"BLUETOOTH_DEVICE"}

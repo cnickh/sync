@@ -132,7 +132,7 @@ object Async {
                 state = INSYNC;live_state.postValue(state)
                 sw.off()
             }
-//            Sync.init_connection(user.key)
+            Sync.init_connection(user.key)
         }
 
         print_state()
@@ -304,13 +304,18 @@ object Async {
     private fun print_state() {
 
 
-        Log.v("Async.kt","State == ${state2String()}")
+        var out = "State == ${state2String()}\n "
 
         for((k,sockets) in active_connections){
-            Log.v("Async.kt","$k == $sockets}")
+            var line = "$k ["
+            for(s in sockets){
+                line += s.type2String() + ", "
+            }
+            line += "]\n"
+            out += line
         }
 
-
+        Log.v("Async.kt",out)
     }
 
     private fun state2String() : String{

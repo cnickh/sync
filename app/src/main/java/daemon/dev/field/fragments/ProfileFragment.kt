@@ -74,7 +74,7 @@ class ProfileFragment : Fragment() {
         binding.userList.layoutManager = layoutManager
 
         syncModel.getUser(PUBLIC_KEY).observe(viewLifecycleOwner) { user ->
-            Log.v("Prof", "$user retrieved")
+//            Log.v("Prof", "$user retrieved")
             if(user != null){
                 binding.alias.hint = user.alias
             }
