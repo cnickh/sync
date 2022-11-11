@@ -100,6 +100,7 @@ object Async {
     suspend fun checkKey(key : String) : Boolean {
         state_lock.lock()
         val ret = active_connections.containsKey(key)
+        Log.v("Async","$key : $ret")
         state_lock.unlock()
         return ret
     }

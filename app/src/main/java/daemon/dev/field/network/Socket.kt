@@ -90,12 +90,15 @@ class Socket(
     }
 
     private fun writeDev(buffer : ByteArray){
-        Log.d("Async","write BT_DEVICE")
+        Log.d("Async","write BT_DEVICE $device")
 
         val service = gattServer?.getService(SERVICE_UUID)
         val char = service?.getCharacteristic(PROFILE_UUID)
         char?.value = buffer
-        gattServer?.notifyCharacteristicChanged (device, char, true)
+        char?.let{
+            gattServer?.notifyCharacteristicChanged (device, char, true)
+        }
+
     }
 
     fun type2String() : String{

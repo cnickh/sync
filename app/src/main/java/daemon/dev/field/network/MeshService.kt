@@ -48,8 +48,6 @@ class MeshService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        looper = NetworkLooper(this)
-        looper.start()
         Log.i(MESH_TAG,"Created successfully")
     }
 
@@ -94,14 +92,18 @@ class MeshService : Service() {
     private fun launchNetworkProcesses(){
         Log.d(MESH_TAG,"launchNetworkProcesses() called")
 
+        looper = NetworkLooper(this)
+        looper.start()
+
         gatt = Gatt(this.application,looper.getHandler())
         gatt.start()
 
         bluetoothLeScanner = BluetoothScanner(this, looper.getHandler())
         bluetoothLeScanner.startScanning()
 
-
         val switch = NetworkSwitch(gatt,bluetoothLeScanner)
+
+        looper.addSwitch(switch)
 
         runBlocking{ Async.ready(context,looper.getHandler(),switch) }
 

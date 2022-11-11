@@ -2,6 +2,7 @@ package daemon.dev.field.network
 
 import daemon.dev.field.SYNC_INTERVAL
 import daemon.dev.field.cereal.objects.MeshRaw
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 
 object Sync {

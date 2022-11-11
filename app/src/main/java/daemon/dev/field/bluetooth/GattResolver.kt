@@ -13,6 +13,7 @@ import daemon.dev.field.network.NetworkLooper
 import daemon.dev.field.network.NetworkLooper.Companion.DISCONNECT
 import daemon.dev.field.network.NetworkLooper.Companion.HANDSHAKE
 import daemon.dev.field.network.NetworkLooper.Companion.PACKET
+import daemon.dev.field.network.NetworkLooper.Companion.RETRY
 import daemon.dev.field.network.Socket
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
@@ -38,7 +39,8 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
             if (isSuccess && isConnected) {
                 gatt.requestMtu(MTU)
             } else {
-                sendEvent(DISCONNECT,socket,null,device,null,null)
+                Log.e(GATT_RESOLVER_TAG,"onConnectionStateChange was bad am resolver time to forget :p")
+                //sendEvent(DISCONNECT,socket,null,device,null,null)
             }
         }
 
@@ -49,13 +51,14 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
 
         override fun onServicesDiscovered(discoveredGatt: BluetoothGatt, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-//                Log.v(GATT_RESOLVER_TAG, "onServicesDiscovered: Have gatt $discoveredGatt")
+                Log.v(GATT_RESOLVER_TAG, "onServicesDiscovered: Have gatt $discoveredGatt")
 
                 try {
 
                     val service = discoveredGatt.getService(SERVICE_UUID)
 
                     if(service == null){
+                        Log.e(GATT_RESOLVER_TAG,"service null")
                         sendEvent(DISCONNECT,socket,null,device,null,null)
                     } else {
 //                        Log.d(GATT_RESOLVER_TAG, "Reading Characteristic")
@@ -78,11 +81,13 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
             characteristic: BluetoothGattCharacteristic?,
             status: Int,
         ) {
-//            Log.v(GATT_RESOLVER_TAG, "onCharacteristicRead called")
+            Log.v(GATT_RESOLVER_TAG, "onCharacteristicRead called $status")
 
             try {
 
                 remoteHost = characteristic?.value
+                Log.v(GATT_RESOLVER_TAG,"have char $characteristic")
+                Log.v(GATT_RESOLVER_TAG, "have remotehost $remoteHost")
 
                 sendEvent(HANDSHAKE,null,null,null,gatt!!,null)
 
@@ -101,13 +106,19 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
 
-            Log.i(GATT_RESOLVER_TAG,"onCharacteristicWrite called")
+            Log.i(GATT_RESOLVER_TAG,"onCharacteristicWrite called \n $remoteHost")
+
+            if(status == 300){
+                Log.e(GATT_RESOLVER_TAG,"got 300 sending disconnect")
+                sendEvent(DISCONNECT,socket,null,device,null,null)
+            }
 
             socket?.let{ _ ->
                 Async.response.open()
             }
 
             remoteHost?.let { bytes ->
+                Log.i(GATT_RESOLVER_TAG,"Handshake with bytes being sent :/")
 
                 sendEvent(HANDSHAKE,null,bytes,device,gatt,this)
 

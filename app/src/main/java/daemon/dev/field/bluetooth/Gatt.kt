@@ -125,7 +125,8 @@ class Gatt(val app : Application, val handler : Handler) {
             )
             if(!isConnected){
                 device.let{ device ->
-                    sendEvent(DISCONNECT,device,null,null,null)
+                    Log.e(GATT_TAG,"onConnectionState was bad am gatt do nothing")
+                    //sendEvent(DISCONNECT,device,null,gattServer!!,null)
                 }
             }
 
@@ -165,7 +166,7 @@ class Gatt(val app : Application, val handler : Handler) {
 
             value?.let {
 
-                gattServer?.sendResponse(device!!, requestId, 0, 0, null)
+                //gattServer?.sendResponse(device!!, requestId, 0, 0, null)
                 sendEvent(PACKET,device!!,it,gattServer,requestId)
 
             }
