@@ -40,7 +40,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
                 gatt.requestMtu(MTU)
             } else {
                 Log.e(GATT_RESOLVER_TAG,"onConnectionStateChange was bad am resolver time to forget :p")
-                //sendEvent(DISCONNECT,socket,null,device,null,null)
+                sendEvent(RETRY,socket,null,device,null,null)
             }
         }
 

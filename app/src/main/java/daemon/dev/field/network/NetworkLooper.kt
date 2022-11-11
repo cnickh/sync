@@ -160,7 +160,7 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
 
         if (getDevice(event.device.address) && (Async.state() == Async.READY)) {
             Log.i(NETLOOPER_TAG,"Connecting scanning ${event.device.address}")
-            //switch.off()
+//            switch.off()
             event.device.connectGatt(context, false, gattCallback)//, TRANSPORT_BREDR, PHY_LE_CODED)
         }
 
@@ -244,7 +244,7 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
         when(event.type){
 
             RETRY ->{
-                event.device?.address?.let { removeDev(it) }
+                event.device?.address?.let { suspendConnection(it) }
                 //switch.on()
             }
             DISCONNECT ->{
