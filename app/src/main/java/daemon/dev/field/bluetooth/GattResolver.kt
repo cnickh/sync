@@ -6,19 +6,10 @@ import android.os.*
 import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.*
-import daemon.dev.field.cereal.objects.HandShake
-import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.network.Async
-import daemon.dev.field.network.NetworkLooper
-import daemon.dev.field.network.NetworkLooper.Companion.DISCONNECT
-import daemon.dev.field.network.NetworkLooper.Companion.HANDSHAKE
-import daemon.dev.field.network.NetworkLooper.Companion.PACKET
-import daemon.dev.field.network.NetworkLooper.Companion.RETRY
+import daemon.dev.field.network.handler.*
 import daemon.dev.field.network.Socket
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+
 
 @SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
@@ -27,8 +18,8 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
         var remoteHost : ByteArray? = null
 
         private fun sendEvent(type : Int,socket : Socket?, bytes : ByteArray?, device: BluetoothDevice?, gatt: BluetoothGatt?, res : GattResolver?){
-            handler.obtainMessage(NetworkLooper.RESOLVER,
-                NetworkLooper.ResolverEvent(type,socket,bytes,device,gatt,res)).sendToTarget()
+            handler.obtainMessage(RESOLVER,
+                ResolverEvent(type,socket,bytes,device,gatt,res)).sendToTarget()
         }
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
@@ -106,15 +97,15 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
 
-            Log.i(GATT_RESOLVER_TAG,"onCharacteristicWrite called \n $remoteHost")
+            Log.i(GATT_RESOLVER_TAG,"onCharacteristicWrite called w/ status[$status]\n $remoteHost")
 
             if(status == 300){
                 Log.e(GATT_RESOLVER_TAG,"got 300 sending disconnect")
                 sendEvent(DISCONNECT,socket,null,device,null,null)
             }
 
-            socket?.let{ _ ->
-                Async.response.open()
+            socket?.let{
+                it.response.open()
             }
 
             remoteHost?.let { bytes ->

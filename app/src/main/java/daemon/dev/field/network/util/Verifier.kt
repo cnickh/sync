@@ -39,7 +39,9 @@ class Verifier {
 
     private suspend fun checkConfirm(socket : Socket, mid : Int){
 
-        val dif = pending_socket[socket]?.minus(System.currentTimeMillis())
+        val dif = pending_socket[socket]?.let{
+            it - System.currentTimeMillis()
+        }
 
         if (dif == null) {
             Log.e("Verifier.kt","peer not responding dif == null")

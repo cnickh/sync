@@ -24,17 +24,10 @@ import android.os.Handler
 import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.*
-import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.network.Async
-import daemon.dev.field.network.NetworkLooper
-import daemon.dev.field.network.NetworkLooper.Companion.DISCONNECT
-import daemon.dev.field.network.NetworkLooper.Companion.HANDSHAKE
-import daemon.dev.field.network.NetworkLooper.Companion.PACKET
-import daemon.dev.field.network.Socket
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import daemon.dev.field.network.handler.*
+
 
 @SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
@@ -50,8 +43,8 @@ class Gatt(val app : Application, val handler : Handler) {
 
     private fun sendEvent(type :Int, device: BluetoothDevice, bytes : ByteArray?, gattServer: BluetoothGattServer?, req : Int?){
         handler.obtainMessage(
-            NetworkLooper.GATT,
-            NetworkLooper.GattEvent(type,device,bytes,gattServer,req)).sendToTarget()
+            GATT,
+            GattEvent(type,device,bytes,gattServer,req)).sendToTarget()
     }
 
     fun start() {
@@ -180,7 +173,7 @@ class Gatt(val app : Application, val handler : Handler) {
 
             device?.let{
                     dev -> val socket = runBlocking { Async.getSocket(dev) }
-                socket?.let{ _ -> Async.response.open()}
+                socket?.let{ it.response.open()}
             }
 
         }

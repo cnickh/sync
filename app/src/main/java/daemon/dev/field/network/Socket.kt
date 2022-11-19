@@ -5,13 +5,13 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattServer
 import android.os.Build
+import android.os.ConditionVariable
 import android.util.Log
 import androidx.annotation.RequiresApi
-import daemon.dev.field.PROFILE_UUID
-import daemon.dev.field.REQUEST_UUID
-import daemon.dev.field.SERVICE_UUID
-import daemon.dev.field.SOCKET_TAG
+import daemon.dev.field.*
+import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.User
+import daemon.dev.field.network.util.Packer
 import kotlinx.coroutines.runBlocking
 import java.net.Socket
 
@@ -34,6 +34,8 @@ class Socket(
 
     var key : String
     var open : Boolean = true
+    val response = ConditionVariable()
+
 
     override fun equals(other: Any?): Boolean {
         val s = other as daemon.dev.field.network.Socket
@@ -58,6 +60,7 @@ class Socket(
     fun write(buffer : ByteArray) {
 
         if(!open){
+            Log.e(SOCKET_TAG,"err closed socket")
             return
         }
 
@@ -128,6 +131,27 @@ class Socket(
                 //TODO
             }
         }
+    }
+
+    fun send(packer : Packer){
+
+        var buffer = packer.next()
+
+        var count = 0
+        while(buffer != null){
+            Log.i("Async.kt", "sending packet $count / ${packer.count()}")
+
+            write(buffer)
+            buffer = packer.next()
+
+            if(!response.block(BLE_INTERVAL)){
+                Log.e("Async.kt","response timeout for $count / ${packer.count()}")
+            }
+
+            response.close()
+            count++
+        }
+
     }
 
 }

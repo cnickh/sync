@@ -11,10 +11,9 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.SCANNER_TAG
 import daemon.dev.field.SERVICE_UUID
-import daemon.dev.field.network.NetworkLooper
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import daemon.dev.field.network.handler.SCANNER
+import daemon.dev.field.network.handler.ScanEvent
+
 
 @SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
@@ -58,8 +57,7 @@ class BluetoothScanner(val context : Context, val handler: Handler) {
         /*onScanResults passes one result to our viewModel via addSingleItems method*/
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
-
-            handler.obtainMessage(NetworkLooper.SCANNER,NetworkLooper.ScanEvent(result.device)).sendToTarget()
+            handler.obtainMessage(SCANNER,ScanEvent(result.device)).sendToTarget()
         }
 
         /*onScanFailed logs an error if the scan was a failure*/

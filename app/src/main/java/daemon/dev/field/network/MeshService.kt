@@ -4,6 +4,8 @@ import android.R
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -48,6 +50,10 @@ class MeshService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
+        val bluetoothManager = this.application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val adapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
         Log.i(MESH_TAG,"Created successfully")
     }
 
@@ -103,10 +109,7 @@ class MeshService : Service() {
 
         val switch = NetworkSwitch(gatt,bluetoothLeScanner)
 
-        looper.addSwitch(switch)
-
         runBlocking{ Async.ready(context,looper.getHandler(),switch) }
-
     }
 
 }

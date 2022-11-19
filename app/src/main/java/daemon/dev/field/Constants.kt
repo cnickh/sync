@@ -34,15 +34,16 @@ const val MERGE_TAG = "CommentMerge.kt"
 const val NOTIFICATION_CHANNEL = "exampleServiceChannel"
 const val NOTIFICATION_ID = 1
 
+const val MAX_PEERS = 3
 
 /*Handshake length max size of 512*/
 const val MTU = 512
 
 const val BLE_INTERVAL = 1000L
 
-const val SYNC_INTERVAL = 5000L
+const val SYNC_INTERVAL = 2500L
 
-const val CONFIRMATION_TIMEOUT = 16000L
+const val CONFIRMATION_TIMEOUT = 7500L
 
 /**
  * service UUID, should be removed
