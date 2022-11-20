@@ -13,7 +13,6 @@ class Sorter {
 
     fun resolve(bytes : ByteArray) : MeshRaw? {
         val json = bytes.toString(CHARSET)
-//        Log.i("Sorter.kt","Unwrapping - $json")
 
         val wrap = try {
             Json.decodeFromString<Wrapper>(json)
@@ -28,9 +27,6 @@ class Sorter {
             val cur = wrap.cur
             val data = wrap.bytes
 
-//            Log.d("Sorter","Have $cur / ${wrap.max}")
-//            Log.d("Sorter","Have slots: $slots")
-
             if(slots.keys.contains(mid)){
                 slots[mid]!!.add(cur,data)
             } else {
@@ -42,15 +38,12 @@ class Sorter {
 
             if(slots[mid]?.size == wrap.max+1){
 
-//                Log.d("Sorter","cur == max")
-
                 var raw = ""
 
                 for (b in slots[mid]!!){
                     raw += b
                 }
 
-//                Log.w("Sorter","Decoding:\n $raw")
                 slots.remove(mid)
                 Json.decodeFromString<MeshRaw>(raw)
 

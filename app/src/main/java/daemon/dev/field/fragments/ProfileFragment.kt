@@ -45,7 +45,7 @@ class ProfileFragment : Fragment() {
         syncModel.state.observe(viewLifecycleOwner) { state ->
 
             binding.mesh.isChecked = (state != Async.IDLE)
-
+            binding.state.text = Async.state2String()
         }
 
         binding.mesh.setOnCheckedChangeListener { mesh, _ ->

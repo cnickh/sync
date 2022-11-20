@@ -25,6 +25,8 @@ const val SCANNER_TAG = "BluetoothScanner.kt"
 const val GATT_RESOLVER_TAG = "GattResolver.kt"
 const val SOCKET_TAG = "Socket.kt"
 const val NETLOOPER_TAG = "NetworkLooper.kt"
+const val ASYNC_TAG = "Async.kt"
+const val PEER_NET = "PeerNetwork.kt"
 const val PROFILE_TAG = "ProfileFragment.kt"
 const val INBOX_TAG = "InboxFragment.kt"
 const val PACKER_TAG = "Packer.kt"
@@ -41,9 +43,9 @@ const val MTU = 512
 
 const val BLE_INTERVAL = 1000L
 
-const val SYNC_INTERVAL = 2500L
+const val SYNC_INTERVAL = 5000L
 
-const val CONFIRMATION_TIMEOUT = 7500L
+const val CONFIRMATION_TIMEOUT = 9000L
 
 /**
  * service UUID, should be removed

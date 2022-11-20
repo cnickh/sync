@@ -57,26 +57,30 @@ class Socket(
         Log.d(SOCKET_TAG,"Peer initialized successfully type[${type2String()}]")
     }
 
-    fun write(buffer : ByteArray) {
+    fun write(buffer : ByteArray) : Int {
 
         if(!open){
             Log.e(SOCKET_TAG,"err closed socket")
-            return
+            return -1
+        }
+        try {
+            Log.v(SOCKET_TAG, "type[${type2String()}], Write to  of size ${buffer.size}")
+            when (type) {
+                BLUETOOTH_GATT -> {
+                    writeGatt(buffer)
+                }
+                BLUETOOTH_DEVICE -> {
+                    writeDev(buffer)
+                }
+                WIFI -> {
+                    writeSock(buffer)
+                }
+            }
+        } catch(e : Exception){
+            return -1
         }
 
-        Log.v(SOCKET_TAG,"type[${type2String()}], Write to  of size ${buffer.size}")
-        when (type) {
-            BLUETOOTH_GATT -> {
-                writeGatt(buffer)
-            }
-            BLUETOOTH_DEVICE -> {
-                writeDev(buffer)
-            }
-            WIFI -> {
-                writeSock(buffer)
-            }
-        }
-
+        return 0
     }
 
     private fun writeSock(buffer : ByteArray){
@@ -84,8 +88,6 @@ class Socket(
     }
 
     private fun writeGatt(buffer : ByteArray){
-        Log.d("Async","write GATT")
-
         val service = gatt!!.getService(SERVICE_UUID)
         val char = service.getCharacteristic(REQUEST_UUID)
         char.value = buffer
@@ -93,15 +95,12 @@ class Socket(
     }
 
     private fun writeDev(buffer : ByteArray){
-        Log.d("Async","write BT_DEVICE $device")
-
         val service = gattServer?.getService(SERVICE_UUID)
         val char = service?.getCharacteristic(PROFILE_UUID)
         char?.value = buffer
         char?.let{
             gattServer?.notifyCharacteristicChanged (device, char, true)
         }
-
     }
 
     fun type2String() : String{
@@ -115,7 +114,7 @@ class Socket(
 
     fun close(){
 
-        Log.i("Socket.kt","Close called on ${key}")
+        Log.i(SOCKET_TAG,"Close called on $key")
 
         open = false
 
@@ -133,25 +132,29 @@ class Socket(
         }
     }
 
-    fun send(packer : Packer){
+    fun send(packer : Packer): Int{
 
         var buffer = packer.next()
 
         var count = 0
         while(buffer != null){
-            Log.i("Async.kt", "sending packet $count / ${packer.count()}")
+            Log.i(SOCKET_TAG, "sending packet $count / ${packer.count()}")
 
-            write(buffer)
+            if(write(buffer) != 0){
+                Log.e(SOCKET_TAG, "Aborting write socket closed")
+                return -1
+            }
             buffer = packer.next()
 
             if(!response.block(BLE_INTERVAL)){
-                Log.e("Async.kt","response timeout for $count / ${packer.count()}")
+                Log.e(SOCKET_TAG,"response timeout for $count / ${packer.count()}")
             }
 
             response.close()
             count++
         }
 
+        return 0
     }
 
 }

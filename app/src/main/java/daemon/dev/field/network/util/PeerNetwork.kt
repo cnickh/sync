@@ -3,13 +3,14 @@ package daemon.dev.field.network.util
 import android.bluetooth.BluetoothDevice
 import android.util.Log
 import daemon.dev.field.MAX_PEERS
+import daemon.dev.field.PEER_NET
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Async.INSYNC
 import daemon.dev.field.network.Async.READY
 import daemon.dev.field.network.Socket
 
 
-class PeerNet {
+class PeerNetwork {
 
     private var state : Int = READY
     private var active_connections = hashMapOf<String,MutableList<Socket>>()
@@ -21,7 +22,7 @@ class PeerNet {
     fun peers() = active_connections.keys
 
     fun add(socket : Socket) : Boolean{
-        Log.d("PeerNet","add() called ${socket.key}, ${socket.type2String()}")
+        Log.d(PEER_NET,"add() called ${socket.key}, ${socket.type2String()}")
 
         return if(state == INSYNC){
 
@@ -64,7 +65,7 @@ class PeerNet {
     }
 
     fun closeSocket(socket : Socket) : Int{
-        Log.i("PeerNet","remove() called ${socket.key}, ${socket.type2String()}")
+        Log.i(PEER_NET,"remove() called ${socket.key}, ${socket.type2String()}")
 
         val key = socket.key
         val type = socket.type
@@ -122,6 +123,16 @@ class PeerNet {
 
         return ret
     }
+
+    fun gattConnection(key : String) : Socket? {
+        active_connections[key]?.let{
+            for (s in it){
+                if(s.type == Socket.BLUETOOTH_GATT){return s}
+            }
+        }
+        return null
+    }
+
     fun print_state() {
 
         var out = "State == ${Async.state2String()}\n "
@@ -135,6 +146,6 @@ class PeerNet {
             out += line
         }
 
-        Log.v("Async-pn.kt",out)
+        Log.v(PEER_NET,out)
     }
 }

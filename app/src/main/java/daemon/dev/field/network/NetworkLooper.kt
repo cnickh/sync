@@ -129,7 +129,7 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
 
             var gattCallback =
                 GattResolver(event.device, getHandler())
-            event.device.connectGatt(context, false, gattCallback)//, TRANSPORT_BREDR, PHY_LE_CODED)
+            event.device.connectGatt(context, false, gattCallback, TRANSPORT_AUTO, PHY_LE_CODED)
         }
 
     }

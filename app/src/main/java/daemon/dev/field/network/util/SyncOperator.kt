@@ -91,9 +91,6 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                     p.index=0
                     p.hops++
                     postRepository.add(p)
-                    val test = postRepository.getAt(p.address())
-//                    Log.d("Op.kt", "Test comments : ${test?.comment}")
-//                    Log.d("Op.kt", "Sending signal on new_thread")
                     new_thread.postValue(p.address().address)
                 }
             }
@@ -176,11 +173,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
             val nw_raw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
 
             Async.send(nw_raw, socket)
-        }else{
-            Log.i("Op.kt","Received $mtype for mid: ${bytesFromBuffer(raw.misc!!)}")
-
         }
-
 
     }
     private fun bytesToBuffer(buffer: ByteArray, data: Int) {

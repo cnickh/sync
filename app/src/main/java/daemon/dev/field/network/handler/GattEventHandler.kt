@@ -76,13 +76,15 @@ class GattEventHandler {
     private suspend fun stopGattConnection(event: GattEvent){
         Log.w(NETLOOPER_TAG,"handleGattEvent: Got disconnect event")
 
-        event.gattServer?.sendResponse(
-            event.device, event.req!!, 69, 0, null)
+        event.req?.let {
+            event.gattServer?.sendResponse(
+                event.device, it, 600, 0, null)
+        }
 
-//        val sock = Async.getSocket(event.device)
-//        sock?.let{
-//            Async.disconnectSocket(it)
-//        }
+        val sock = Async.getSocket(event.device)
+        sock?.let{
+            Async.disconnectSocket(it)
+        }
 //        event.gattServer?.cancelConnection(event.device)
     }
 

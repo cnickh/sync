@@ -2,22 +2,20 @@ package daemon.dev.field.network
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
-import android.os.ConditionVariable
 import android.os.Handler
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
-import daemon.dev.field.BLE_INTERVAL
+import daemon.dev.field.ASYNC_TAG
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.cereal.objects.*
 import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.data.db.SyncDatabase
-import daemon.dev.field.network.Socket.Companion.BLUETOOTH_DEVICE
 import daemon.dev.field.network.handler.APP
 import daemon.dev.field.network.handler.AppEvent
 import daemon.dev.field.network.util.Packer
-import daemon.dev.field.network.util.PeerNet
+import daemon.dev.field.network.util.PeerNetwork
 import daemon.dev.field.network.util.SyncOperator
 import daemon.dev.field.network.util.Verifier
 import kotlinx.coroutines.sync.Mutex
@@ -39,7 +37,6 @@ object Async {
     val live_state = MutableLiveData(IDLE)
     private var state = IDLE
     private val state_lock = Mutex()
-    val response = ConditionVariable()
 
     private var message_number = 0
 
@@ -54,8 +51,8 @@ object Async {
     private lateinit var ds : SyncDatabase
     private lateinit var op : SyncOperator
     private lateinit var vr : Verifier
-    private lateinit var nl : Handler
-    private lateinit var pn : PeerNet
+    private lateinit var nl : Handler //NetworkLooper
+    private lateinit var pn : PeerNetwork
     private lateinit var sw : MeshService.NetworkSwitch
 
     suspend fun me() : User{
@@ -81,7 +78,7 @@ object Async {
         state_lock.lock()
         if(state != IDLE){state_lock.unlock();return}
 
-        pn = PeerNet()
+        pn = PeerNetwork()
 
         sw = switch
         this.nl = nl
@@ -104,14 +101,14 @@ object Async {
     suspend fun checkKey(key : String) : Boolean {
         state_lock.lock()
         val ret = pn.contains(key)//active_connections.containsKey(key)
-        Log.v("Async","$key : $ret")
+        Log.v(ASYNC_TAG,"$key : $ret")
         state_lock.unlock()
         return ret
     }
 
 
     suspend fun connect(socket : Socket, user : User) : Boolean{
-        Log.d("Async","Calling connect on ${socket.key}")
+        Log.d(ASYNC_TAG,"Calling connect on ${socket.key}")
 
         state_lock.lock()
 
@@ -142,7 +139,7 @@ object Async {
     }
 
     suspend fun disconnectSocket(socket : Socket){
-        Log.i("Async.kt","disconnectSocket() called")
+        Log.i(ASYNC_TAG,"disconnectSocket() called")
         state_lock.lock()
 
         if(socket.type == Socket.BLUETOOTH_GATT){
@@ -166,6 +163,12 @@ object Async {
         val raw = MeshRaw(MeshRaw.DISCONNECT, null, null, null, null, null)
         send(raw,user.key)
 
+        val gatt_socket = pn.gattConnection(user.key)
+        gatt_socket?.let{
+            nl.obtainMessage(APP,
+                AppEvent(it)
+            ).sendToTarget()
+        }
 
         pn.removePeer(user.key)
         _peers.remove(user)
@@ -190,15 +193,19 @@ object Async {
 
         if(raw.type != MeshRaw.CONFIRM) {
             raw.mid = message_number++
-            Log.d("Async", "Sending ${type2string(raw.type)} mid ${raw.mid}")
+            Log.d(ASYNC_TAG, "Sending ${type2string(raw.type)} mid ${raw.mid}")
         }else{
-            Log.d("Async", "Sending ${type2string(raw.type)} for mid ${op.bytesFromBuffer(raw.misc!!)}")
+            Log.d(ASYNC_TAG, "Sending ${type2string(raw.type)} for mid ${op.bytesFromBuffer(raw.misc!!)}")
         }
         val packer = Packer(raw)
 
-        socket.send(packer)
+        val success = socket.send(packer)
 
         state_lock.unlock()
+
+        if(success != 0){
+            disconnectSocket(socket);return
+        }
 
         if(raw.type != MeshRaw.CONFIRM){
             vr.add(socket, raw.mid)
@@ -251,21 +258,13 @@ object Async {
 
        return when(type){
             MeshRaw.INFO ->{"INFO"}
-
             MeshRaw.POST_LIST->{"POST_LIST"}
-
             MeshRaw.POST_W_ATTACH->{"POST_W_ATTACH"}
-
             MeshRaw.REQUEST -> {"REQUEST"}
-
             MeshRaw.NEW_DATA -> {"NEW_DATA"}
-
             MeshRaw.PING->{"PING"}
-
-           MeshRaw.DISCONNECT->{"DISCONNECT"}
-
+            MeshRaw.DISCONNECT->{"DISCONNECT"}
             MeshRaw.CONFIRM->{"CONFIRM"}
-
             else ->{"NO_TYPE"}
         }
 

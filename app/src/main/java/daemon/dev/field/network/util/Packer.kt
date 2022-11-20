@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
  *  BluetoothLE which as far as I can tell has a max packet size of 512 bytes.
  *
  */
-class Packer(private val raw : MeshRaw) {
+class Packer(raw : MeshRaw) {
 
     private val PACKET_SIZE = 365
 
@@ -26,9 +26,6 @@ class Packer(private val raw : MeshRaw) {
 
         val type = raw.type
         val mid = (1..9999).random()
-
-//        Log.v(PACKER_TAG, "packing with max:$max size:$size PACKET:$PACKET_SIZE")
-
 
         if(max == 0){
             val wrap = Wrapper(type,mid,0,max,bytes)
@@ -54,14 +51,12 @@ class Packer(private val raw : MeshRaw) {
 
     private fun bytes(wrap : Wrapper) : ByteArray{
         val json  = Json.encodeToString(wrap)
-//        Log.i("Packer.kt","Wrapping - $json")
         return json.toByteArray(CHARSET)
     }
 
     fun next() : ByteArray? {
         sent++
         return if(sent <= max){
-//            Log.v(PACKER_TAG, "next(): size-${packets[sent].size}")
             packets[sent]
         } else {
             null

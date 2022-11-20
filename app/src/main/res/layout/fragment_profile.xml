@@ -32,9 +32,24 @@
             android:layout_marginTop="8dp"
             android:layout_gravity="center_horizontal">
 
+            <TextView
+                android:id="@+id/state"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/og_bg"
+                android:gravity="center|center_vertical"
+                android:singleLine="true"
+                android:text="State"
+                android:textSize="16sp" />
+
             <EditText
                 android:id="@+id/alias"
-                android:layout_width="fill_parent"
+                android:layout_weight="4"
+                android:layout_width="wrap_content"
                 android:layout_height="42dp"
                 android:layout_gravity="center"
                 android:layout_marginStart="4dp"

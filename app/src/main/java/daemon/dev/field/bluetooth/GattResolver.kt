@@ -31,6 +31,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
                 gatt.requestMtu(MTU)
             } else {
                 Log.e(GATT_RESOLVER_TAG,"onConnectionStateChange was bad am resolver time to forget :p")
+                remoteHost = null
                 sendEvent(RETRY,socket,null,device,null,null)
             }
         }
@@ -99,7 +100,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
 
             Log.i(GATT_RESOLVER_TAG,"onCharacteristicWrite called w/ status[$status]\n $remoteHost")
 
-            if(status == 300){
+            if(status != 200){
                 Log.e(GATT_RESOLVER_TAG,"got 300 sending disconnect")
                 sendEvent(DISCONNECT,socket,null,device,null,null)
             }

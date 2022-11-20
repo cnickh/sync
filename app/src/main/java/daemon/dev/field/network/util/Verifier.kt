@@ -54,7 +54,9 @@ class Verifier {
         }
 
         if(pending_message.contains(mid)){
-            Log.e("Verifier.kt","[not received :(] Message $mid")
+            if (dif != null) {
+                Log.e("Verifier.kt","[not received :(] Message $mid diff ${dif/1000}")
+            }
             pending_message.remove(mid)
         }
 

@@ -2,7 +2,6 @@ package daemon.dev.field.fragments.model
 
 import android.util.Log
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import daemon.dev.field.PUBLIC_KEY
@@ -50,7 +49,7 @@ class SyncModel internal constructor(
 
         Log.i("SyncModel","filter is $filter")
         if(posts.isNotEmpty()){
-            Log.i("SyncModel","addres is ${posts[0].address().address}")
+            Log.i("SyncModel","address is ${posts[0].address().address}")
         }
 
         if(filter == null){
@@ -112,18 +111,14 @@ class SyncModel internal constructor(
     }
 
     fun addChannel(string : String){
-
         viewModelScope.launch(Dispatchers.IO){
             channelAccess.createChannel(string, UNIVERSAL_KEY)
         }
-
     }
 
     fun updateFilter(){
         viewModelScope.launch(Dispatchers.IO) {
-
             filter = channelAccess.getOpenContents()
-
         }
     }
 
@@ -134,18 +129,6 @@ class SyncModel internal constructor(
         val time = System.currentTimeMillis()
 
         val post = Post(PUBLIC_KEY,time,title,body,"null",0)
-
-        //Packeting
-//        val data = hashMapOf<String,String>()
-//        data[post.address().address] = post.hash()
-//        val raw = MeshRaw(
-//            MeshRaw.NEW_DATA,
-//            null,
-//            null,
-//            data,
-//            null,
-//            null
-//        )
 
         viewModelScope.launch(Dispatchers.IO) {
             Log.i("SyncModel.kt","Created post $post")
@@ -168,21 +151,10 @@ class SyncModel internal constructor(
 
         val post = get(position)!!
         post.comment = Json.encodeToString(globalSub)
-//        val data = hashMapOf<String,String>()
-//        data[post.address().address] = post.hash()
-//        val raw = MeshRaw(
-//            MeshRaw.NEW_DATA,
-//            null,
-//            null,
-//            data,
-//            null,
-//            null
-//        )
 
         viewModelScope.launch(Dispatchers.IO) {
             postRepository.stage(listOf(post))
             postRepository.commit()
-//            Async.sendAll(raw)
         }
 
         return comment
