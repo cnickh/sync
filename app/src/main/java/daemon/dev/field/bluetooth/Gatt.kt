@@ -31,10 +31,8 @@ import daemon.dev.field.network.handler.*
 
 @SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
-class Gatt(val app : Application, val handler : Handler) {
+class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val adapter: BluetoothAdapter, val handler : Handler) {
 
-    private val advertiser : BluetoothAdvertiser = BluetoothAdvertiser()
-    private var bluetoothManager: BluetoothManager? = null
     var gattServer: BluetoothGattServer? = null
     private var gattServerCallback: BluetoothGattServerCallback? = null
 
@@ -49,32 +47,18 @@ class Gatt(val app : Application, val handler : Handler) {
 
     fun start() {
 
-        if(bluetoothManager == null) {
-            bluetoothManager = app.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        }
-
         setupGattServer(app)
-        advertiser.startAdvertisement()
 
     }
 
     fun stopServer() {
         gattServer?.close()
-        advertiser.stopAdvertising()
-    }
-
-    fun startAdvertising(){
-        advertiser.startAdvertisement()
-    }
-
-    fun stopAdvertising(){
-        advertiser.stopAdvertising()
     }
 
     private fun setupGattServer(app: Application) {
         gattServerCallback = GattServerCallback()
 
-        gattServer = bluetoothManager!!.openGattServer(
+        gattServer = bluetoothManager.openGattServer(
             app,
             gattServerCallback
         ).apply {
@@ -117,9 +101,9 @@ class Gatt(val app : Application, val handler : Handler) {
                 "onConnectionStateChange: Server $device ${device.name} success: $isSuccess connected: $isConnected"
             )
             if(!isConnected){
-                device.let{ device ->
+                device.let{
                     Log.e(GATT_TAG,"onConnectionState was bad am gatt")
-                    sendEvent(DISCONNECT,device,null,gattServer!!,null)
+                    sendEvent(DISCONNECT,it,null,gattServer!!,null)
                 }
             }
 
@@ -171,9 +155,10 @@ class Gatt(val app : Application, val handler : Handler) {
         override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
             super.onNotificationSent(device, status)
 
+//            Log.d(GATT_TAG, "OnNotificationSent(): exe-thread["+Thread.currentThread().name +"]")
             device?.let{
                     dev -> val socket = runBlocking { Async.getSocket(dev) }
-                socket?.let{ it.response.open()}
+                socket?.response?.open()
             }
 
         }

@@ -17,9 +17,8 @@ import daemon.dev.field.network.handler.ScanEvent
 
 @SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.O)
-class BluetoothScanner(val context : Context, val handler: Handler) {
+class BluetoothScanner(val adapter: BluetoothAdapter, val handler: Handler) {
 
-    private val adapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
     private var bluetoothLeScanner : BluetoothLeScanner? = null
     private lateinit var scanCallback: DaemonScanCallback
     private val ScanFilterServiceUUID : ParcelUuid = ParcelUuid(SERVICE_UUID)
@@ -57,7 +56,7 @@ class BluetoothScanner(val context : Context, val handler: Handler) {
         /*onScanResults passes one result to our viewModel via addSingleItems method*/
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
-            handler.obtainMessage(SCANNER,ScanEvent(result.device)).sendToTarget()
+            handler.obtainMessage(SCANNER,ScanEvent(result)).sendToTarget()
         }
 
         /*onScanFailed logs an error if the scan was a failure*/

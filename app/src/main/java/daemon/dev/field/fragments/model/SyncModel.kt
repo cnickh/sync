@@ -92,7 +92,8 @@ class SyncModel internal constructor(
 
     fun sendToTarget(raw : MeshRaw, key : String){
         viewModelScope.launch(Dispatchers.IO) {
-            Async.send(raw, key)
+            //Async.send(raw, key)
+            Sync.queue(key,raw)
         }
     }
 

@@ -1,7 +1,9 @@
 package daemon.dev.field.network
 
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice.*
+import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -31,10 +33,9 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
     val gattHandler = GattEventHandler()
     val resHandler = ResolverEventHandler()
 
-    val MAX_DISCONNNECTS : Int = 10
+    val MAX_DISCONNNECTS : Int = 99
     val scannedDevices = mutableListOf<String>()
     val disconnectCount = hashMapOf<String,Int>()
-    lateinit var switch: MeshService.NetworkSwitch
 
     private fun suspendConnection(device : String){
 
@@ -124,12 +125,13 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
     }
 
     private suspend fun handleScanEvent(event : ScanEvent){
-        if (getDevice(event.device.address) && (Async.state() == Async.READY)) {
-            Log.i(NETLOOPER_TAG,"Connecting scanning ${event.device.address}")
+        if (getDevice(event.result.device.address) && (Async.state() == Async.READY)) {
+            Log.i(NETLOOPER_TAG,"Connecting scanning ${event.result.device.address}")
 
             var gattCallback =
-                GattResolver(event.device, getHandler())
-            event.device.connectGatt(context, false, gattCallback, TRANSPORT_AUTO, PHY_LE_CODED)
+                GattResolver(event.result.device, getHandler())
+            event.result.device.connectGatt(context, false, gattCallback, TRANSPORT_AUTO, PHY_LE_CODED)
+
         }
 
     }

@@ -21,12 +21,9 @@ class GattEventHandler {
                 stopGattConnection(event)
             }
             PACKET ->{
-                Log.i(NETLOOPER_TAG,"handleGattEvent: got PACKET")
                 val socket = Async.getSocket(event.device)
 
                 if(socket == null){
-                    Log.i(NETLOOPER_TAG,"handleGattEvent: reading handshake")
-
                     val json = event.bytes!!.toString(CHARSET)
                     val shake = try{
                         Json.decodeFromString<HandShake>(json)
@@ -60,8 +57,6 @@ class GattEventHandler {
                 val shake = Async.handshake()
                 val json = Json.encodeToString(shake)
                 if(shake.state == Async.READY){
-                    Log.i(NETLOOPER_TAG,"Sending response $json")
-
                     event.gattServer?.sendResponse(
                         event.device, event.req!!, 0, 0, json.toByteArray(CHARSET))
                 } else {
@@ -75,7 +70,6 @@ class GattEventHandler {
 
     private suspend fun stopGattConnection(event: GattEvent){
         Log.w(NETLOOPER_TAG,"handleGattEvent: Got disconnect event")
-
         event.req?.let {
             event.gattServer?.sendResponse(
                 event.device, it, 600, 0, null)

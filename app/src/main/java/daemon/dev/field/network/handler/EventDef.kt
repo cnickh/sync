@@ -3,6 +3,8 @@ package daemon.dev.field.network.handler
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattServer
+import android.bluetooth.le.ScanRecord
+import android.bluetooth.le.ScanResult
 import daemon.dev.field.bluetooth.GattResolver
 import daemon.dev.field.network.Socket
 
@@ -16,7 +18,7 @@ const val PACKET = 5
 const val DISCONNECT = 6
 const val RETRY = 7
 
-data class ScanEvent(val device : BluetoothDevice)
+data class ScanEvent(val result : ScanResult)
 
 data class GattEvent(val type : Int,
                          val device: BluetoothDevice, val bytes : ByteArray?, val gattServer: BluetoothGattServer?, val req : Int?)

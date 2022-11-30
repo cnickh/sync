@@ -26,7 +26,6 @@ class ResolverEventHandler {
                 Async.receive(event.bytes!!,event.socket!!)
             }
             HANDSHAKE ->{
-                Log.i(NETLOOPER_TAG,"handleResolverEvent: got HANDSHAKE")
                 if(event.bytes == null){
 
                     val shake = Async.handshake()
@@ -37,12 +36,9 @@ class ResolverEventHandler {
                         val json = Json.encodeToString(shake)
                         char.value = json.toByteArray(CHARSET)
                         event.gatt.writeCharacteristic(char)
-                        Log.i(NETLOOPER_TAG,"handleResolverEvent: Handshake sent")
-
                     }
 
                 }else{
-                    Log.i(NETLOOPER_TAG,"handleResolverEvent: Socket being initialized")
                     val gatt = event.gatt!!
                     val service = gatt.getService(SERVICE_UUID)
                     val char = service.getCharacteristic(PROFILE_UUID)

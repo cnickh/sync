@@ -10,11 +10,12 @@ var UNIVERSAL_KEY = ""
 /**Character Encoding*/
 val CHARSET = Charsets.US_ASCII
 
+const val CONNECTION_PERM = Manifest.permission.BLUETOOTH_CONNECT
 const val LOCATION_FINE_PERM = Manifest.permission.ACCESS_FINE_LOCATION
 const val READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE
 const val PERMISSION_REQUEST_STORAGE = 102
 const val PERMISSION_REQUEST_LOCATION = 101
-
+const val PERMISSION_REQUEST_CONNECTION = 103
 /*Class TAGs*/
 const val DB_OP = "PostDatabase.kt"
 const val AD_TAG = "BluetoothAdvertiser.kt"
@@ -33,7 +34,7 @@ const val PACKER_TAG = "Packer.kt"
 const val MERGE_TAG = "CommentMerge.kt"
 
 /*Channel Connection States*/
-const val NOTIFICATION_CHANNEL = "exampleServiceChannel"
+const val NOTIFICATION_CHANNEL = "MeshServiceChannel"
 const val NOTIFICATION_ID = 1
 
 const val MAX_PEERS = 3
@@ -41,11 +42,11 @@ const val MAX_PEERS = 3
 /*Handshake length max size of 512*/
 const val MTU = 512
 
-const val BLE_INTERVAL = 1000L
+const val BLE_INTERVAL = 1000L //1 second
 
-const val SYNC_INTERVAL = 5000L
+const val SYNC_INTERVAL = 2000L //2 seconds
 
-const val CONFIRMATION_TIMEOUT = 9000L
+const val CONFIRMATION_TIMEOUT = 20000L //20 seconds
 
 /**
  * service UUID, should be removed

@@ -54,7 +54,7 @@ class Socket(
 
         key = user.key
 
-        Log.d(SOCKET_TAG,"Peer initialized successfully type[${type2String()}]")
+//        Log.d(SOCKET_TAG,"Peer initialized successfully type[${type2String()}]")
     }
 
     fun write(buffer : ByteArray) : Int {
@@ -64,7 +64,7 @@ class Socket(
             return -1
         }
         try {
-            Log.v(SOCKET_TAG, "type[${type2String()}], Write to  of size ${buffer.size}")
+//            Log.v(SOCKET_TAG, "type[${type2String()}], Write to  of size ${buffer.size}")
             when (type) {
                 BLUETOOTH_GATT -> {
                     writeGatt(buffer)
@@ -138,7 +138,7 @@ class Socket(
 
         var count = 0
         while(buffer != null){
-            Log.i(SOCKET_TAG, "sending packet $count / ${packer.count()}")
+//            Log.i(SOCKET_TAG, "sending packet $count / ${packer.count()}")
 
             if(write(buffer) != 0){
                 Log.e(SOCKET_TAG, "Aborting write socket closed")

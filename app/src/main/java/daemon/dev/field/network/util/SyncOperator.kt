@@ -10,6 +10,7 @@ import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Socket
+import daemon.dev.field.network.Sync
 
 
 /**@brief this class implements the handling of network packets. The packets are constructed from
@@ -79,8 +80,9 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                         data_map[channel] = hash
                     }
 
-                    val raw = MeshRaw(MeshRaw.NEW_DATA,null,null,data_map,null,null)
-                    Async.send(raw,socket)
+                    val newRaw = MeshRaw(MeshRaw.NEW_DATA,null,null,data_map,null,null)
+                    //Async.send(raw,socket)
+                    Sync.queue(socket.key,newRaw)
                 }
 
             }
@@ -112,7 +114,8 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                 )
 //                Log.i("op.kt", "Requests: ${raw.requests}")
 //                Log.i("op.kt", "Send post ${list[0]} with comments ${list[0].comment}")
-                Async.send(newRaw, socket)
+                //Async.send(newRaw, socket)
+                Sync.queue(socket.key,newRaw)
             }
 
             MeshRaw.NEW_DATA -> {
@@ -140,7 +143,8 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                             null
                         )
                         if(posts.isNotEmpty()){
-                            Async.send(newRaw, socket)
+                            //Async.send(newRaw, socket)
+                            Sync.queue(socket.key,newRaw)
                         }
                     }
                 }
@@ -165,14 +169,18 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
 
         }
 
+        Log.i("Op.kt","Received $mtype , mid: ${raw.mid} from peer[${socket.key}]")
+
         if(raw.type != MeshRaw.CONFIRM){
             Log.i("Op.kt","Received $mtype , mid: ${raw.mid} from peer[${socket.key}]")
 
             val sig_bytes = ByteArray(4)
             bytesToBuffer(sig_bytes, raw.mid)
-            val nw_raw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
+            val newRaw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
 
-            Async.send(nw_raw, socket)
+            Async.send(newRaw, socket)
+            //Sync.queue(socket.key,raw)
+
         }
 
     }

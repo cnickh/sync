@@ -6,12 +6,23 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/thread_count"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="@string/zero"
+        android:textColor="#7C4DFF"
+        app:layout_constraintBottom_toTopOf="@+id/relativeLayout"
+        tools:ignore="TextContrastCheck" />
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="76dp"
-        app:layout_constraintBottom_toTopOf="@+id/relativeLayout" />
+        app:layout_constraintBottom_toTopOf="@+id/relativeLayout"
+        tools:layout="@layout/fragment_inbox"
+        tools:layout_editor_absoluteX="-139dp" />
 
     <RelativeLayout
         android:id="@+id/relativeLayout"
@@ -36,6 +47,7 @@
         android:layout_height="match_parent"
         android:layout_alignParentTop="true"
         app:navGraph="@navigation/nav_graph"
-        app:defaultNavHost="true"/>
+        app:defaultNavHost="true"
+        tools:layout="@layout/fragment_compose" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

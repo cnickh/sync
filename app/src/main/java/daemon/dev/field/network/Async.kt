@@ -1,6 +1,8 @@
 package daemon.dev.field.network
 
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothServerSocket
+import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.os.Handler
 import android.util.Log
@@ -60,23 +62,23 @@ object Async {
     }
 
     suspend fun state() : Int{
-        state_lock.lock()
+      //  state_lock.lock()
         val ret = state
-        state_lock.unlock()
+      //  state_lock.unlock()
         return ret
     }
 
     suspend fun handshake() : HandShake {
-        state_lock.lock()
+       // state_lock.lock()
         val shake = HandShake(state, me(), null)
-        state_lock.unlock()
+       // state_lock.unlock()
 
         return shake
     }
 
     suspend fun ready(context : Context, nl : Handler, switch : MeshService.NetworkSwitch){
-        state_lock.lock()
-        if(state != IDLE){state_lock.unlock();return}
+       // state_lock.lock()
+//        if(state != IDLE){state_lock.unlock();return}
 
         pn = PeerNetwork()
 
@@ -92,17 +94,19 @@ object Async {
         op.setVerifier(vr)
         op.setLiveFilter(filter)
 
+        Sync.start()
+
         state = READY
         live_state.postValue(state)
 
-        state_lock.unlock()
+     //   state_lock.unlock()
     }
 
     suspend fun checkKey(key : String) : Boolean {
-        state_lock.lock()
+      //  state_lock.lock()
         val ret = pn.contains(key)//active_connections.containsKey(key)
-        Log.v(ASYNC_TAG,"$key : $ret")
-        state_lock.unlock()
+//        Log.v(ASYNC_TAG,"$key : $ret")
+      //  state_lock.unlock()
         return ret
     }
 
@@ -110,7 +114,7 @@ object Async {
     suspend fun connect(socket : Socket, user : User) : Boolean{
         Log.d(ASYNC_TAG,"Calling connect on ${socket.key}")
 
-        state_lock.lock()
+      //  state_lock.lock()
 
         op.insertUser(user)
 
@@ -119,7 +123,7 @@ object Async {
         if(ret && !_peers.contains(user)){
             _peers.add(user)
             peers.postValue(_peers)
-            Sync.init_connection(user.key)
+            Sync.add(user.key)
         }
 
         state = pn.state()
@@ -127,20 +131,22 @@ object Async {
         if(state == INSYNC){sw.off()}
 
         print_state()
-        state_lock.unlock()
+      //  state_lock.unlock()
         return ret
     }
 
     suspend fun getSocket(device : BluetoothDevice) : Socket?{
-        state_lock.lock()
+      //  state_lock.lock()
         val ret = pn.getSocket(device)
-        state_lock.unlock()
+     //   state_lock.unlock()
         return ret
     }
 
     suspend fun disconnectSocket(socket : Socket){
         Log.i(ASYNC_TAG,"disconnectSocket() called")
-        state_lock.lock()
+        vr.clear(socket)
+
+      //  state_lock.lock()
 
         if(socket.type == Socket.BLUETOOTH_GATT){
             nl.obtainMessage(APP,
@@ -149,36 +155,52 @@ object Async {
         }
 
         if(pn.closeSocket(socket) == 0){
-            state = pn.state()
-            live_state.postValue(state)
             _peers.remove(socket.user)
             peers.postValue(_peers)
+
+            if(state == INSYNC){
+                state = pn.state()
+                live_state.postValue(state)
+                sw.on()
+            }
         }
 
         print_state()
-        state_lock.unlock()
+      //  state_lock.unlock()
     }
 
     suspend fun disconnect(user : User){
+        val key = user.key
         val raw = MeshRaw(MeshRaw.DISCONNECT, null, null, null, null, null)
-        send(raw,user.key)
+        send(raw,key)
 
-        val gatt_socket = pn.gattConnection(user.key)
+        pn.get(key,Socket.BLUETOOTH_DEVICE)?.let{
+            vr.clear(it)
+        }
+
+        pn.get(key,Socket.BLUETOOTH_GATT)?.let{
+            vr.clear(it)
+        }
+
+       // state_lock.lock()
+        val gatt_socket = pn.gattConnection(key)
         gatt_socket?.let{
             nl.obtainMessage(APP,
                 AppEvent(it)
             ).sendToTarget()
         }
 
-        pn.removePeer(user.key)
+        pn.removePeer(key)
         _peers.remove(user)
         peers.postValue(_peers)
+        Sync.remove(key)
 
         if(state == INSYNC){
             state = pn.state()
             live_state.postValue(state)
             sw.on()
         }
+      //  state_lock.unlock()
 
     }
 
@@ -188,8 +210,8 @@ object Async {
     }
 
     suspend fun send(raw : MeshRaw, socket : Socket){
-        state_lock.lock()
-        if(state == IDLE){state_lock.unlock();return}
+       // state_lock.lock()
+//        if(state == IDLE){state_lock.unlock();return}
 
         if(raw.type != MeshRaw.CONFIRM) {
             raw.mid = message_number++
@@ -201,7 +223,7 @@ object Async {
 
         val success = socket.send(packer)
 
-        state_lock.unlock()
+        //state_lock.unlock()
 
         if(success != 0){
             disconnectSocket(socket);return
@@ -228,8 +250,10 @@ object Async {
         val raw = MeshRaw(MeshRaw.DISCONNECT, null, null, null, null, null)
         sendAll(raw)
 
-        state_lock.lock()
-        if(state == IDLE){state_lock.unlock();return}
+      //  state_lock.lock()
+//        if(state == IDLE){state_lock.unlock();return}
+
+        Sync.kill()
 
         pn.clear()
 
@@ -238,7 +262,7 @@ object Async {
         state = IDLE
         live_state.postValue(state)
 
-        state_lock.unlock()
+     //   state_lock.unlock()
     }
 
     private fun print_state() {

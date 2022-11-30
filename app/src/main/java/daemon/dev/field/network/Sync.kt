@@ -2,16 +2,41 @@ package daemon.dev.field.network
 
 import daemon.dev.field.SYNC_INTERVAL
 import daemon.dev.field.cereal.objects.MeshRaw
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 
 object Sync {
 
+    private lateinit var sync : SyncThread
     val open_channels = mutableListOf<String>()
+    val peer_queue = hashMapOf<String,ArrayDeque<MeshRaw>>()
+    val queue_lock = Mutex()
 
-    fun init_connection(key : String){
-        val sync = SyncThread(key)
+    fun start(){
+        sync = SyncThread()
         sync.start()
+    }
+
+    suspend fun kill(){
+        sync.kill()
+    }
+
+    suspend fun add(peer : String){
+        //queue_lock.lock()
+        peer_queue[peer] = ArrayDeque()
+       // queue_lock.unlock()
+    }
+
+    suspend fun remove(peer : String){
+       // queue_lock.lock()
+        peer_queue.remove(peer)
+       // queue_lock.unlock()
+    }
+
+    suspend fun queue(peer : String, raw : MeshRaw){
+       // queue_lock.lock()
+        peer_queue[peer]?.addLast(raw)
+      //  queue_lock.unlock()
     }
 
     fun selectChannel(name : String) : Boolean{
@@ -24,29 +49,49 @@ object Sync {
         }
     }
 
-    class SyncThread(val key : String) : Thread() {
+    class SyncThread : Thread() {
 
-        var active = true
+        private var active = true
+        var i = 0
 
         override fun run() {
-            while(active){
+            runBlocking { while(active){
 
-                runBlocking {
+                val info = Async.me()
+                info.channels = open_channels.joinToString(",")
+                val raw = MeshRaw(MeshRaw.INFO, info, null, null, null, null)
 
-                    val info = Async.me()
+              //  queue_lock.lock()
 
-                    info.channels = open_channels.joinToString(",")
+                if (peer_queue.toList().isNotEmpty()){
+                    val p = i++ % peer_queue.size
+                    val (key,queue) = peer_queue.toList()[p]
 
-                    val raw = MeshRaw(MeshRaw.INFO, info, null, null, null, null)
+                    if(Async.checkKey(key)){
 
-                    active = Async.checkKey(key)
-                    if(active){
-                        Async.send(raw, key)
+                        if(queue.isEmpty()){
+                            Async.send(raw, key)
+                        }else{
+                            Async.send(queue.removeFirst(), key)
+                        }
+
+                    }else{
+                        peer_queue.remove(key)
                     }
+
                 }
 
+              //  queue_lock.unlock()
                 sleep(SYNC_INTERVAL)
-            }
+            } }
+
+        }
+
+        suspend fun kill(){
+            active = false
+           // queue_lock.lock()
+            peer_queue.clear()
+         //   queue_lock.unlock()
         }
     }
 

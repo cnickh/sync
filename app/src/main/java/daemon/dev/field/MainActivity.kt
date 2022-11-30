@@ -37,6 +37,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Log.d(MAIN_TAG, "Main-thread["+Thread.currentThread().name +"]")
+
         val key = ByteArray(8)
         val random = SecureRandom()
         random.nextBytes(key)
@@ -50,9 +52,10 @@ class MainActivity : AppCompatActivity() {
         check_init()
 
         requestPermissions(
-            arrayOf(LOCATION_FINE_PERM),
+            arrayOf(LOCATION_FINE_PERM,CONNECTION_PERM),
             PERMISSION_REQUEST_LOCATION
         )
+
 
         createNotificationChannel()
 
@@ -114,6 +117,10 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             PERMISSION_REQUEST_LOCATION -> {
                 Log.v(MAIN_TAG,"Checking MeshService")
+                requestPermissions(
+                    arrayOf(CONNECTION_PERM),
+                    PERMISSION_REQUEST_CONNECTION
+                )
             }
             else -> Log.e(MAIN_TAG,"Permissions denied")
         }

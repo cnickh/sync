@@ -17,8 +17,7 @@ import daemon.dev.field.SERVICE_UUID
 
 @SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class BluetoothAdvertiser {
-    private val adapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+class BluetoothAdvertiser(val adapter: BluetoothAdapter) {
 
     // This property will be null if bluetooth is not enabled or if advertising is not
     // possible on the device
@@ -26,7 +25,6 @@ class BluetoothAdvertiser {
     private var advertiseCallback: AdvertiseCallback? = null
     private var advertiseSettings: AdvertiseSettings = buildAdvertiseSettings()
     private var advertiseData: AdvertiseData = buildAdvertiseData()
-
     /**
      * Start advertising this device so other BLE devices can see it and connect
      */
@@ -68,9 +66,10 @@ class BluetoothAdvertiser {
          * AdvertiseCallback.ADVERTISE_FAILED_DATA_TOO_LARGE. Catch this error in the
          * onStartFailure() method of an AdvertiseCallback implementation.
          */
+
         val dataBuilder = AdvertiseData.Builder()
             .addServiceUuid(ParcelUuid(SERVICE_UUID))
-//            .addServiceData(ParcelUuid(SERVICE_UUID), PUBLIC_KEY.toByteArray(CHARSET))
+//            .addServiceData(ParcelUuid(SERVICE_UUID),sig_bytes)
             .setIncludeDeviceName(false)
 
         /* For example - this will cause advertising to fail (exceeds size limit) */
@@ -108,5 +107,6 @@ class BluetoothAdvertiser {
             Log.d(AD_TAG, "Advertising successfully started")
         }
     }
+
 
 }

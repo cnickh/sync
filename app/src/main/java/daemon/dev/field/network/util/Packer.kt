@@ -20,7 +20,7 @@ class Packer(raw : MeshRaw) {
     private val max = size/PACKET_SIZE
     private var packets = mutableListOf<ByteArray>()
 
-    var sent : Int = -1
+    private var sent : Int = -1
 
     init {
 

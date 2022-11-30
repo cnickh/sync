@@ -1,4 +1,4 @@
-package daemon.dev.field.network.util;
+package daemon.dev.field.network.util
 
 import android.os.Handler
 import android.os.Looper
@@ -7,15 +7,37 @@ import daemon.dev.field.CONFIRMATION_TIMEOUT
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Socket
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 
 class Verifier {
 
-    private val pending_message = mutableListOf<Int>()
+    private val pending_message = hashMapOf<Socket,MutableList<Int>>()
     private val pending_socket = hashMapOf<Socket,Long>()
+    private val vr = Mutex()
 
-    fun add(socket : Socket, mid : Int){
 
-        pending_message.add(mid)
+
+    suspend fun clear(socket : Socket){
+        Log.w("Verifier.kt","here0")
+
+       // vr.lock()
+        pending_socket.remove(socket)
+        pending_message[socket]?.clear()
+       // vr.unlock()
+    }
+
+    suspend fun add(socket : Socket, mid : Int){
+       // Log.w("Verifier.kt","here1")
+
+       // vr.lock()
+
+        if (pending_message[socket] == null){
+            pending_message[socket] = mutableListOf(mid)
+        }else{
+            pending_message[socket]!!.add(mid)
+        }
+
+      //  vr.unlock()
 
         Handler(Looper.getMainLooper()).postDelayed({
             //post delayed check and throw error
@@ -24,42 +46,51 @@ class Verifier {
 
     }
 
-    fun confirm(socket : Socket, mid : Int){
+    suspend fun confirm(socket : Socket, mid : Int){
+       // Log.w("Verifier.kt","here2")
+
+       // vr.lock()
 
         pending_socket[socket] = System.currentTimeMillis()
 
-        if(pending_message.contains(mid)){
-            pending_message.remove(mid)
+        if(pending_message[socket]!!.contains(mid)){
+            pending_message[socket]!!.remove(mid)
             Log.w("Verifier.kt","[was received :)] Message $mid")
         }else{
             Log.e("Verifier.kt","[already removed] Message $mid")
         }
+       // vr.unlock()
 
     }
 
     private suspend fun checkConfirm(socket : Socket, mid : Int){
+       // Log.w("Verifier.kt","here3")
 
-        val dif = pending_socket[socket]?.let{
-            it - System.currentTimeMillis()
+        //vr.lock()
+
+        if(!pending_message[socket]!!.contains(mid)){
+            return
+        } else {
+            Log.e("Verifier.kt","Message $mid not received")
+            pending_message[socket]!!.remove(mid)
         }
 
+        val dif = pending_socket[socket]?.let{
+            System.currentTimeMillis() - it
+        }
+
+        //vr.unlock()
+
+
         if (dif == null) {
-            Log.e("Verifier.kt","peer not responding dif == null")
+            Log.e("Verifier.kt","peer[${socket.key}|${socket.type2String()}] not responding dif == null")
             Async.disconnectSocket(socket)
         }else{
             if(dif > CONFIRMATION_TIMEOUT){
-                Log.e("Verifier.kt","peer not responding dif == $dif")
+                Log.e("Verifier.kt","peer[${socket.key}|${socket.type2String()}] not responding dif == $dif")
                 Async.disconnectSocket(socket)
             }
         }
-
-        if(pending_message.contains(mid)){
-            if (dif != null) {
-                Log.e("Verifier.kt","[not received :(] Message $mid diff ${dif/1000}")
-            }
-            pending_message.remove(mid)
-        }
-
     }
 
 }

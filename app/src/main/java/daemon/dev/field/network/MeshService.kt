@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import daemon.dev.field.*
+import daemon.dev.field.bluetooth.BluetoothAdvertiser
 import daemon.dev.field.bluetooth.BluetoothScanner
 import daemon.dev.field.bluetooth.Gatt
 import kotlinx.coroutines.runBlocking
@@ -25,19 +26,23 @@ class MeshService : Service() {
     /*Essentials for Operation*/
     val context : Context = this
 
+    private lateinit var bluetoothManager : BluetoothManager
+    private lateinit var adapter : BluetoothAdapter
     private lateinit var bluetoothLeScanner: BluetoothScanner
+    private lateinit var bluetoothAdvertiser: BluetoothAdvertiser
+
     private lateinit var gatt : Gatt
     private lateinit var looper : NetworkLooper
 
-    class NetworkSwitch(val gatt: Gatt, val scanner : BluetoothScanner){
+    class NetworkSwitch(val bluetoothAdvertiser: BluetoothAdvertiser, val scanner : BluetoothScanner){
 
         fun on(){
-            gatt.startAdvertising()
+            bluetoothAdvertiser.startAdvertisement()
             scanner.startScanning()
         }
 
         fun off(){
-            gatt.stopAdvertising()
+            bluetoothAdvertiser.stopAdvertising()
             scanner.stopScanning()
         }
 
@@ -51,14 +56,15 @@ class MeshService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        val bluetoothManager = this.application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val adapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        bluetoothManager = this.application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        adapter = bluetoothManager.adapter
 
         Log.i(MESH_TAG,"Created successfully")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(MESH_TAG,"Started successfully")
+        Log.d(MESH_TAG, "MeshService-thread["+Thread.currentThread().name +"]")
 
         enableNotification()
         launchNetworkProcesses()
@@ -97,19 +103,20 @@ class MeshService : Service() {
 
     private fun launchNetworkProcesses(){
         Log.d(MESH_TAG,"launchNetworkProcesses() called")
-
         looper = NetworkLooper(this)
         looper.start()
 
-        gatt = Gatt(this.application,looper.getHandler())
-        gatt.start()
-
-        bluetoothLeScanner = BluetoothScanner(this, looper.getHandler())
-        bluetoothLeScanner.startScanning()
-
-        val switch = NetworkSwitch(gatt,bluetoothLeScanner)
+        bluetoothAdvertiser = BluetoothAdvertiser(adapter)
+        bluetoothLeScanner = BluetoothScanner(adapter, looper.getHandler())
+        val switch = NetworkSwitch(bluetoothAdvertiser,bluetoothLeScanner)
 
         runBlocking{ Async.ready(context,looper.getHandler(),switch) }
+
+        gatt = Gatt(this.application, bluetoothManager, adapter, looper.getHandler())
+        gatt.start()
+
+        switch.on()
+
     }
 
 }
