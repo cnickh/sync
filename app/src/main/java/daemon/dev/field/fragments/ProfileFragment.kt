@@ -42,11 +42,16 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.threadCount.text = Thread.activeCount().toString()
+
         syncModel.state.observe(viewLifecycleOwner) { state ->
 
             binding.mesh.isChecked = (state != Async.IDLE)
             binding.state.text = Async.state2String()
+            binding.threadCount.text = Thread.activeCount().toString()
+
         }
+
 
         binding.mesh.setOnCheckedChangeListener { mesh, _ ->
 

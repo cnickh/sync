@@ -70,10 +70,18 @@
             android:id="@+id/signature"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
             android:text="sig:" />
+        <!--            android:layout_marginBottom="16dp"-->
+
+        <TextView
+            android:id="@+id/thread_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="0" />
+
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
