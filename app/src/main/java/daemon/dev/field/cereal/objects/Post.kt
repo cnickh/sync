@@ -18,11 +18,17 @@ data class Post(
     @PrimaryKey(autoGenerate = true) var index : Int = 0,
 
     ){
-    fun hash() : String{
-        val hash = title + body + comment
-        return hash.hashCode().toString()
+
+    override fun equals(other: Any?): Boolean {
+        return (other as Post).address() == address()
     }
+
+    fun contentString() : String{
+        return title + body + comment
+    }
+
     fun address() : Address{
         return Address("$key:$time")
     }
+
 }

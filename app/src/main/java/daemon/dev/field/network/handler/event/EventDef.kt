@@ -1,4 +1,4 @@
-package daemon.dev.field.network.handler
+package daemon.dev.field.network.handler.event
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt

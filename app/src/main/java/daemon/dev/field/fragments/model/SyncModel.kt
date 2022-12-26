@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import daemon.dev.field.MODEL_TAG
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.UNIVERSAL_KEY
 import daemon.dev.field.cereal.objects.*
@@ -28,42 +29,57 @@ class SyncModel internal constructor(
     val posts = postRepository.posts
     val peers = Async.peers
     val channels = channelAccess.channels
-    val live_filter = Async.filter
-
+    var raw_filter = channelAccess.getLiveContents(Sync.open_channels)
     val state : LiveData<Int> = Async.live_state
-
-    val new_thread = Async.new_thread
     val ping = Async.ping
 
-    var filter : List<String>? = null
+    private var filter : List<String> = listOf()
+    
+    fun filter(posts : List<Post>?) : List<Post> {
 
-    fun filter(posts : List<Post>) : List<Post> {
+        raw_filter.value?.let{ updateFilter(it) }
 
-        viewModelScope.launch(Dispatchers.IO) {
-            filter = channelAccess.getOpenContents()
-        }
+        val ret = mutableListOf<Post>()
 
-        var ret = mutableListOf<Post>()
-
-        Log.i("SyncModel","Have post list $posts")
-
-        Log.i("SyncModel","filter is $filter")
-        if(posts.isNotEmpty()){
-            Log.i("SyncModel","address is ${posts[0].address().address}")
-        }
-
-        if(filter == null){
-            ret = posts as MutableList<Post>
+        if(posts != null){
+            Log.d(MODEL_TAG,"filter posts: $posts")
+            Log.d(MODEL_TAG,"filter: $filter")
+            for (p in posts) {
+                if (filter.contains(p.address().address)) {
+                    ret.add(p)
+                }
+            }
         }else{
-            for(p in posts){
-                if(filter!!.contains(p.address().address)){
+            val posts_last = this.posts.value ?: return ret
+            Log.d(MODEL_TAG,"filter posts_last: $posts_last")
+            Log.d(MODEL_TAG,"filter: $filter")
+
+            for (p in posts_last) {
+                if (filter.contains(p.address().address)) {
                     ret.add(p)
                 }
             }
         }
-        Log.i("SyncModel","Have new list $ret")
 
+        Log.d(MODEL_TAG,"filter ret: $ret")
         return ret
+    }
+
+    fun updateFilter(content : List<String>){
+
+        val posts = mutableListOf<String>()
+
+        for(c in content){
+            
+            if(c!="null") {
+                for (p in c.split(",")) {
+                    if (!posts.contains(p)) posts.add(p)
+                }
+            }
+
+        }
+
+        filter = posts
     }
 
     fun listContent2Log(channels : List<String>) {
@@ -77,9 +93,9 @@ class SyncModel internal constructor(
 
     fun selectChannel(name : String) : Boolean {
         val ret = Sync.selectChannel(name)
+        raw_filter = channelAccess.getLiveContents(Sync.open_channels)
         viewModelScope.launch(Dispatchers.IO) {
-           filter = channelAccess.getOpenContents()
-            Log.i("SyncModel","Have filter $filter")
+            Sync.queueUpdate()
         }
         return ret
     }
@@ -117,12 +133,6 @@ class SyncModel internal constructor(
         }
     }
 
-    fun updateFilter(){
-        viewModelScope.launch(Dispatchers.IO) {
-            filter = channelAccess.getOpenContents()
-        }
-    }
-
     fun create(
         title: String,
         body: String,
@@ -131,19 +141,27 @@ class SyncModel internal constructor(
 
         val post = Post(PUBLIC_KEY,time,title,body,"null",0)
 
+        if(Sync.open_channels.isEmpty()){
+            Log.e("SyncModel.kt","Err no open channels, post not created")
+            return
+        }
+        
         viewModelScope.launch(Dispatchers.IO) {
-            Log.i("SyncModel.kt","Created post $post")
+            Log.v("SyncModel.kt","Created post $post")
             postRepository.add(post)
             for(c in Sync.open_channels){
                 channelAccess.addPost(c,post.address().address)
             }
             filter = channelAccess.getOpenContents()
-
+            Sync.queueUpdate()
         }
 
     }
 
-    fun comment(position : Int, sub : MutableList<Comment>,globalSub : MutableList<Comment>, text : String) : Comment {
+    fun comment(position : Int, sub : MutableList<Comment>, globalSub : MutableList<Comment>, text : String) : Comment {
+
+        Log.v("SyncModel.kt","Creating comment $text")
+
 
         val time = System.currentTimeMillis()
 
@@ -156,6 +174,7 @@ class SyncModel internal constructor(
         viewModelScope.launch(Dispatchers.IO) {
             postRepository.stage(listOf(post))
             postRepository.commit()
+            Sync.queueUpdate()
         }
 
         return comment

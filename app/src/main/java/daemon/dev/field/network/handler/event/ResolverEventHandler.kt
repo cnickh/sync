@@ -1,16 +1,19 @@
-package daemon.dev.field.network.handler
+package daemon.dev.field.network.handler.event
 
+import android.annotation.SuppressLint
 import android.util.Log
 import daemon.dev.field.*
 import daemon.dev.field.cereal.objects.HandShake
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Socket
+import daemon.dev.field.network.handler.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class ResolverEventHandler {
 
+    @SuppressLint("MissingPermission")
     suspend fun handleResolverEvent(event: ResolverEvent) : Int{
 
         var ret = 1
@@ -74,6 +77,7 @@ class ResolverEventHandler {
         return ret
     }//handleResolverEvent
 
+    @SuppressLint("MissingPermission")
     private suspend fun stopResolverConnection(event: ResolverEvent){
         Log.w(NETLOOPER_TAG,"handleGattEvent: Got disconnect event")
         if(event.socket == null){

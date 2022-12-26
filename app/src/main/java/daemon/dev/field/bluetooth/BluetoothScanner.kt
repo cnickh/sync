@@ -11,8 +11,8 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.SCANNER_TAG
 import daemon.dev.field.SERVICE_UUID
-import daemon.dev.field.network.handler.SCANNER
-import daemon.dev.field.network.handler.ScanEvent
+import daemon.dev.field.network.handler.event.SCANNER
+import daemon.dev.field.network.handler.event.ScanEvent
 
 
 @SuppressLint("MissingPermission")

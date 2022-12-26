@@ -71,7 +71,7 @@ class CommentMerge(a : String, b : String) {
 
     }
 
-    fun place(list : MutableList<Comment>, item : Comment){
+    private fun place(list : MutableList<Comment>, item : Comment){
         if(list.size==0){list.add(item);return}
 
         val time = item.time
@@ -96,7 +96,11 @@ class CommentMerge(a : String, b : String) {
     }
 
     fun getResult() : String{
-        return ret
+        return if(ret == "[]"){
+            "null"
+        }else{
+            ret
+        }
     }
 
 }

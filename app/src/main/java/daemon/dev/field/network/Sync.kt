@@ -1,24 +1,43 @@
 package daemon.dev.field.network
 
+import android.util.Log
 import daemon.dev.field.SYNC_INTERVAL
+import daemon.dev.field.SYNC_TAG
 import daemon.dev.field.cereal.objects.MeshRaw
+import daemon.dev.field.data.ChannelAccess
+import daemon.dev.field.data.PostRepository
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 object Sync {
 
     private lateinit var sync : SyncThread
+    private lateinit var ca : ChannelAccess
+    private lateinit var pr : PostRepository
+
     val open_channels = mutableListOf<String>()
     val peer_queue = hashMapOf<String,ArrayDeque<MeshRaw>>()
     val queue_lock = Mutex()
 
-    fun start(){
+
+    lateinit var channel_info : HashMap<String,String>
+    private var raw : MeshRaw? = null
+
+    private var running : Boolean = false
+
+    fun start(ca : ChannelAccess, pr : PostRepository){
+        this.ca = ca
+        this.pr = pr
         sync = SyncThread()
         sync.start()
+        running = true
     }
 
     suspend fun kill(){
         sync.kill()
+        running = false
     }
 
     suspend fun add(peer : String){
@@ -35,8 +54,44 @@ object Sync {
 
     suspend fun queue(peer : String, raw : MeshRaw){
        // queue_lock.lock()
-        peer_queue[peer]?.addLast(raw)
+        peer_queue[peer]?.addFirst(raw)
       //  queue_lock.unlock()
+    }
+
+    suspend fun channelInfo(c : String) : String?{
+        queue_lock.lock()
+        val ret = channel_info[c]
+        queue_lock.unlock()
+        return ret
+    }
+
+    suspend fun queueUpdate(){
+        if(!running){return}
+        queue_lock.lock()
+
+        val info = Async.me()
+        val hmap = hashMapOf<String,String>()
+        val map = ca.mapOpenChannels()
+
+        for ((c,l) in map){
+            hmap[c] = pr.hashListCombined(l)
+        }
+        Log.v(SYNC_TAG,"Updating raw with $hmap")
+        channel_info = hmap
+        info.channels = Json.encodeToString(hmap)
+
+        raw = MeshRaw(MeshRaw.INFO, info, null, null, null, null)
+
+        for ((p,q) in peer_queue) {
+
+            if (q.isNotEmpty() && q.first().type == MeshRaw.INFO) {
+                q.removeFirst()
+            }
+
+            q.addFirst(raw!!)
+
+        }
+        queue_lock.unlock()
     }
 
     fun selectChannel(name : String) : Boolean{
@@ -57,31 +112,22 @@ object Sync {
         override fun run() {
             runBlocking { while(active){
 
-                val info = Async.me()
-                info.channels = open_channels.joinToString(",")
-                val raw = MeshRaw(MeshRaw.INFO, info, null, null, null, null)
-
-              //  queue_lock.lock()
+                queue_lock.lock()
 
                 if (peer_queue.toList().isNotEmpty()){
                     val p = i++ % peer_queue.size
                     val (key,queue) = peer_queue.toList()[p]
 
                     if(Async.checkKey(key)){
-
-                        if(queue.isEmpty()){
-                            Async.send(raw, key)
-                        }else{
+                        if(queue.isNotEmpty())
                             Async.send(queue.removeFirst(), key)
-                        }
-
                     }else{
                         peer_queue.remove(key)
                     }
 
                 }
 
-              //  queue_lock.unlock()
+                queue_lock.unlock()
                 sleep(SYNC_INTERVAL)
             } }
 

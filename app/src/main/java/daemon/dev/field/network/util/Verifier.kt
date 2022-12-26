@@ -18,7 +18,7 @@ class Verifier {
 
 
     suspend fun clear(socket : Socket){
-        Log.w("Verifier.kt","here0")
+        Log.v("Verifier.kt","here0")
 
        // vr.lock()
         pending_socket.remove(socket)
@@ -55,7 +55,7 @@ class Verifier {
 
         if(pending_message[socket]!!.contains(mid)){
             pending_message[socket]!!.remove(mid)
-            Log.w("Verifier.kt","[was received :)] Message $mid")
+            Log.v("Verifier.kt","[was received :)] Message $mid")
         }else{
             Log.e("Verifier.kt","[already removed] Message $mid")
         }

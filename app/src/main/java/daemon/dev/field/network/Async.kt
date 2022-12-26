@@ -1,8 +1,6 @@
 package daemon.dev.field.network
 
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothServerSocket
-import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.os.Handler
 import android.util.Log
@@ -14,13 +12,15 @@ import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.data.db.SyncDatabase
-import daemon.dev.field.network.handler.APP
-import daemon.dev.field.network.handler.AppEvent
+import daemon.dev.field.network.handler.event.APP
+import daemon.dev.field.network.handler.event.AppEvent
 import daemon.dev.field.network.util.Packer
 import daemon.dev.field.network.util.PeerNetwork
 import daemon.dev.field.network.util.SyncOperator
 import daemon.dev.field.network.util.Verifier
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**@brief this object implements a singleton instance that preserves network state between
  * application and background service processes. It handles connections and disconnections with
@@ -46,8 +46,6 @@ object Async {
     val peers = MutableLiveData<MutableList<User>>(mutableListOf()) //updates connected peers
 
     /**All pasted to SyncOperator, used to notify app of important packets*/
-    val filter = MutableLiveData<Int>() //set on NEW_DATA updates post lists in each channel
-    val new_thread  = MutableLiveData<String>()//update comments on a specific post
     val ping = MutableLiveData<String>()//updates pings
 
     private lateinit var ds : SyncDatabase
@@ -87,14 +85,15 @@ object Async {
         vr = Verifier()
 
         ds = SyncDatabase.getInstance(context)
-        op = SyncOperator(PostRepository(ds.postDao), UserBase(ds.userDao), ChannelAccess(ds.channelDao))
+        val ca = ChannelAccess(ds.channelDao)
+        val pr = PostRepository(ds.postDao)
+        op = SyncOperator(pr, UserBase(ds.userDao), ca)
 
-        op.setLiveData(new_thread)
         op.setPing(ping)
         op.setVerifier(vr)
-        op.setLiveFilter(filter)
 
-        Sync.start()
+        Sync.start(ca,pr)
+        Sync.queueUpdate()
 
         state = READY
         live_state.postValue(state)
@@ -102,12 +101,11 @@ object Async {
      //   state_lock.unlock()
     }
 
-    suspend fun checkKey(key : String) : Boolean {
-      //  state_lock.lock()
-        val ret = pn.contains(key)//active_connections.containsKey(key)
-//        Log.v(ASYNC_TAG,"$key : $ret")
-      //  state_lock.unlock()
-        return ret
+    suspend fun checkKey(key: String): Boolean {
+        //  state_lock.lock()
+        //        Log.v(ASYNC_TAG,"$key : $ret")
+        //  state_lock.unlock()
+        return pn.contains(key)
     }
 
 
@@ -130,6 +128,7 @@ object Async {
         live_state.postValue(state)
         if(state == INSYNC){sw.off()}
 
+        Sync.queueUpdate()
         print_state()
       //  state_lock.unlock()
         return ret
@@ -215,9 +214,10 @@ object Async {
 
         if(raw.type != MeshRaw.CONFIRM) {
             raw.mid = message_number++
-            Log.d(ASYNC_TAG, "Sending ${type2string(raw.type)} mid ${raw.mid}")
+            val detail = Json.encodeToString(raw)
+            Log.v(ASYNC_TAG, "Sending ${type2string(raw.type)} mid ${raw.mid} \n $detail")
         }else{
-            Log.d(ASYNC_TAG, "Sending ${type2string(raw.type)} for mid ${op.bytesFromBuffer(raw.misc!!)}")
+            Log.v(ASYNC_TAG, "Sending ${type2string(raw.type)} for mid ${op.bytesFromBuffer(raw.misc!!)}")
         }
         val packer = Packer(raw)
 

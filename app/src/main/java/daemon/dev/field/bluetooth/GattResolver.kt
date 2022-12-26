@@ -7,7 +7,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.*
 import daemon.dev.field.network.Async
-import daemon.dev.field.network.handler.*
+import daemon.dev.field.network.handler.event.*
 import daemon.dev.field.network.Socket
 
 
@@ -98,7 +98,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
 
-            Log.i(GATT_RESOLVER_TAG,"onCharacteristicWrite called w/ status[$status]\n $remoteHost")
+//            Log.i(GATT_RESOLVER_TAG,"onCharacteristicWrite called w/ status[$status]\n $remoteHost")
 
             if(status != 200){
                 Log.e(GATT_RESOLVER_TAG,"got 300 sending disconnect")

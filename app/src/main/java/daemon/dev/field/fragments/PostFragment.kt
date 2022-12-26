@@ -72,16 +72,13 @@ class PostFragment : Fragment() {
             }
         })
 
-        syncModel.new_thread.observe(viewLifecycleOwner, Observer { address ->
-            Log.d("PostFragment.kt", "new_thread signal received")
+        syncModel.posts.observe(viewLifecycleOwner, Observer { _ ->
+            Log.d("PostFragment.kt", "post_list changed signal received")
+            post = syncModel.get(pid)!!
+            binding.subComment.removeAllViews()
+            Log.d("PostFragment.kt", "Updating thread with ${post.comment}")
 
-            if(address == post.address().address){
-                post = syncModel.get(pid)!!
-                binding.subComment.removeAllViews()
-                Log.d("PostFragment.kt", "Updating thread with ${post.comment}")
-
-                updateSub()
-            }
+            updateSub()
         })
 
 //        var mediaPlayer = MediaPlayer.create(context, R.raw.shieldsup)
@@ -156,6 +153,8 @@ class PostFragment : Fragment() {
 
             tempCard.send.setOnClickListener {
                 val mesg = tempCard.commentText.text.toString()
+                Log.d("PostFragment.kt", "Created comment $mesg")
+
                 commenting = false
 
                 val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager?

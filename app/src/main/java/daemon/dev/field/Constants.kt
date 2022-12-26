@@ -10,6 +10,8 @@ var UNIVERSAL_KEY = ""
 /**Character Encoding*/
 val CHARSET = Charsets.US_ASCII
 
+const val HEX = 16
+
 const val CONNECTION_PERM = Manifest.permission.BLUETOOTH_CONNECT
 const val LOCATION_FINE_PERM = Manifest.permission.ACCESS_FINE_LOCATION
 const val READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE
@@ -32,6 +34,8 @@ const val PROFILE_TAG = "ProfileFragment.kt"
 const val INBOX_TAG = "InboxFragment.kt"
 const val PACKER_TAG = "Packer.kt"
 const val MERGE_TAG = "CommentMerge.kt"
+const val SYNC_TAG = "Sync.kt"
+const val MODEL_TAG = "SyncModel.kt"
 
 /*Channel Connection States*/
 const val NOTIFICATION_CHANNEL = "MeshServiceChannel"
@@ -44,10 +48,13 @@ const val MTU = 512
 
 const val BLE_INTERVAL = 1000L //1 second
 
-const val SYNC_INTERVAL = 2000L //2 seconds
+const val SYNC_INTERVAL = 100L//8000L //8 seconds
 
 const val CONFIRMATION_TIMEOUT = 20000L //20 seconds
 
+const val SERVER_PORT = 8888
+
+const val DEVICE_NAME = ""
 /**
  * service UUID, should be removed
  */
@@ -60,6 +67,9 @@ val PROFILE_UUID: UUID = UUID.fromString("d3f751bc-12a1-4939-a91a-3fd976867a5b")
  * UUID for requests to be made
  */
 val REQUEST_UUID = UUID.fromString("61163941-2a11-459e-a447-53b3332004f3")
+
+val WIFI_UUID = UUID.fromString("ad22b5f6-19f4-4f07-9388-ce4a75b464e1")
+
 /**
  * UUIDs for 1-1 data transfers
  */

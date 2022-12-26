@@ -34,5 +34,6 @@ interface ChannelDao {
     @Query("SELECT `key` FROM channel_table WHERE `name` = :name")
     suspend fun getKey(name : String) : String
 
-
+    @Query("SELECT `contents` FROM channel_table WHERE `name` IN (:list)")
+    fun getLiveContents(list : List<String>) : LiveData<List<String>>
 }

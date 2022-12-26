@@ -1,11 +1,11 @@
-package daemon.dev.field.network.handler
+package daemon.dev.field.network.handler.event
 
+import android.annotation.SuppressLint
 import android.util.Log
 import daemon.dev.field.CHARSET
 import daemon.dev.field.NETLOOPER_TAG
 import daemon.dev.field.cereal.objects.HandShake
 import daemon.dev.field.network.Async
-import daemon.dev.field.network.NetworkLooper
 import daemon.dev.field.network.Socket
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 
 class GattEventHandler {
 
+    @SuppressLint("MissingPermission")
     suspend fun handleGattEvent(event : GattEvent){
 
         when(event.type){
@@ -68,6 +69,7 @@ class GattEventHandler {
 
     }//handlerGattEvent
 
+    @SuppressLint("MissingPermission")
     private suspend fun stopGattConnection(event: GattEvent){
         Log.w(NETLOOPER_TAG,"handleGattEvent: Got disconnect event")
         event.req?.let {

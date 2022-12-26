@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.Dimension
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
@@ -19,8 +20,7 @@ import daemon.dev.field.fragments.ChannelFragment
 import daemon.dev.field.fragments.InboxFragment
 import daemon.dev.field.fragments.ProfileFragment
 import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.fragments.model.SyncModelFactory
-import daemon.dev.field.nypt.KEY_TAG
+import daemon.dev.field.fragments.model.factory.SyncModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

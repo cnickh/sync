@@ -29,8 +29,7 @@ class MeshRaw(val type : Int,
 
     fun hash(): String {
         return type.toString() + nodeInfo?.hash() + requests?.toString() + newData?.toString() + posts?.toString() + misc?.toString(
-            CHARSET
-        )
+        CHARSET)
     }
 
 }

@@ -52,7 +52,7 @@ class ChannelFragment : Fragment() {
             val mList = list as MutableList<String>
             mList.remove("Public")
             channelAdapter.updateView(mList)
-            syncModel.listContent2Log(mList)
+//            syncModel.listContent2Log(mList)
 
         })
 

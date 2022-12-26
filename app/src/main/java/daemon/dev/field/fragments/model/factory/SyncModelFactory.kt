@@ -1,19 +1,17 @@
-package daemon.dev.field.fragments.model
+package daemon.dev.field.fragments.model.factory
 
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.UNIVERSAL_KEY
 import daemon.dev.field.cereal.objects.Channel
-import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.data.db.SyncDatabase
+import daemon.dev.field.fragments.model.SyncModel
 import kotlinx.coroutines.*
-import kotlin.random.Random
 
 class SyncModelFactory (private val context: Context) : ViewModelProvider.Factory {
     @Suppress("unchecked_cast")

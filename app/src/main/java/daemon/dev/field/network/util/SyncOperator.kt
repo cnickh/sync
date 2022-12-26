@@ -2,7 +2,6 @@ package daemon.dev.field.network.util
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
-import daemon.dev.field.CHARSET
 import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.data.ChannelAccess
@@ -10,7 +9,9 @@ import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Socket
-import daemon.dev.field.network.Sync
+import daemon.dev.field.network.handler.packet.INFOHandler
+import daemon.dev.field.network.handler.packet.NEW_DATAHandler
+import daemon.dev.field.network.handler.packet.POST_LISTHandler
 
 
 /**@brief this class implements the handling of network packets. The packets are constructed from
@@ -18,28 +19,20 @@ import daemon.dev.field.network.Sync
 
 class SyncOperator(private val postRepository: PostRepository, private val userBase: UserBase, private val channelAccess : ChannelAccess) {
 
-    lateinit var new_thread : MutableLiveData<String>
     lateinit var livePing : MutableLiveData<String>
-    lateinit var filter : MutableLiveData<Int>
-
     lateinit var vr : Verifier
 
     private val sorter = Sorter()
+    private val infoHandler = INFOHandler(userBase,channelAccess,postRepository)
+    private val newDataHandler = NEW_DATAHandler(postRepository,channelAccess)
+    private val postListHandler = POST_LISTHandler(postRepository,channelAccess)
 
     fun setVerifier(verifier: Verifier){
         vr = verifier
     }
 
-    fun setLiveData(thread : MutableLiveData<String>){
-        new_thread = thread
-    }
-
     fun setPing(ping : MutableLiveData<String>){
         livePing = ping
-    }
-
-    fun setLiveFilter(filter : MutableLiveData<Int>){
-        this.filter = filter
     }
 
     suspend fun insertUser(user : User){
@@ -60,41 +53,23 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
 
         val mtype : String
 
+        if(raw.type != MeshRaw.CONFIRM){
+            val sig_bytes = ByteArray(4)
+            bytesToBuffer(sig_bytes, raw.mid)
+            val newRaw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
+            Async.send(newRaw, socket)
+            //Sync.queue(socket.key,raw)
+        }
+
         when(raw.type){
             MeshRaw.INFO ->{
                 mtype = "INFO"
-                val info = raw.nodeInfo!!
-                val channels = info.channels.split(",")
-                info.channels = "null"
-                userBase.update(info)
-
-                val posts = channelAccess.resolveChannels(channels)
-
-                if(posts.isNotEmpty()){
-//                    Log.d("Op.kt", "INFO have resolved :: $posts")
-
-                    val data_map = hashMapOf<String,HashMap<String,String>>()
-
-                    for((channel,list) in posts){
-                        val hash = postRepository.hashList(list)
-                        data_map[channel] = hash
-                    }
-
-                    val newRaw = MeshRaw(MeshRaw.NEW_DATA,null,null,data_map,null,null)
-                    //Async.send(raw,socket)
-                    Sync.queue(socket.key,newRaw)
-                }
-
+                infoHandler.handle(raw,socket)
             }
 
             MeshRaw.POST_LIST->{
                 mtype = "POST_LIST"
-                for(p in raw.posts!!){
-                    p.index=0
-                    p.hops++
-                    postRepository.add(p)
-                    new_thread.postValue(p.address().address)
-                }
+                postListHandler.handle(raw)
             }
 
             MeshRaw.POST_W_ATTACH->{
@@ -103,51 +78,11 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
 
             MeshRaw.REQUEST -> {
                 mtype = "REQUEST"
-                val list = postRepository.getList(raw.requests!!)
-                val newRaw = MeshRaw(
-                    MeshRaw.POST_LIST,
-                    null,
-                    null,
-                    null,
-                    list,
-                    null
-                )
-//                Log.i("op.kt", "Requests: ${raw.requests}")
-//                Log.i("op.kt", "Send post ${list[0]} with comments ${list[0].comment}")
-                //Async.send(newRaw, socket)
-                Sync.queue(socket.key,newRaw)
             }
 
             MeshRaw.NEW_DATA -> {
                 mtype = "NEW_DATA"
-                raw.newData?.let {
-//                    Log.i("op.kt", "Got NEW_DATA adding posts to channel and comparing")
-                    val list = hashMapOf<String,String>()
-
-                    for((channel,posts) in it){
-                        for((address,hash) in posts){
-                            channelAccess.addPost(channel,address)
-                            list[address] = hash
-                        }
-                    }
-
-                    filter.postValue(1)
-
-                    postRepository.compare(list).let { posts ->
-                        val newRaw = MeshRaw(
-                            MeshRaw.REQUEST,
-                            null,
-                            posts,
-                            null,
-                            null,
-                            null
-                        )
-                        if(posts.isNotEmpty()){
-                            //Async.send(newRaw, socket)
-                            Sync.queue(socket.key,newRaw)
-                        }
-                    }
-                }
+                newDataHandler.handle(raw,socket)
             }
 
             MeshRaw.PING->{
@@ -169,19 +104,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
 
         }
 
-        Log.i("Op.kt","Received $mtype , mid: ${raw.mid} from peer[${socket.key}]")
-
-        if(raw.type != MeshRaw.CONFIRM){
-            Log.i("Op.kt","Received $mtype , mid: ${raw.mid} from peer[${socket.key}]")
-
-            val sig_bytes = ByteArray(4)
-            bytesToBuffer(sig_bytes, raw.mid)
-            val newRaw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
-
-            Async.send(newRaw, socket)
-            //Sync.queue(socket.key,raw)
-
-        }
+//        Log.i("Op.kt","Received $mtype , mid: ${raw.mid} from peer[${socket.key}]")
 
     }
     private fun bytesToBuffer(buffer: ByteArray, data: Int) {

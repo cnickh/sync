@@ -1,9 +1,7 @@
 package daemon.dev.field.network
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice.*
-import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -11,7 +9,7 @@ import android.os.Message
 import android.util.Log
 import daemon.dev.field.*
 import daemon.dev.field.bluetooth.GattResolver
-import daemon.dev.field.network.handler.*
+import daemon.dev.field.network.handler.event.*
 import kotlinx.coroutines.runBlocking
 
 /**@brief this class implements a looper that takes blocking calls out of

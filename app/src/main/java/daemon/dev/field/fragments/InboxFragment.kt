@@ -17,7 +17,6 @@ import daemon.dev.field.databinding.FragmentInboxBinding
 import daemon.dev.field.fragments.adapter.PostAdapter
 import daemon.dev.field.fragments.model.SyncModel
 
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class InboxFragment : Fragment() {
 
     private val sync : SyncModel by activityViewModels()
@@ -35,7 +34,6 @@ class InboxFragment : Fragment() {
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         val postAdapter = PostAdapter(requireActivity())
@@ -44,15 +42,18 @@ class InboxFragment : Fragment() {
         binding.postInbox.layoutManager = LinearLayoutManager(requireContext())
 
         sync.posts.observe(viewLifecycleOwner, Observer { new_post_list ->
+            Log.d(INBOX_TAG,"Observe post_list fired on \n $new_post_list")
             postAdapter.updateView(sync.filter(new_post_list))
         })
 
-        sync.peers.observe(viewLifecycleOwner, Observer { new_post_list ->
+        sync.peers.observe(viewLifecycleOwner, Observer { _ ->
             postAdapter.notifyDataSetChanged()
         })
 
-        sync.live_filter.observe(viewLifecycleOwner, Observer { _ ->
-            sync.updateFilter()
+        sync.raw_filter.observe(viewLifecycleOwner, Observer {
+            Log.d(INBOX_TAG,"Observe raw_filter fired on \n $it")
+            sync.updateFilter(it)
+            postAdapter.updateView(sync.filter(null))
         })
 
         binding.create.setOnClickListener {
