@@ -9,13 +9,13 @@ import kotlinx.serialization.Serializable
 @Entity(tableName = "post_table")
 data class Post(
 
-    val key : String,
-    val time : Long,
-    val title : String,
-    val body : String,
-    var comment : String,
-    var hops : Int,
-    @PrimaryKey(autoGenerate = true) var index : Int = 0,
+    val key: String,
+    val time: Long,
+    val title: String,
+    val body: String,
+    var comment: String,
+    var hops: Int,
+    @PrimaryKey(autoGenerate = true) var index: Int = 0,
 
     ){
 

@@ -1,97 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/base"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/wht_bg">
 
-    <LinearLayout
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:id="@+id/linearLayout"
-        android:layout_width="360dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/profile_header"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="@dimen/e_margin"
+        android:layout_marginLeft="@dimen/u_margin"
+        android:layout_marginRight="@dimen/u_margin"
         android:background="@drawable/tint_bg"
-        android:orientation="vertical"
-        android:elevation="6dp"
+        android:elevation="@dimen/elevation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <Switch
-            android:id="@+id/mesh"
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:text="Activate Mesh Networking"
-            android:layout_gravity="center"/>
+        <ImageButton
+            android:id="@+id/editButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="256dp"
+            android:layout_marginTop="32dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/pencil" />
+
+        <FrameLayout
+            android:id="@+id/ref"
+            android:layout_width="3dp"
+            android:layout_height="70dp"
+            android:layout_gravity="center"
+            android:background="@drawable/col_bg"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/user_info"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_gravity="center_horizontal">
+            android:orientation="vertical"
+            android:layout_marginTop="@dimen/l_margin"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <FrameLayout
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:layout_gravity="center"
+                android:background="@drawable/circle"
+                android:layout_marginBottom="@dimen/m_margin"
+                />
 
             <TextView
-                android:id="@+id/state"
+                android:id="@+id/username"
                 android:layout_width="wrap_content"
-                android:layout_height="42dp"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/og_bg"
-                android:gravity="center|center_vertical"
-                android:singleLine="true"
-                android:text="State"
-                android:textSize="16sp" />
+                android:layout_marginBottom="@dimen/c_margin"
+                android:text="Username"
+                android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/alias"
-                android:layout_weight="4"
+            <TextView
+                android:id="@+id/key"
+                android:textSize="@dimen/key_text"
                 android:layout_width="wrap_content"
-                android:layout_height="42dp"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:background="@drawable/wht_bg"
-                android:hint="Username"
-                android:paddingLeft="16dp"
-                android:imeOptions="actionDone"
-                android:inputType="textPersonName"
-                android:singleLine="true"
-                android:textSize="16sp" />
+                android:layout_marginBottom="@dimen/m_margin"
+
+                android:text="key"
+                />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/stateFrame"
+                android:layout_gravity="center"
+                android:layout_marginBottom="2dp"
+                android:background="@drawable/etxt_bg"
+                android:layout_width="76dp"
+                android:layout_height="29dp"
+                android:clickable="true">
 
 
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="7dp"
+                    android:orientation="horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <FrameLayout
+                        android:id="@+id/stateBubble"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:background="@drawable/circle_vsm" />
+
+                    <TextView
+                        android:id="@+id/state"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:gravity="center"
+                        android:layout_gravity="center"
+                        android:textSize="13sp"
+                        android:text="IDLE"/>
+                </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/signature"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:text="sig:" />
-        <!--            android:layout_marginBottom="16dp"-->
 
-        <TextView
-            android:id="@+id/thread_count"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="0" />
-
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/user_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="146dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/l_margin"
+
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/profile_header" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

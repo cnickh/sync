@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/wht_bg">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="360dp"
-        android:layout_height="wrap_content"
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/profile_card"
+        android:layout_width="390dp"
+        android:layout_height="148.96dp"
+        android:layout_marginStart="4dp"
         android:layout_marginTop="16dp"
         android:background="@drawable/tint_bg"
         android:orientation="vertical"
@@ -16,122 +19,126 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:text="Username"
-            android:id="@+id/alias"
-            android:layout_width="320dp"
-            android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:singleLine="true"
-            android:textSize="16sp" />
+        <FrameLayout
+            android:id="@+id/ref0"
+            android:layout_width="3dp"
+            android:layout_height="15dp"
+            android:layout_gravity="center"
+            android:background="@drawable/col_bg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/signature"
+        <FrameLayout
+            android:id="@+id/ref1"
+            android:layout_width="3dp"
+            android:layout_height="15dp"
+            android:layout_gravity="center"
+            android:background="@drawable/col_bg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+
+        <FrameLayout
+            android:id="@+id/frameLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:text="sig:" />
-    </LinearLayout>
+            android:layout_marginStart="14dp"
+            android:background="@drawable/circle"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="152dp"
+            android:text="Username"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
+        <TextView
+            android:id="@+id/key"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="152dp"
+            android:layout_marginTop="4dp"
+            android:text="key"
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/username" />
+
+        <ImageButton
+            android:id="@+id/chat"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:background="@null"
+            android:padding="4dp"
+            android:scaleType="fitCenter"
+            android:text="fuck"
+            app:layout_constraintEnd_toStartOf="@+id/add"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/chat" />
+
+        <ImageButton
+            android:id="@+id/add"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:background="@null"
+            android:padding="4dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintEnd_toStartOf="@+id/block"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/global" />
+
+        <ImageButton
+            android:id="@+id/block"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:background="@null"
+            android:padding="4dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/block" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/user_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="125dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/l_margin"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-        android:orientation="vertical">
+        app:layout_constraintTop_toBottomOf="@+id/profile_card" />
 
-        <LinearLayout
-            android:id="@+id/chatBox"
-            android:layout_width="360dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/tint_bg"
-            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/chat_text"
-                android:layout_width="320dp"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:text="Start a private Chat with this user"
-                android:textSize="16sp" />
-            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-                android:id="@+id/chat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                app:icon="@drawable/chat"
-                android:text="Chat" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/addBox"
-            android:layout_width="360dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/tint_bg"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/addText"
-                android:layout_width="320dp"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:text="Send a Key to allow this user to enter a private channel"
-                android:textSize="16sp" />
-            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-                android:id="@+id/add"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                app:icon="@drawable/global"
-                android:text="Invite" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/blockBox"
-            android:layout_width="360dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/tint_bg"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/blockText"
-                android:layout_width="320dp"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:text="Block this User, you will not longer send or receive any messages from this user"
-                android:textSize="16sp" />
-            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-                android:id="@+id/block"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                app:icon="@drawable/block"
-                android:text="Block" />
-        </LinearLayout>
-        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/back"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            app:icon="@drawable/left"
-            android:layout_marginTop="4dp"
-            android:text="Back" />
-    </LinearLayout>
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="4dp"
+        android:text="Back"
+        app:icon="@drawable/left"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/user_list" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

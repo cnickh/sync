@@ -1,23 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/card"
-    android:layout_width="360dp"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
+    android:layout_marginBottom="@dimen/l_margin"
+    android:layout_marginLeft="@dimen/u_margin"
+    android:layout_marginRight="@dimen/u_margin"
     android:layout_gravity="center"
-    android:background="@drawable/tint_bg"
-    android:orientation="vertical"
-    android:elevation="6dp">
+    android:background="@drawable/dev_holder"
+    android:orientation="horizontal"
+    android:elevation="@dimen/elevation">
+
+    <FrameLayout
+        android:id="@+id/ref0"
+        android:layout_width="3dp"
+        android:layout_height="15dp"
+        android:layout_gravity="center"
+        android:background="@drawable/col_bg"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <FrameLayout
+        android:id="@+id/profile_image"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center_vertical"
+        android:background="@drawable/circle_sm"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
     <TextView
         android:id="@+id/name"
         android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:layout_gravity="center_vertical"
-        android:layout_marginStart="16dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="68dp"
         android:gravity="center"
-        android:padding="2dp"
-        android:text="TextView" />
+        android:text="TextView"
+        android:textSize="@dimen/user_text"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="68dp"
+        android:gravity="center"
+        android:text="TextView"
+        android:textSize="@dimen/key_text"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/name" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

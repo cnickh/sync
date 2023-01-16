@@ -16,6 +16,7 @@ import daemon.dev.field.R
 import daemon.dev.field.databinding.FragmentInboxBinding
 import daemon.dev.field.fragments.adapter.PostAdapter
 import daemon.dev.field.fragments.model.SyncModel
+import daemon.dev.field.util.Gen
 
 class InboxFragment : Fragment() {
 
@@ -62,6 +63,8 @@ class InboxFragment : Fragment() {
                 replace<ComposeFragment>(R.id.container_view)
                 addToBackStack(null)
             }
+
+//            postAdapter.updateView(Gen().genPost())
 
         }
 

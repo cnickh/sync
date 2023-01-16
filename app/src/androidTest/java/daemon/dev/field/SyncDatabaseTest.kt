@@ -18,15 +18,12 @@ package daemon.dev.field
 
 
 import androidx.room.Room
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import daemon.dev.field.cereal.objects.Post
 import daemon.dev.field.data.db.*
 import junit.framework.Assert.assertNotNull
 import kotlinx.coroutines.runBlocking
 import org.junit.*
-import org.junit.runner.RunWith
-import java.io.IOException
 
 
 /**

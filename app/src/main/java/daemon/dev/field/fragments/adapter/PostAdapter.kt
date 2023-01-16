@@ -17,9 +17,10 @@
 package daemon.dev.field.fragments.adapter
 
 import android.os.Build
+import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import androidx.annotation.RequiresApi
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentActivity
@@ -27,10 +28,10 @@ import androidx.fragment.app.FragmentTransaction
 import androidx.recyclerview.widget.RecyclerView
 import daemon.dev.field.R
 import daemon.dev.field.cereal.objects.Post
-import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.PostViewHolderBinding
 import daemon.dev.field.fragments.PostFragment
-import daemon.dev.field.network.Async
+import daemon.dev.field.util.Gen
+import daemon.dev.field.util.Phi
 
 
 /**
@@ -78,9 +79,16 @@ class PostAdapter(val activity : FragmentActivity) : RecyclerView.Adapter<PostAd
             item?.let {
 
                 binding.title.text = it.title
-                binding.body.text = it.body
+
+                if(it.body.length > 100){
+                    binding.body.text = it.body.substring(0,99) + "..."
+                }else{
+                    binding.body.text = it.body
+                }
+
                 binding.hopValue.text = it.hops.toString()
-                binding.radioButton.isChecked = Async.peers.value?.contains(User(it.key,"",0,"")) == true
+                //binding.radioButton.isChecked = Async.peers.value?.contains(User(it.key,"",0,"")) == true
+                binding.timeStamp.text = Gen().getDateTime(it.time)
 
                 binding.postCard.setOnClickListener{ _ ->
 
@@ -103,10 +111,33 @@ class PostAdapter(val activity : FragmentActivity) : RecyclerView.Adapter<PostAd
 
                 }
 
+                beautify(binding)
             }
         }
 
     }
+    private fun beautify(binding: PostViewHolderBinding){
+
+        binding.postCard.viewTreeObserver.addOnGlobalLayoutListener(object :
+            ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+
+                val v = binding.postCard
+                v.viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+                val height = Phi().phi(v.width,4)
+
+                val params = binding.body.layoutParams
+                params.height = height - binding.header.height - binding.timeStamp.height
+//                binding.body.layoutParams = params
+
+                val numLines = binding.body.lineCount
+                val numChars: Int = binding.body.layout.getLineEnd(1)
+                Log.v("PostAdapter.kt","Body numChars $numChars  numLines $numLines")
 
 
+            } }
+        )
+
+    }
 }

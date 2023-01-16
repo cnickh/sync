@@ -1,10 +1,6 @@
 package daemon.dev.field.nypt;
 
-import java.util.Random;
-
 class Aes implements Symmetric{
-
-  Random rand = new Random();
 
   byte[][] subBox = new byte[16][16];
   byte[][] invBox = new byte[16][16];

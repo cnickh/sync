@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <dimen name="s_margin">2dp</dimen>
+    <dimen name="l_margin">4dp</dimen>
+    <dimen name="v_margin">6dp</dimen>
+    <dimen name="c_margin">8dp</dimen>
+    <dimen name="m_margin">12dp</dimen>
+    <dimen name="k_margin">14dp</dimen>
+    <dimen name="e_margin">16dp</dimen>
+    <dimen name="u_margin">16dp</dimen>
+    <dimen name="b_margin">20dp</dimen>
+
+    <dimen name="pad">4dp</dimen>
+    <dimen name="elevation">0dp</dimen>
+    <dimen name="radius">16dp</dimen>
+
+    <dimen name="key_text">11sp</dimen>
+    <dimen name="user_text">16sp</dimen>
+    <dimen name="title_text">24sp</dimen>
+
+
+</resources>
