@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/profile_header"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/e_margin"
+    android:layout_marginLeft="@dimen/u_margin"
+    android:layout_marginRight="@dimen/u_margin"
+    android:background="@drawable/tint_bg"
+    android:elevation="@dimen/elevation"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+
+    <TextView
+        android:id="@+id/username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="24dp"
+        android:text="Block This User?"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/buttons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="42dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/username">
+
+        <Button
+            android:id="@+id/back"
+            android:layout_width="64dp"
+            android:layout_height="42dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="@dimen/e_margin"
+            android:background="@drawable/col_bg"
+            android:gravity="center"
+            android:text="No" />
+
+        <Button
+            android:id="@+id/block"
+            android:layout_width="64dp"
+            android:layout_height="42dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="@dimen/e_margin"
+            android:background="@drawable/col_bg"
+            android:gravity="center"
+            android:text="Yes" />
+
+    </LinearLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

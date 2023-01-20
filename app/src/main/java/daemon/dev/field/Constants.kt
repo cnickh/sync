@@ -5,7 +5,7 @@ import java.util.UUID
 
 
 var PUBLIC_KEY = ""
-var UNIVERSAL_KEY = ""
+var UNIVERSAL_KEY = "Hello uni-key"
 
 /**Character Encoding*/
 val CHARSET = Charsets.US_ASCII

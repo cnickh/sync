@@ -1,14 +1,10 @@
 package daemon.dev.field.nypt
 
-import android.util.Log
+import org.bouncycastle.crypto.ec.CustomNamedCurves
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jce.spec.ECParameterSpec
 import java.security.*
-import javax.crypto.*
-import java.security.spec.EllipticCurve
-
-import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.crypto.ec.CustomNamedCurves;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.spec.ECParameterSpec;
+import javax.crypto.Cipher
 
 class Crypto {
 
@@ -17,6 +13,9 @@ class Crypto {
     private lateinit var eCipher : Cipher
 
     fun init(){
+
+        Security.setProperty("crypto.policy", "unlimited");
+
 
         val generator = KeyPairGenerator.getInstance("RSA")
 
@@ -51,4 +50,20 @@ class Crypto {
 
     }
 
+
+    fun main(args: Array<String>) {
+        val curveParams = CustomNamedCurves.getByName("Curve25519")
+        val ecSpec = ECParameterSpec(
+            curveParams.curve,
+            curveParams.g,
+            curveParams.n,
+            curveParams.h,
+            curveParams.seed
+        )
+        val kpg = KeyPairGenerator.getInstance("EC", BouncyCastleProvider())
+        kpg.initialize(ecSpec)
+        val keyPair = kpg.generateKeyPair()
+        val publicKey = keyPair.public
+        val privateKey = keyPair.private
+    }
 }

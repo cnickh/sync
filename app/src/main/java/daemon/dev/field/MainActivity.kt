@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.annotation.Dimension
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
@@ -20,7 +19,7 @@ import daemon.dev.field.fragments.ChannelFragment
 import daemon.dev.field.fragments.InboxFragment
 import daemon.dev.field.fragments.ProfileFragment
 import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.fragments.model.factory.SyncModelFactory
+import daemon.dev.field.fragments.model.SyncModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,13 +48,14 @@ class MainActivity : AppCompatActivity() {
         val viewModelFactory = SyncModelFactory(this)
         syncModel = ViewModelProvider(this, viewModelFactory)[SyncModel::class.java]
 
-        check_init()
+        syncModel.channels.observe(this, Observer { list ->
+            Log.d(MAIN_TAG, "We got this up in this bitch $list")
+        })
 
         requestPermissions(
             arrayOf(LOCATION_FINE_PERM,CONNECTION_PERM),
             PERMISSION_REQUEST_LOCATION
         )
-
 
         createNotificationChannel()
 
@@ -66,6 +66,9 @@ class MainActivity : AppCompatActivity() {
             replace<ProfileFragment>(R.id.fragment_view)
             addToBackStack(null)
         }
+
+//        binding.navBar.getOrCreateBadge(R.id.profile).number = 2
+//        binding.navBar.removeBadge(R.id.profile)
 
         binding.navBar.setOnItemSelectedListener {
 
@@ -138,23 +141,6 @@ class MainActivity : AppCompatActivity() {
         manager.createNotificationChannel(serviceChannel)
     }
 
-    private fun check_init(){
 
-        val sync = SyncDatabase.getInstance(this)
-
-        val userDao = sync.userDao
-
-        CoroutineScope(Dispatchers.IO).launch {
-            userDao.clear()
-            if(userDao.wait(PUBLIC_KEY) == null){
-                val num = Random.nextInt(999)
-                val user = User(PUBLIC_KEY,"anon#$num",0, "null")
-                userDao.insert(user)
-                Log.v("Main", "${userDao.wait(PUBLIC_KEY)} inserted")
-            }else{
-                Log.v("Main","user already exists")
-            }
-        }
-    }
 
 }

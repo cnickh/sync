@@ -12,16 +12,17 @@
     android:layout_gravity="center"
     android:background="@drawable/dev_holder"
     android:orientation="horizontal"
+    android:visibility="invisible"
     android:elevation="@dimen/elevation">
 
-    <FrameLayout
-        android:id="@+id/ref0"
-        android:layout_width="3dp"
-        android:layout_height="15dp"
-        android:layout_gravity="center"
-        android:background="@drawable/col_bg"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+<!--    <FrameLayout-->
+<!--        android:id="@+id/ref0"-->
+<!--        android:layout_width="3dp"-->
+<!--        android:layout_height="15dp"-->
+<!--        android:layout_gravity="center"-->
+<!--        android:background="@drawable/col_bg"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent" />-->
 
 
     <FrameLayout
@@ -29,7 +30,7 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_gravity="center_vertical"
-        android:background="@drawable/circle_sm"
+        android:background="@drawable/circle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

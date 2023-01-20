@@ -74,48 +74,54 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/username" />
 
-        <ImageButton
-            android:id="@+id/chat"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            android:background="@null"
-            android:padding="4dp"
-            android:scaleType="fitCenter"
-            android:text="fuck"
-            app:layout_constraintEnd_toStartOf="@+id/add"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/chat" />
-
-        <ImageButton
-            android:id="@+id/add"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            android:background="@null"
-            android:padding="4dp"
-            android:scaleType="fitCenter"
-            app:layout_constraintEnd_toStartOf="@+id/block"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/global" />
-
-        <ImageButton
-            android:id="@+id/block"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            android:background="@null"
-            android:padding="4dp"
-            android:scaleType="fitCenter"
+        <LinearLayout
+            android:id="@+id/button_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/block" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:id="@+id/block"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@null"
+                android:padding="4dp"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/block" />
+
+            <ImageButton
+                android:id="@+id/chat"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="8dp"
+                android:background="@null"
+                android:padding="4dp"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/chat" />
+
+            <ImageButton
+                android:id="@+id/add"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:layout_marginEnd="8dp"
+                android:layout_marginTop="12dp"
+                android:background="@null"
+                android:padding="4dp"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/global" />
+
+        </LinearLayout>
+
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView

@@ -30,6 +30,7 @@ import daemon.dev.field.fragments.ProfileSelectFragment
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.util.Expander
 import daemon.dev.field.util.Phi
+import java.lang.Thread.sleep
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -53,10 +54,12 @@ class DeviceAdapter(val view : View, val activity : FragmentActivity) : Recycler
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): deviceVh {
         val binding =
             DeviceViewHolderBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        beautify(binding)
         return deviceVh(binding)
     }
 
     override fun onBindViewHolder(holder: deviceVh, position: Int) {
+
         holder.bind(getItem(position))
     }
 
@@ -78,28 +81,32 @@ class DeviceAdapter(val view : View, val activity : FragmentActivity) : Recycler
                 binding.name.text = it.alias
                 binding.id.text = it.key
 
+                val key = it.key
+
                 binding.card.setOnClickListener {
 
-//                    val bundle = bundleOf("pid" to position)
+                    val bundle = bundleOf("key" to key)
 
-//                    val postFrag = PostFragment()
-//
-//                    postFrag.arguments = bundle
-//
-//                    val ft : FragmentTransaction =
-//                        activity.supportFragmentManager.beginTransaction();
-//
-//                    ft.replace(R.id.container_view, postFrag, "FRAGMENT_TAG");
-//                    ft.commit();
+                    val selFrag = ProfileSelectFragment()
 
-                    activity.supportFragmentManager.commit {
-                        replace<ProfileSelectFragment>(R.id.fragment_view)
-                        addToBackStack(null)
-                    }
+                    selFrag.arguments = bundle
+
+                    val ft : FragmentTransaction =
+                        activity.supportFragmentManager.beginTransaction();
+
+                    ft.replace(R.id.container_view, selFrag, "FRAGMENT_TAG");
+                    ft.addToBackStack(null)
+                    ft.commit();
+
+//                    activity.supportFragmentManager.commit {
+//                        replace<ProfileSelectFragment>(R.id.fragment_view)
+//                        addToBackStack(null)
+//                    }
 
                 }
 
-                beautify(binding)
+                binding.card.visibility = View.VISIBLE
+
             }
         }
     }
@@ -124,13 +131,13 @@ class DeviceAdapter(val view : View, val activity : FragmentActivity) : Recycler
                 //set constraints to comment writer
                 val set = ConstraintSet()
                 set.clone(v)
-                set.connect(
-                    binding.ref0.id,
-                    ConstraintSet.START,
-                    v.id,
-                    ConstraintSet.START,
-                    params.height
-                )
+//                set.connect(
+//                    binding.ref0.id,
+//                    ConstraintSet.START,
+//                    v.id,
+//                    ConstraintSet.START,
+//                    params.height
+//                )
                 set.connect(
                     binding.name.id,
                     ConstraintSet.START,
@@ -154,11 +161,10 @@ class DeviceAdapter(val view : View, val activity : FragmentActivity) : Recycler
                 )
                 set.applyTo(v)
 
-                val params0 = binding.ref0.layoutParams
-                params0.height = params.height
-                binding.ref0.layoutParams = params0
-
-
+//                val params0 = binding.ref0.layoutParams
+//                params0.height = params.height
+//                binding.ref0.layoutParams = params0
+//
             }
             })
     }

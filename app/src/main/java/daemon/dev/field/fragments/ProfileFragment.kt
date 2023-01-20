@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.*
 import android.view.View.OnTouchListener
 import androidx.annotation.RequiresApi
@@ -16,12 +17,16 @@ import androidx.fragment.app.activityViewModels
 import com.google.android.flexbox.*
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.cereal.objects.User
-import daemon.dev.field.databinding.EditProfileBinding
-import daemon.dev.field.databinding.FragmentProfileBinding
+import daemon.dev.field.databinding.*
 import daemon.dev.field.fragments.adapter.DeviceAdapter
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.network.Async
 import daemon.dev.field.util.Phi
+import daemon.dev.field.util.ServiceLauncher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 
 class ProfileFragment : Fragment() {
@@ -30,6 +35,9 @@ class ProfileFragment : Fragment() {
 
     private lateinit var binding: FragmentProfileBinding
     private lateinit var deviceAdapter : DeviceAdapter
+
+    private var syncButton : SyncButtonBinding? = null
+    private var readyButton : ReadyButtonBinding? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -45,24 +53,22 @@ class ProfileFragment : Fragment() {
 
         beautify()
 
-        syncModel.state.observe(viewLifecycleOwner) { state ->
-
-            binding.state.text = Async.state2String()
-
+        syncModel.state.observe(viewLifecycleOwner) { _ ->
+            when(Async.state2String()){
+                "IDLE"->{idle()}
+                "READY"->{ready()}
+                "INSYNC"->{insync()}
+            }
         }
 
         binding.stateFrame.setOnClickListener {
 
-//           CoroutineScope(Dispatchers.IO).launch {
-//                if (Async.state() == Async.IDLE) {
-//                    ServiceLauncher(view.context).checkStartMesh()
-//                } else if (Async.state() != Async.IDLE) {
-//                    ServiceLauncher(view.context).checkKillMesh()
-//                }
-//            }
-//
-//            binding.state.text = Async.state2String()
-            val keys = listOf<User>(
+           CoroutineScope(Dispatchers.IO).launch {
+               ServiceLauncher(view.context).checkStartMesh()
+            }
+
+            binding.state.text = Async.state2String()
+            val keys = listOf(
 
                 User("ALKFDJ)@#{P","TonyJboyz",0,"None"),
                 User("ALKFDJ)@#{P","Tim Halaberton",0,"None"),
@@ -133,8 +139,6 @@ class ProfileFragment : Fragment() {
             false
         })
 
-
-
         card.doneButton.setOnClickListener {
             binding.base.removeView(card.root)
             binding.base.addView(binding.profileHeader)
@@ -152,14 +156,64 @@ class ProfileFragment : Fragment() {
 
     }
 
+    private fun idle(){
+        if(readyButton != null){
+            binding.userInfo.removeView(readyButton!!.stateFrame)
+            binding.stateFrame.layoutParams = readyButton!!.stateFrame.layoutParams
+            binding.userInfo.addView(binding.stateFrame)
+        }
+    }
+
+    private fun ready(){
+        binding.userInfo.removeView(binding.stateFrame)
+
+        if(readyButton == null){
+            readyButton = ReadyButtonBinding.inflate(
+                LayoutInflater.from(view!!.context),
+                null,
+                false
+            )
+            readyButton!!.stateFrame.setOnClickListener {
+                CoroutineScope(Dispatchers.IO).launch {
+                    ServiceLauncher(view!!.context).checkKillMesh()
+                }
+            }
+        }
+
+        readyButton!!.stateFrame.layoutParams = binding.stateFrame.layoutParams
+        binding.userInfo.addView(readyButton!!.stateFrame)
+
+
+    }
+
+    private fun insync(){
+        binding.userInfo.removeView(readyButton!!.stateFrame)
+
+        if(syncButton == null){
+            syncButton = SyncButtonBinding.inflate(
+                LayoutInflater.from(view!!.context),
+                null,
+                false
+            )
+            syncButton!!.stateFrame.setOnClickListener {
+                CoroutineScope(Dispatchers.IO).launch {
+                    ServiceLauncher(view!!.context).checkKillMesh()
+                }
+            }
+        }
+        syncButton!!.stateFrame.layoutParams = readyButton!!.stateFrame.layoutParams
+        binding.userInfo.addView(syncButton!!.stateFrame)
+    }
+
     private fun beautify(){
+
+
+        view!!.visibility = View.INVISIBLE
 
         view!!.viewTreeObserver.addOnGlobalLayoutListener(object :
             ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
                 view!!.viewTreeObserver.removeOnGlobalLayoutListener(this)
-
-
 
                 val params = binding.profileHeader.layoutParams
                 params.width = binding.profileHeader.width
@@ -175,8 +229,6 @@ class ProfileFragment : Fragment() {
                        "buttonWidth: ${binding.editButton.width} \n " +
                         "editConstraint: $editConstraint")
 
-
-                //set constraints to comment writer
                 val set = ConstraintSet()
                 set.clone(binding.profileHeader)
                 set.connect(
@@ -189,14 +241,11 @@ class ProfileFragment : Fragment() {
 
                 set.applyTo(binding.profileHeader)
 
-
-
                 val userHeight = binding.userInfo.height
                 val rem = params.height - userHeight
 
                 Log.d("ProfileFragment.kt", "rem: $rem \n" +
                 "userHeight: $userHeight")
-
 
                 val set0 = ConstraintSet()
                 set0.clone(binding.profileHeader)
@@ -217,24 +266,23 @@ class ProfileFragment : Fragment() {
 
                 set0.applyTo(binding.profileHeader)
 
+                view!!.visibility = View.VISIBLE
 
-                val params0 = binding.ref.layoutParams
-                params0.height = params.height
-                binding.ref.layoutParams = params0
+//                val params0 = binding.ref.layoutParams
+//                params0.height = params.height
+//                binding.ref.layoutParams = params0
 
-                //set constraints to comment writer
-                val nset = ConstraintSet()
-                nset.clone(binding.profileHeader)
-                nset.connect(
-                    binding.ref.id,
-                    ConstraintSet.END,
-                    binding.profileHeader.id,
-                    ConstraintSet.END,
-                    editConstraint
-                )
+//                val nset = ConstraintSet()
+//                nset.clone(binding.profileHeader)
+//                nset.connect(
+//                    binding.ref.id,
+//                    ConstraintSet.END,
+//                    binding.profileHeader.id,
+//                    ConstraintSet.END,
+//                    editConstraint
+//                )
 
-                nset.applyTo(binding.profileHeader)
-
+//                nset.applyTo(binding.profileHeader)
             }
         })
 

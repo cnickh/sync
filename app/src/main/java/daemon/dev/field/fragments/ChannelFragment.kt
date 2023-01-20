@@ -1,15 +1,15 @@
 package daemon.dev.field.fragments
 
-import android.content.Context
-import android.content.DialogInterface
+
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
+import android.view.WindowManager
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import daemon.dev.field.R
 import daemon.dev.field.databinding.FragmentChannelBinding
 import daemon.dev.field.fragments.adapter.ChannelAdapter
+import daemon.dev.field.fragments.dialogs.CreateDialog
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.network.Sync
 
@@ -49,10 +50,9 @@ class ChannelFragment : Fragment() {
 
         syncModel.channels.observe(viewLifecycleOwner, Observer { list ->
 
-            val mList = list as MutableList<String>
+            val mList = list.toMutableList()
             mList.remove("Public")
             channelAdapter.updateView(mList)
-//            syncModel.listContent2Log(mList)
 
         })
 
@@ -61,29 +61,29 @@ class ChannelFragment : Fragment() {
         binding.create.text="Create Channel"
 
         binding.create.setOnClickListener {
-            createBin(requireContext())
+            createBin()
         }
 
 
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun createBin(context: Context) {
-        val taskEditText = EditText(context)
-        taskEditText.hint = "Bin Name"
-        val dialog: AlertDialog = AlertDialog.Builder(context)
-            .setTitle("Enter Name")
-            .setView(taskEditText)
-            .setPositiveButton("Create",
-                DialogInterface.OnClickListener { a0, a1 -> /*create channel*/
+    private fun createBin() {
+        activity?.let {
 
-                    syncModel.addChannel(taskEditText.text.toString())
+            val dialog = CreateDialog(it,syncModel)
 
-                })
-            .setNegativeButton("Cancel", null)
-            .create()
+            dialog.window?.setBackgroundDrawable(
+                ColorDrawable(
+                    Color.TRANSPARENT)
+            );
 
-        dialog.show()
+            dialog.window?.clearFlags(
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
+            dialog.show()
+
+        }
     }
 
     private fun addPublic(){
