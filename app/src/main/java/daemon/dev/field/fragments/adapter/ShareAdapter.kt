@@ -1,6 +1,7 @@
 package daemon.dev.field.fragments.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import daemon.dev.field.R
@@ -48,6 +49,7 @@ class ShareAdapter(exampleList: ArrayList<String>,val dialogModel: DialogModel) 
             bin?.let { bin_id ->
 
                 binding.binName.text = bin_id
+
                 binding.bin.setOnClickListener {
                     if(dialogModel.selectChannel(bin_id)){
                         binding.bin.setBackgroundResource(R.drawable.col_bg)

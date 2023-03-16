@@ -1,33 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     >
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bin"
-        android:clickable="true"
-        android:elevation="6dp"
         android:layout_width="139.14dp"
         android:layout_height="86dp"
-        android:background="@drawable/wht_bg"
         android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/wht_bg"
+        android:clickable="true"
+        android:elevation="6dp"
         android:foregroundGravity="center"
-        android:layout_margin="8dp"
-        >
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/bin_name"
-            android:textSize="20sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center|center_vertical"
             android:gravity="center"
-
             android:text="bin_name"
             android:textColor="#000000"
+            android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -35,4 +39,17 @@
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-</FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/badge"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="-4dp"
+        android:layout_marginEnd="4dp"
+        android:visibility="invisible"
+        android:background="@drawable/circle"
+        android:elevation="10dp"
+        app:layout_constraintEnd_toEndOf="@+id/bin"
+        app:layout_constraintTop_toTopOf="@+id/bin" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

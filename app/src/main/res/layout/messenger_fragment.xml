@@ -10,7 +10,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/top_card"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="96dp"
+        android:elevation="2dp"
         android:background="@drawable/tint_bg"
         android:layout_marginTop="@dimen/u_margin"
         android:layout_marginStart="@dimen/u_margin"
@@ -20,29 +21,34 @@
         app:layout_constraintTop_toTopOf="parent">
 
 
-        <FrameLayout
-            android:id="@+id/frameLayout2"
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/user_image"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_gravity="center"
+            android:layout_marginBottom="4dp"
             android:layout_marginTop="4dp"
-            android:background="@drawable/circle"
+            android:src="@drawable/daisy_purp"
+            app:shapeAppearanceOverlay="@style/roundedImageViewRounded"
+            app:strokeWidth="1dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            />
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/user_alias"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="4dp"
-            android:layout_marginBottom="2dp"
+            android:layout_marginBottom="8dp"
             android:gravity="center"
             android:text="TextView"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/frameLayout2" />
+            app:layout_constraintTop_toBottomOf="@+id/user_image" />
 
         <ImageButton
             android:id="@+id/close"
@@ -63,13 +69,23 @@
         android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/text_box">
+        app:layout_constraintBottom_toTopOf="@+id/text_box"
+        app:layout_constraintTop_toBottomOf="@+id/top_card"
+        app:layout_constraintVertical_bias="0.99"
+        tools:layout_editor_absoluteX="0dp">
 
         <LinearLayout
             android:id="@+id/something"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"/>
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:id="@+id/spaceHolder"
+                android:layout_width="match_parent"
+                android:layout_height="178dp" />
+
+        </LinearLayout>
 
 
     </ScrollView>

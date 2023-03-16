@@ -9,10 +9,12 @@ import daemon.dev.field.network.Sync
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.lang.Thread.sleep
+import java.util.*
+import kotlin.collections.HashMap
 
 class POST_LISTHandler(val postRepository: PostRepository, val channelAccess: ChannelAccess) {
 
-    suspend fun handle( raw: MeshRaw){
+    suspend fun handle(raw: MeshRaw){
 //d
         Log.d("POST_LIST.kt","Received POST_LIST")
         for(p in raw.posts!!){
@@ -22,7 +24,7 @@ class POST_LISTHandler(val postRepository: PostRepository, val channelAccess: Ch
         }
 
         raw.misc?.let{
-            val json = it.toString(CHARSET)
+            val json = it
             val meta = Json.decodeFromString<HashMap<String,List<String>>>(json)
 
             for((c,l) in meta){
@@ -33,5 +35,11 @@ class POST_LISTHandler(val postRepository: PostRepository, val channelAccess: Ch
 
         Sync.queueUpdate()
     }
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
+    }
 
+    private fun String.toByteArray() : ByteArray {
+        return Base64.getDecoder().decode(this)
+    }
 }

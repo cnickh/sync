@@ -9,6 +9,7 @@ import daemon.dev.field.*
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.handler.event.*
 import daemon.dev.field.network.Socket
+import daemon.dev.field.nypt.Session
 
 
 @SuppressLint("MissingPermission")
@@ -16,10 +17,18 @@ import daemon.dev.field.network.Socket
 class GattResolver(val device : BluetoothDevice, val handler: Handler) : BluetoothGattCallback() {
         var socket : Socket? = null
         var remoteHost : ByteArray? = null
+        var session : Session? = null
 
-        private fun sendEvent(type : Int,socket : Socket?, bytes : ByteArray?, device: BluetoothDevice?, gatt: BluetoothGatt?, res : GattResolver?){
+        private fun sendEvent(type : Int,
+                              socket : Socket?,
+                              bytes : ByteArray?,
+                              device: BluetoothDevice?,
+                              gatt: BluetoothGatt?,
+                              res : GattResolver?,
+                              session: Session?){
+
             handler.obtainMessage(RESOLVER,
-                ResolverEvent(type,socket,bytes,device,gatt,res)).sendToTarget()
+                ResolverEvent(type,socket,bytes,device,gatt,res,session)).sendToTarget()
         }
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
@@ -32,7 +41,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
             } else {
                 Log.e(GATT_RESOLVER_TAG,"onConnectionStateChange was bad am resolver time to forget :p")
                 remoteHost = null
-                sendEvent(RETRY,socket,null,device,null,null)
+                sendEvent(RETRY,socket,null,device,null,null,null)
             }
         }
 
@@ -51,7 +60,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
 
                     if(service == null){
                         Log.e(GATT_RESOLVER_TAG,"service null")
-                        sendEvent(DISCONNECT,socket,null,device,null,null)
+                        sendEvent(DISCONNECT,socket,null,device,null,null,null)
                     } else {
 //                        Log.d(GATT_RESOLVER_TAG, "Reading Characteristic")
                         val characteristic = service.getCharacteristic(PROFILE_UUID)
@@ -81,7 +90,8 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
                 Log.v(GATT_RESOLVER_TAG,"have char $characteristic")
                 Log.v(GATT_RESOLVER_TAG, "have remotehost $remoteHost")
 
-                sendEvent(HANDSHAKE,null,null,null,gatt!!,null)
+                session = Session()
+                sendEvent(HANDSHAKE,null,null,null,gatt!!,null,session)
 
             } catch (e : Exception){
                 val msg = e.message
@@ -102,7 +112,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
 
             if(status != 200){
                 Log.e(GATT_RESOLVER_TAG,"got 300 sending disconnect")
-                sendEvent(DISCONNECT,socket,null,device,null,null)
+                sendEvent(DISCONNECT,socket,null,device,null,null,null)
             }
 
             socket?.let{
@@ -110,10 +120,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
             }
 
             remoteHost?.let { bytes ->
-                Log.i(GATT_RESOLVER_TAG,"Handshake with bytes being sent :/")
-
-                sendEvent(HANDSHAKE,null,bytes,device,gatt,this)
-
+                sendEvent(HANDSHAKE,null,bytes,device,gatt,this,session)
             }
             remoteHost = null
         }
@@ -133,7 +140,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler) : Bluetoo
                     data = characteristic?.value
 
                     data?.let { bytes ->
-                        sendEvent(PACKET,socket,bytes,null,null,null)
+                        sendEvent(PACKET,socket,bytes,null,null,null,null)
                     }
 
                 } else {

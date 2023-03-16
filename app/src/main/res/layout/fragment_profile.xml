@@ -20,20 +20,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageButton
-            android:id="@+id/editButton"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="center"
-            android:layout_marginStart="256dp"
-            android:layout_marginTop="32dp"
-            android:background="@android:color/transparent"
-            android:scaleType="fitCenter"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/pencil" />
-
-<!--        <FrameLayout-->
+        <!--        <FrameLayout-->
 <!--            android:id="@+id/ref"-->
 <!--            android:layout_width="3dp"-->
 <!--            android:layout_height="70dp"-->
@@ -42,22 +29,39 @@
 <!--            app:layout_constraintEnd_toEndOf="parent"-->
 <!--            app:layout_constraintTop_toTopOf="parent" />-->
 
+        <ImageButton
+            android:id="@+id/editButton"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:elevation="6dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/pencil" />
+
         <LinearLayout
             android:id="@+id/user_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="@dimen/l_margin"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <FrameLayout
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/pic"
                 android:layout_width="90dp"
                 android:layout_height="90dp"
                 android:layout_gravity="center"
-                android:background="@drawable/circle"
-                android:layout_marginBottom="@dimen/m_margin"
+                android:layout_marginBottom="4dp"
+                android:src="@drawable/daisy_purp"
+                app:shapeAppearanceOverlay="@style/roundedImageViewRounded"
+                app:strokeWidth="1dp"
+
                 />
 
             <TextView
@@ -71,22 +75,21 @@
 
             <TextView
                 android:id="@+id/key"
-                android:textSize="@dimen/key_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginBottom="@dimen/m_margin"
-
                 android:text="key"
-                />
+
+                android:textSize="@dimen/key_text" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/stateFrame"
+                android:layout_width="80dp"
+                android:layout_height="29dp"
                 android:layout_gravity="center"
                 android:layout_marginBottom="2dp"
                 android:background="@drawable/grey_border"
-                android:layout_width="80dp"
-                android:layout_height="29dp"
                 android:clickable="true">
 
 
@@ -110,11 +113,11 @@
                         android:id="@+id/state"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center"
                         android:layout_marginStart="6dp"
                         android:gravity="center"
-                        android:layout_gravity="center"
-                        android:textSize="13sp"
-                        android:text="IDLE"/>
+                        android:text="IDLE"
+                        android:textSize="13sp" />
                 </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>

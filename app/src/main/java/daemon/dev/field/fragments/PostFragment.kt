@@ -17,6 +17,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
+import daemon.dev.field.CHARSET
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
 import daemon.dev.field.cereal.objects.Comment
@@ -27,6 +28,7 @@ import daemon.dev.field.databinding.NewCommentViewHolderBinding
 import daemon.dev.field.fragments.model.SyncModel
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import java.util.*
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -72,14 +74,13 @@ class PostFragment : Fragment() {
             }
         })
 
-        syncModel.posts.observe(viewLifecycleOwner, Observer { _ ->
+        syncModel.posts.observe(viewLifecycleOwner) { _ ->
             Log.d("PostFragment.kt", "post_list changed signal received")
             post = syncModel.get(pid)!!
             binding.subComment.removeAllViews()
             Log.d("PostFragment.kt", "Updating thread with ${post.comment}")
-
             updateSub()
-        })
+        }
 
 //        var mediaPlayer = MediaPlayer.create(context, R.raw.shieldsup)
 //        mediaPlayer.start()
@@ -114,6 +115,9 @@ class PostFragment : Fragment() {
 
         for (c in sub){
             val card = CommentViewHolderBinding.inflate(LayoutInflater.from(context), null, false)
+
+            Log.i("PostFragment.kt","Adding comment text ${c.comment}")
+
 //            card.user.text = c.user.alias
             card.text.text = c.comment
 
@@ -121,11 +125,11 @@ class PostFragment : Fragment() {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT)
 
-            params.gravity = Gravity.END
-
-            if(c.key != PUBLIC_KEY){
+            if(c.key != PUBLIC_KEY.toBase64()){
                 card.commentCard.setBackgroundResource(R.drawable.cmt_left)
                 params.gravity = Gravity.START
+            }else{
+                params.gravity = Gravity.END
             }
 
             card.commentCard.setOnClickListener {
@@ -166,21 +170,21 @@ class PostFragment : Fragment() {
                 val comment:String = tempCard.commentText.text.toString()
 
                 val nwComment = syncModel.comment(pid,sub,globalSub,comment)
-                val nwCard = CommentViewHolderBinding.inflate(LayoutInflater.from(context), null, false)
-
-//                nwCard.user.text = comment.user.alias
-                nwCard.text.text = nwComment.comment
-                nwCard.commentCard.setOnClickListener {
-                    commentThis(nwComment.sub, nwCard.subComment,depth+1)
-                }
-                lLayout.addView(nwCard.root)
-                val params = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
-
-                params.gravity = Gravity.END
-
-                nwCard.root.layoutParams = params
+//                val nwCard = CommentViewHolderBinding.inflate(LayoutInflater.from(context), null, false)
+//
+////                nwCard.user.text = comment.user.alias
+//                nwCard.text.text = nwComment.comment
+//                nwCard.commentCard.setOnClickListener {
+//                    commentThis(nwComment.sub, nwCard.subComment,depth+1)
+//                }
+//                lLayout.addView(nwCard.root)
+//                val params = LinearLayout.LayoutParams(
+//                    ViewGroup.LayoutParams.WRAP_CONTENT,
+//                    ViewGroup.LayoutParams.WRAP_CONTENT)
+//
+//                params.gravity = Gravity.END
+//
+//                nwCard.root.layoutParams = params
             }
 
             tempCard.root.autofillId
@@ -211,6 +215,9 @@ class PostFragment : Fragment() {
 
         }
 
+    }
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
     }
 
 }

@@ -3,6 +3,7 @@ package daemon.dev.field.network
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.os.Handler
+import android.os.SystemClock.elapsedRealtime
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import daemon.dev.field.ASYNC_TAG
@@ -21,6 +22,8 @@ import daemon.dev.field.network.util.Verifier
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.util.*
+import kotlin.collections.HashMap
 
 /**@brief this object implements a singleton instance that preserves network state between
  * application and background service processes. It handles connections and disconnections with
@@ -44,9 +47,11 @@ object Async {
 
     private val _peers = mutableListOf<User>()
     val peers = MutableLiveData<MutableList<User>>(mutableListOf()) //updates connected peers
+    val peerStart = HashMap<String,Long>()
 
     /**All pasted to SyncOperator, used to notify app of important packets*/
     val ping = MutableLiveData<String>()//updates pings
+    val direct = MutableLiveData<String>()//updates on direct message
 
     private lateinit var ds : SyncDatabase
     private lateinit var op : SyncOperator
@@ -56,7 +61,11 @@ object Async {
     private lateinit var sw : MeshService.NetworkSwitch
 
     suspend fun me() : User{
-        return ds.userDao.wait(PUBLIC_KEY)!!
+        return ds.userDao.wait(PUBLIC_KEY.toBase64())!!
+    }
+
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
     }
 
     suspend fun state() : Int{
@@ -68,7 +77,7 @@ object Async {
 
     suspend fun handshake() : HandShake {
        // state_lock.lock()
-        val shake = HandShake(state, me(), null)
+        val shake = HandShake(state, me(), null,null)
        // state_lock.unlock()
 
         return shake
@@ -91,9 +100,10 @@ object Async {
 
         op.setPing(ping)
         op.setVerifier(vr)
+        op.setMsg(direct)
 
         Sync.start(ca,pr)
-        Sync.queueUpdate()
+//        Sync.queueUpdate()
 
         state = READY
         live_state.postValue(state)
@@ -119,16 +129,20 @@ object Async {
         val ret = pn.add(socket)
 
         if(ret && !_peers.contains(user)){
+            val time = elapsedRealtime()
+            peerStart[user.key] = time
+
             _peers.add(user)
             peers.postValue(_peers)
             Sync.add(user.key)
+            Sync.queueUpdate()
         }
 
         state = pn.state()
         live_state.postValue(state)
         if(state == INSYNC){sw.off()}
 
-        Sync.queueUpdate()
+        //Sync.queueUpdate()
         print_state()
       //  state_lock.unlock()
         return ret
@@ -189,6 +203,10 @@ object Async {
             ).sendToTarget()
         }
 
+        val dis_cmnt = Comment(key,"d1sc0nn3ct",0L)
+        val json = Json.encodeToString(dis_cmnt)
+        direct.postValue(json)
+
         pn.removePeer(key)
         _peers.remove(user)
         peers.postValue(_peers)
@@ -217,7 +235,7 @@ object Async {
             val detail = Json.encodeToString(raw)
             Log.v(ASYNC_TAG, "Sending ${type2string(raw.type)} mid ${raw.mid} \n $detail")
         }else{
-            Log.v(ASYNC_TAG, "Sending ${type2string(raw.type)} for mid ${op.bytesFromBuffer(raw.misc!!)}")
+            Log.v(ASYNC_TAG, "Sending ${type2string(raw.type)} for mid ${raw.misc!!}")
         }
         val packer = Packer(raw)
 

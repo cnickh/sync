@@ -9,9 +9,7 @@ import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Socket
-import daemon.dev.field.network.handler.packet.INFOHandler
-import daemon.dev.field.network.handler.packet.NEW_DATAHandler
-import daemon.dev.field.network.handler.packet.POST_LISTHandler
+import daemon.dev.field.network.handler.packet.*
 
 
 /**@brief this class implements the handling of network packets. The packets are constructed from
@@ -20,12 +18,15 @@ import daemon.dev.field.network.handler.packet.POST_LISTHandler
 class SyncOperator(private val postRepository: PostRepository, private val userBase: UserBase, private val channelAccess : ChannelAccess) {
 
     lateinit var livePing : MutableLiveData<String>
+    lateinit var liveMsg : MutableLiveData<String>
     lateinit var vr : Verifier
 
     private val sorter = Sorter()
+    lateinit var directHandler : DIRECTHandler
     private val infoHandler = INFOHandler(userBase,channelAccess,postRepository)
     private val newDataHandler = NEW_DATAHandler(postRepository,channelAccess)
     private val postListHandler = POST_LISTHandler(postRepository,channelAccess)
+    private val channelHandler = CHANNELHandler(channelAccess)
 
     fun setVerifier(verifier: Verifier){
         vr = verifier
@@ -35,13 +36,21 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
         livePing = ping
     }
 
+    fun setMsg(msg : MutableLiveData<String>){
+        liveMsg = msg
+        directHandler = DIRECTHandler(liveMsg)
+    }
+
     suspend fun insertUser(user : User){
         userBase.add(user)
 //        Log.i("op.kt"," got user: ${userBase.wait(user.key)}")
     }
 
     suspend fun receive(bytes : ByteArray, socket : Socket){
-        val msg = sorter.resolve(bytes)
+
+        val plain = socket.decrypt(bytes)
+
+        val msg = sorter.resolve(plain)
         if(msg != null){
 //            Log.e("Op.kt", "Packet construction success -\n $msg")
             dataToReceive(msg,socket)
@@ -54,9 +63,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
         val mtype : String
 
         if(raw.type != MeshRaw.CONFIRM){
-            val sig_bytes = ByteArray(4)
-            bytesToBuffer(sig_bytes, raw.mid)
-            val newRaw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,sig_bytes)
+            val newRaw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,raw.mid.toString())
             Async.send(newRaw, socket)
             //Sync.queue(socket.key,raw)
         }
@@ -66,37 +73,39 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
                 mtype = "INFO"
                 infoHandler.handle(raw,socket)
             }
-
             MeshRaw.POST_LIST->{
                 mtype = "POST_LIST"
                 postListHandler.handle(raw)
             }
-
             MeshRaw.POST_W_ATTACH->{
                 mtype = "POST_W_ATTACH"
             }
-
             MeshRaw.REQUEST -> {
                 mtype = "REQUEST"
             }
-
             MeshRaw.NEW_DATA -> {
                 mtype = "NEW_DATA"
                 newDataHandler.handle(raw,socket)
             }
-
             MeshRaw.PING->{
                 mtype = "PING"
                 livePing.postValue(socket.key)
             }
-
+            MeshRaw.CHANNEL->{
+                mtype = "CHANNEL"
+                channelHandler.handle(raw.misc!!)
+            }
+            MeshRaw.DIRECT->{
+                mtype = "CHANNEL"
+                directHandler.handle(raw.misc!!)
+            }
             MeshRaw.DISCONNECT->{
                 mtype = "DISCONNECT"
                 Async.disconnect(socket.user)
             }
             MeshRaw.CONFIRM->{
                 mtype = "CONFIRM"
-                vr.confirm(socket, bytesFromBuffer(raw.misc!!))
+                vr.confirm(socket, raw.misc!!.toInt())
             }
             else ->{
                 mtype = "NO_TYPE"

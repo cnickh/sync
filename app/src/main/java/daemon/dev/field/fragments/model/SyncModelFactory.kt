@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import daemon.dev.field.CHARSET
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.UNIVERSAL_KEY
 import daemon.dev.field.cereal.objects.Channel
@@ -13,6 +14,7 @@ import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.data.db.SyncDatabase
 import kotlinx.coroutines.*
+import java.util.*
 import kotlin.random.Random
 
 class SyncModelFactory (private val context: Context) : ViewModelProvider.Factory {
@@ -35,12 +37,16 @@ class SyncModelFactory (private val context: Context) : ViewModelProvider.Factor
                 channelDao.insert(Channel("Public", UNIVERSAL_KEY, "null"))
                 Log.i("Fac-Debug" ,"What did we just insert?? ${channelDao.getKey("Public")}")
 
+                channelDao.insert(Channel("test", "null", "null"))
 
-                if(userDao.wait(PUBLIC_KEY) == null){
+                val channels = channelDao.waitChannels()
+                Log.i("Facz-Debug" ,"What did we just insert?? $channels")
+
+                if(userDao.wait(PUBLIC_KEY.toBase64()) == null){
                     val num = Random.nextInt(999)
-                    val user = User(PUBLIC_KEY,"anon#$num",0, "null")
+                    val user = User(PUBLIC_KEY.toBase64(),"anon#$num",0, "null")
                     userDao.insert(user)
-                    Log.v("Main", "${userDao.wait(PUBLIC_KEY)} inserted")
+                    Log.v("Main", "${userDao.wait(PUBLIC_KEY.toBase64())} inserted")
                 }else{
                     Log.v("Main","user already exists")
                 }
@@ -53,5 +59,9 @@ class SyncModelFactory (private val context: Context) : ViewModelProvider.Factor
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
+    }
+
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
     }
 }

@@ -13,6 +13,14 @@ class ChannelAccess(private val sync : ChannelDao) {
         return sync.waitContents(name)
     }
 
+    suspend fun delete(name : String){
+        sync.delete(name)
+    }
+
+    suspend fun updateKey(name : String, key : String){
+        sync.updateKey(name,key)
+    }
+
     suspend fun getOpenContents() : List<String>{
         val posts = mutableListOf<String>()
 

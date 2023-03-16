@@ -17,7 +17,7 @@ class Sorter {
         val wrap = try {
             Json.decodeFromString<Wrapper>(json)
         } catch (e : Exception) {
-            Log.e("Sorter.kt","Could not decode wrapper, possibly handshake")
+            Log.e("Sorter.kt","Could not decode wrapper, possibly handshake \n have $json")
             null
         }
 
@@ -26,6 +26,9 @@ class Sorter {
             val mid = wrap.mid
             val cur = wrap.cur
             val data = wrap.bytes
+            val max = wrap.max
+
+            Log.v("Sorter.kt","have mid: $mid cur: $cur max: $max")
 
             if(slots.keys.contains(mid)){
                 slots[mid]!!.add(cur,data)
@@ -36,7 +39,7 @@ class Sorter {
                 }
             }
 
-            if(slots[mid]?.size == wrap.max+1){
+            if(slots[mid]?.size == max+1){
 
                 var raw = ""
 

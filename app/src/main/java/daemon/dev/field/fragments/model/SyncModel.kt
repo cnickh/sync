@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import daemon.dev.field.CHARSET
 import daemon.dev.field.MODEL_TAG
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.UNIVERSAL_KEY
@@ -13,10 +14,12 @@ import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Sync
+import daemon.dev.field.nypt.ChannelBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.util.*
 
 /**@brief this class provides database and network data to UI threads via coroutines.*/
 
@@ -31,6 +34,8 @@ class SyncModel internal constructor(
     val channels = channelAccess.channels
     var raw_filter = channelAccess.getLiveContents(Sync.open_channels)
     val state : LiveData<Int> = Async.live_state
+    val me = userBase.getUser(PUBLIC_KEY.toBase64())
+
     val ping = Async.ping
 
     private var filter : List<String> = listOf()
@@ -127,9 +132,24 @@ class SyncModel internal constructor(
         return posts.value?.get(position)
     }
 
-    fun addChannel(string : String){
-        viewModelScope.launch(Dispatchers.IO){
-            channelAccess.createChannel(string, UNIVERSAL_KEY)
+    fun removeChannel(name : String){
+        viewModelScope.launch(Dispatchers.IO) {
+            channelAccess.delete(name)
+        }
+    }
+
+    fun buildChannel(name : String) {
+        val builder = ChannelBuilder(name)
+        viewModelScope.launch(Dispatchers.IO) {
+            channelAccess.updateKey(name,builder.key().toBase64())
+        }
+    }
+
+    fun addChannel(name : String){
+        val builder = ChannelBuilder(name)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            channelAccess.createChannel(name,builder.key().toBase64())
         }
     }
 
@@ -139,7 +159,7 @@ class SyncModel internal constructor(
     ){
         val time = System.currentTimeMillis()
 
-        val post = Post(PUBLIC_KEY,time,title,body,"null",0)
+        val post = Post(PUBLIC_KEY.toBase64(),time,title,body,"null",0)
 
         if(Sync.open_channels.isEmpty()){
             Log.e("SyncModel.kt","Err no open channels, post not created")
@@ -165,7 +185,7 @@ class SyncModel internal constructor(
 
         val time = System.currentTimeMillis()
 
-        val comment = Comment(PUBLIC_KEY,text,time)
+        val comment = Comment(PUBLIC_KEY.toBase64(),text,time)
         sub.add(comment)
 
         val post = get(position)!!
@@ -179,5 +199,11 @@ class SyncModel internal constructor(
 
         return comment
     }
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
+    }
 
+    private fun String.toByteArray() : ByteArray {
+        return Base64.getDecoder().decode(this)
+    }
 }

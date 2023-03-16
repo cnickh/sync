@@ -45,7 +45,6 @@ class CreateDialog(var c: Activity, var syncModel : SyncModel) : Dialog(c), View
             R.id.cancel -> dismiss()
             else -> {}
         }
-        dismiss()
     }
 
     private fun beautify() {
@@ -53,6 +52,7 @@ class CreateDialog(var c: Activity, var syncModel : SyncModel) : Dialog(c), View
             .viewTreeObserver.addOnGlobalLayoutListener(object :
                 ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
+                    findViewById<ConstraintLayout>(R.id.profile_header)!!.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
                     val root = findViewById<ConstraintLayout>(R.id.profile_header)
                     val phi = 1.618033988749895

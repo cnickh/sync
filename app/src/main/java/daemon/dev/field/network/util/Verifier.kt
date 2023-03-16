@@ -20,16 +20,16 @@ class Verifier {
     suspend fun clear(socket : Socket){
         Log.v("Verifier.kt","here0")
 
-       // vr.lock()
+//        vr.lock()
         pending_socket.remove(socket)
         pending_message[socket]?.clear()
-       // vr.unlock()
+//        vr.unlock()
     }
 
     suspend fun add(socket : Socket, mid : Int){
        // Log.w("Verifier.kt","here1")
 
-       // vr.lock()
+//        vr.lock()
 
         if (pending_message[socket] == null){
             pending_message[socket] = mutableListOf(mid)
@@ -37,7 +37,7 @@ class Verifier {
             pending_message[socket]!!.add(mid)
         }
 
-      //  vr.unlock()
+//        vr.unlock()
 
         Handler(Looper.getMainLooper()).postDelayed({
             //post delayed check and throw error
@@ -49,9 +49,15 @@ class Verifier {
     suspend fun confirm(socket : Socket, mid : Int){
        // Log.w("Verifier.kt","here2")
 
-       // vr.lock()
+//        vr.lock()
 
         pending_socket[socket] = System.currentTimeMillis()
+
+        if(pending_message[socket] == null){
+            Log.e("Verifier.kt","[already removed] Message $mid")
+//            vr.unlock()
+            return
+        }
 
         if(pending_message[socket]!!.contains(mid)){
             pending_message[socket]!!.remove(mid)
@@ -59,14 +65,14 @@ class Verifier {
         }else{
             Log.e("Verifier.kt","[already removed] Message $mid")
         }
-       // vr.unlock()
+//        vr.unlock()
 
     }
 
     private suspend fun checkConfirm(socket : Socket, mid : Int){
        // Log.w("Verifier.kt","here3")
 
-        //vr.lock()
+//        vr.lock()
 
         if(!pending_message[socket]!!.contains(mid)){
             return
@@ -79,7 +85,7 @@ class Verifier {
             System.currentTimeMillis() - it
         }
 
-        //vr.unlock()
+//        vr.unlock()
 
 
         if (dif == null) {

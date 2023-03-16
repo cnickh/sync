@@ -10,24 +10,29 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.*
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
+import com.bumptech.glide.Glide
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
 import daemon.dev.field.databinding.FragmentProfileSelectBinding
 import daemon.dev.field.fragments.dialogs.AddDialog
 import daemon.dev.field.fragments.dialogs.BlockDialog
 import daemon.dev.field.fragments.model.DialogModel
+import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.util.Phi
+import kotlin.math.roundToInt
 
 
 class ProfileSelectFragment : Fragment() {
 
     private val syncModel : SyncModel by activityViewModels()
+    private val resModel : ResourceModel by activityViewModels()
     private val dialogModel : DialogModel by viewModels()
 
     private lateinit var binding: FragmentProfileSelectBinding
@@ -49,15 +54,33 @@ class ProfileSelectFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.v("ProfSel","onCreate called")
+
+
 
         beautify()
+        dialogModel.setUser(key)
+        syncModel.getUser(key).observe(viewLifecycleOwner, Observer { user ->
+            if(user != null) {
+                binding.username.text = user.alias
+                binding.key.text = key
+            } else {
 
-//        syncModel.getUser(key).observe(viewLifecycleOwner, Observer { user ->
-//            if(user != null) {
-//                binding.username.text = user.alias
-//                binding.key.text = key
-//            }
-//        })
+            }
+        })
+        resModel.getUserProfile(key).observe(viewLifecycleOwner) {
+            if(it != null){
+                val uri = it.toUri()
+
+                Glide
+                    .with(this)
+                    .load(uri)
+                    .circleCrop()
+                    .thumbnail()
+                    .placeholder(R.drawable.loading_spinner)
+                    .into(binding.userImage);
+            }
+        }
 
         syncModel.channels.observeOnce(viewLifecycleOwner,Observer{
 
@@ -85,7 +108,7 @@ class ProfileSelectFragment : Fragment() {
                 activity!!.supportFragmentManager.beginTransaction()
 
 
-            ft.replace(R.id.container_view, msgFrag, "FRAGMENT_TAG");
+            ft.replace(R.id.container_view, msgFrag);
             ft.addToBackStack(null)
             ft.commit();
 
@@ -96,7 +119,11 @@ class ProfileSelectFragment : Fragment() {
 
 
         binding.back.setOnClickListener {
-            parentFragmentManager.popBackStack()
+            //parentFragmentManager.popBackStack()
+            parentFragmentManager.commit {
+                replace<ProfileFragment>(R.id.fragment_view)
+                addToBackStack(null)
+            }
         }
 
         dialogModel.blockedStatus.observe(viewLifecycleOwner, Observer { status ->
@@ -130,9 +157,18 @@ class ProfileSelectFragment : Fragment() {
         activity?.let {
 
             val list = syncModel.channels.value!!
+            val itr = list.iterator()
 
-            val array = ArrayList(list)
-            array.remove("Public")
+            val stringList = mutableListOf<String>()
+
+            while (itr.hasNext()){
+                val next = itr.next()
+                if(next.key != "null" && next.name != "Public"){
+                    stringList.add(next.name)
+                }
+            }
+
+            val array = ArrayList(stringList)
 
             val dialog = AddDialog(it,dialogModel,array)
 
@@ -169,79 +205,47 @@ class ProfileSelectFragment : Fragment() {
 
     private fun beautify() {
 
-        binding.profileCard.viewTreeObserver.addOnGlobalLayoutListener(object :
-            ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                binding.profileCard.viewTreeObserver.removeOnGlobalLayoutListener(this)
+        val displayMetrics = requireContext().resources.displayMetrics
+        val params = binding.profileCard.layoutParams
+        val width = displayMetrics.widthPixels - (30*displayMetrics.density)
+        params.width = width.roundToInt()
+        val height = Phi().phi(width.roundToInt(),2)
+        params.height = height
 
-                val width = binding.profileCard.width
-                val params = binding.profileCard.layoutParams
+        val offset = ((params.height - 96*displayMetrics.density)/2).roundToInt()
 
-                val height = Phi().phi(width,2)
-                params.height = height
-                binding.profileCard.layoutParams = params
+        val bParams = binding.buttonLayout.layoutParams
+        bParams.width = (width - 2*height).roundToInt()
+        binding.buttonLayout.layoutParams = bParams
 
-                val offset = (height - binding.frameLayout.width)/2
+        val set = ConstraintSet()
+        set.clone(binding.profileCard)
 
+        set.connect(
+            binding.username.id,
+            ConstraintSet.START,
+            binding.profileCard.id,
+            ConstraintSet.START,
+            height
+        )
+        set.connect(
+            binding.key.id,
+            ConstraintSet.START,
+            binding.profileCard.id,
+            ConstraintSet.START,
+            height
+        )
 
-                val bParams = binding.buttonLayout.layoutParams
-                bParams.width = (width - 2*height)
-                binding.buttonLayout.layoutParams = bParams
+        set.connect(
+            binding.userImage.id,
+            ConstraintSet.START,
+            binding.profileCard.id,
+            ConstraintSet.START,
+            offset
+        )
 
-                val set = ConstraintSet()
-                set.clone(binding.profileCard)
+        set.applyTo(binding.profileCard)
 
-                set.connect(
-                    binding.username.id,
-                    ConstraintSet.START,
-                    binding.profileCard.id,
-                    ConstraintSet.START,
-                    height
-                )
-                set.connect(
-                    binding.key.id,
-                    ConstraintSet.START,
-                    binding.profileCard.id,
-                    ConstraintSet.START,
-                    height
-                )
-
-                set.connect(
-                    binding.frameLayout.id,
-                    ConstraintSet.START,
-                    binding.profileCard.id,
-                    ConstraintSet.START,
-                    offset
-                )
-
-                set.connect(
-                    binding.ref0.id,
-                    ConstraintSet.START,
-                    binding.profileCard.id,
-                    ConstraintSet.START,
-                    height
-                )
-
-                set.connect(
-                    binding.ref1.id,
-                    ConstraintSet.START,
-                    binding.profileCard.id,
-                    ConstraintSet.START,
-                    (height*2)
-                )
-
-                set.applyTo(binding.profileCard)
-
-                val params0 = binding.ref0.layoutParams
-                params0.height = height
-                binding.ref0.layoutParams = params0
-
-                val params1 = binding.ref1.layoutParams
-                params1.height = height
-                binding.ref1.layoutParams = params1
-
-            }
-        })
 
     }
 }

@@ -1,14 +1,17 @@
 package daemon.dev.field
 
 import android.Manifest
+import android.net.Uri
 import java.util.UUID
 
+var PUBLIC_KEY = ByteArray(1)
+var PRIVATE_KEY = ByteArray(1)
 
-var PUBLIC_KEY = ""
 var UNIVERSAL_KEY = "Hello uni-key"
 
 /**Character Encoding*/
-val CHARSET = Charsets.US_ASCII
+//val CHARSET = Charsets.US_ASCII
+val CHARSET = Charsets.UTF_8
 
 const val HEX = 16
 

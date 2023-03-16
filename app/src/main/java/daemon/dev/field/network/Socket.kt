@@ -12,6 +12,7 @@ import daemon.dev.field.*
 import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.network.util.Packer
+import daemon.dev.field.nypt.Symmetric
 import kotlinx.coroutines.runBlocking
 import java.net.Socket
 
@@ -23,7 +24,8 @@ class Socket(
     private val socket: Socket?,
     private val gatt : BluetoothGatt?,
     val device : BluetoothDevice,
-    val gattServer : BluetoothGattServer?
+    private val gattServer : BluetoothGattServer?,
+    private val symKey : ByteArray
            ){
 
     companion object {
@@ -35,6 +37,7 @@ class Socket(
     var key : String
     var open : Boolean = true
     val response = ConditionVariable()
+    private var symmetric : Symmetric = Symmetric()
 
 
     override fun equals(other: Any?): Boolean {
@@ -46,9 +49,11 @@ class Socket(
 
     init {
 
+        symmetric.init(symKey)
+
         when(type){
             BLUETOOTH_GATT -> {gatt!!}
-            BLUETOOTH_DEVICE -> {device!!;gattServer!!}
+            BLUETOOTH_DEVICE -> {gattServer!!}
             WIFI -> {socket!!}
         }
 
@@ -57,7 +62,15 @@ class Socket(
 //        Log.d(SOCKET_TAG,"Peer initialized successfully type[${type2String()}]")
     }
 
+    fun decrypt(bytes: ByteArray) : ByteArray {
+        return symmetric.decrypt(bytes)
+    }
+
     fun write(buffer : ByteArray) : Int {
+
+        val cipher = symmetric.encrypt(buffer)
+
+        Log.v(SOCKET_TAG,"Have ${buffer.size}b plain & ${cipher.size}b cipher")
 
         if(!open){
             Log.e(SOCKET_TAG,"err closed socket")
@@ -67,13 +80,13 @@ class Socket(
 //            Log.v(SOCKET_TAG, "type[${type2String()}], Write to  of size ${buffer.size}")
             when (type) {
                 BLUETOOTH_GATT -> {
-                    writeGatt(buffer)
+                    writeGatt(cipher)
                 }
                 BLUETOOTH_DEVICE -> {
-                    writeDev(buffer)
+                    writeDev(cipher)
                 }
                 WIFI -> {
-                    writeSock(buffer)
+                    writeSock(cipher)
                 }
             }
         } catch(e : Exception){

@@ -33,6 +33,7 @@ object Sync {
         sync = SyncThread()
         sync.start()
         running = true
+        channel_info = hashMapOf()
     }
 
     suspend fun kill(){
@@ -73,9 +74,23 @@ object Sync {
         val hmap = hashMapOf<String,String>()
         val map = ca.mapOpenChannels()
 
-        for ((c,l) in map){
-            hmap[c] = pr.hashListCombined(l)
+        if(map.isEmpty()){
+            queue_lock.unlock()
+            return
         }
+
+        for ((c,l) in map){
+            val hash = pr.hashListCombined(l)
+            if(hash != "null"){
+                hmap[c] = pr.hashListCombined(l)
+            }
+        }
+
+        if(hmap.isEmpty()){
+            queue_lock.unlock()
+            return
+        }
+
         Log.v(SYNC_TAG,"Updating raw with $hmap")
         channel_info = hmap
         info.channels = Json.encodeToString(hmap)

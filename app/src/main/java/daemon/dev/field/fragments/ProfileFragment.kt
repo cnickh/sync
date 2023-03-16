@@ -3,22 +3,26 @@ package daemon.dev.field.fragments
 import android.annotation.SuppressLint
 import android.app.ActionBar.LayoutParams
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.util.TypedValue
 import android.view.*
 import android.view.View.OnTouchListener
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import com.bumptech.glide.Glide
 import com.google.android.flexbox.*
 import daemon.dev.field.PUBLIC_KEY
+import daemon.dev.field.R
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.*
 import daemon.dev.field.fragments.adapter.DeviceAdapter
+import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.network.Async
 import daemon.dev.field.util.Phi
@@ -26,18 +30,22 @@ import daemon.dev.field.util.ServiceLauncher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.*
 import kotlin.math.roundToInt
 
 
 class ProfileFragment : Fragment() {
 
     private val syncModel : SyncModel by activityViewModels()
+    private val resModel : ResourceModel by activityViewModels()
 
     private lateinit var binding: FragmentProfileBinding
     private lateinit var deviceAdapter : DeviceAdapter
 
     private var syncButton : SyncButtonBinding? = null
     private var readyButton : ReadyButtonBinding? = null
+
+    private var uiState = "IDLE"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,19 +54,37 @@ class ProfileFragment : Fragment() {
         binding = FragmentProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
-
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
+    }
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         beautify()
 
-        syncModel.state.observe(viewLifecycleOwner) { _ ->
-            when(Async.state2String()){
-                "IDLE"->{idle()}
-                "READY"->{ready()}
-                "INSYNC"->{insync()}
+        setState()
+
+        resModel.loadProfileImage()
+
+        resModel.liveProfile.observe(viewLifecycleOwner) { uri ->
+            if(uri != null){
+                Glide
+                    .with(this)
+                    .load(uri)
+                    .circleCrop()
+                    .thumbnail()
+                    .placeholder(R.drawable.loading_spinner)
+                    .into(binding.pic);
             }
+        }
+
+        syncModel.state.observe(viewLifecycleOwner) { _ ->
+            setState()
+        }
+
+        syncModel.me.observe(viewLifecycleOwner) {
+            binding.username.text = it.alias
         }
 
         binding.stateFrame.setOnClickListener {
@@ -68,20 +94,20 @@ class ProfileFragment : Fragment() {
             }
 
             binding.state.text = Async.state2String()
-            val keys = listOf(
-
-                User("ALKFDJ)@#{P","TonyJboyz",0,"None"),
-                User("ALKFDJ)@#{P","Tim Halaberton",0,"None"),
-                User("ALKFDJ)@#{P","HQ_yamean",0,"None")
-
-            )
-
-
-            Log.d("ProfileFragment.kt", "defuq boi")
-            deviceAdapter.updateView(keys)
+//            val keys = listOf(
+//
+//                User("ALKFDJ)@#{P","TonyJboyz",0,"None"),
+//                User("ALKFDJ)@#{P","Tim Halaberton",0,"None"),
+//                User("ALKFDJ)@#{P","HQ_yamean",0,"None")
+//
+//            )
+//
+//
+//            Log.d("ProfileFragment.kt", "defuq boi")
+//            deviceAdapter.updateView(keys)
         }
 
-        binding.key.text = PUBLIC_KEY
+        binding.key.text = PUBLIC_KEY.toBase64()
         deviceAdapter = activity?.let { DeviceAdapter(view, it) }!!
         binding.userList.adapter = deviceAdapter
 
@@ -100,12 +126,25 @@ class ProfileFragment : Fragment() {
 
         binding.editButton.setOnClickListener {
             editMode()
+            Log.i("Fac-Debug" ,"entering edit mode set DONE")
+
         }
 
     }
 
+    private fun setState(){
+        val state = Async.state2String()
+
+        when(state){
+            "IDLE"->{idle()}
+            "READY"->{ready()}
+            "INSYNC"->{insync()}
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun editMode(){
+
 
         val card = EditProfileBinding.inflate(
             LayoutInflater.from(view?.context),
@@ -113,8 +152,10 @@ class ProfileFragment : Fragment() {
             false
         )
 
+
         binding.base.removeView(binding.profileHeader)
         binding.base.addView(card.root)
+
 
         card.root.layoutParams = binding.profileHeader.layoutParams
         card.doneButton.layoutParams = binding.editButton.layoutParams
@@ -123,10 +164,12 @@ class ProfileFragment : Fragment() {
         val old_width = binding.editButton.width
         val old_height = binding.editButton.height
 
+
         card.doneButton.updateLayoutParams {
             width = LayoutParams.WRAP_CONTENT
             height = LayoutParams.WRAP_CONTENT
         }
+
 
         card.doneButton.setOnTouchListener(OnTouchListener { v, event ->
             when (event.action) {
@@ -139,7 +182,15 @@ class ProfileFragment : Fragment() {
             false
         })
 
+
         card.doneButton.setOnClickListener {
+
+            val alias = card.username.text.toString()
+
+            if(alias != ""){
+                syncModel.setAlias(alias)
+            }
+
             binding.base.removeView(card.root)
             binding.base.addView(binding.profileHeader)
 
@@ -152,11 +203,42 @@ class ProfileFragment : Fragment() {
                 width = old_width
                 height = old_height
             }
+
+        }
+
+        resModel.liveProfile.observe(viewLifecycleOwner) { uri ->
+            if(uri != null){
+                Glide
+                    .with(this)
+                    .load(uri)
+                    .circleCrop()
+                    .thumbnail()
+                    .placeholder(R.drawable.loading_spinner)
+                    .into(card.pic);
+            }
+        }
+
+        card.camera.setOnClickListener {
+            getContent.launch(arrayOf("image/*"))
+        }
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    private val getContent = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        //Handle the returned Uri
+        val img = uri
+        img?.let {
+            resModel.setProfileImage(it)
         }
 
     }
 
     private fun idle(){
+
+        if(uiState == "IDLE"){return}
+        else{uiState = "IDLE"}
+
         if(readyButton != null){
             binding.userInfo.removeView(readyButton!!.stateFrame)
             binding.stateFrame.layoutParams = readyButton!!.stateFrame.layoutParams
@@ -165,6 +247,10 @@ class ProfileFragment : Fragment() {
     }
 
     private fun ready(){
+
+        if(uiState == "READY"){return}
+        else{uiState = "READY"}
+
         binding.userInfo.removeView(binding.stateFrame)
 
         if(readyButton == null){
@@ -187,6 +273,10 @@ class ProfileFragment : Fragment() {
     }
 
     private fun insync(){
+
+        if(uiState == "INSYNC"){return}
+        else{uiState = "INSYNC"}
+
         binding.userInfo.removeView(readyButton!!.stateFrame)
 
         if(syncButton == null){
@@ -207,84 +297,24 @@ class ProfileFragment : Fragment() {
 
     private fun beautify(){
 
+        val displayMetrics = requireContext().resources.displayMetrics
+        val params = binding.profileHeader.layoutParams
+        val width = displayMetrics.widthPixels - (30*displayMetrics.density)
+        params.width = width.roundToInt()
+        params.height = Phi().phi(width.roundToInt(),1)
 
-        view!!.visibility = View.INVISIBLE
+        binding.profileHeader.layoutParams = params
+        val set = ConstraintSet()
+        set.clone(binding.profileHeader)
+        set.connect(
+            binding.editButton.id,
+            ConstraintSet.START,
+            binding.profileHeader.id,
+            ConstraintSet.START,
+            params.height
+        )
 
-        view!!.viewTreeObserver.addOnGlobalLayoutListener(object :
-            ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                view!!.viewTreeObserver.removeOnGlobalLayoutListener(this)
-
-                val params = binding.profileHeader.layoutParams
-                params.width = binding.profileHeader.width
-//                Log.d("ProfileFragment.kt", "width1: ${params.width}")
-
-                params.height = Phi().phi(params.width,1)
-                binding.profileHeader.layoutParams = params
-
-                val editConstraint = (params.width - params.height)//Phi().pxToDp(params.width - params.height, requireContext())
-
-                Log.d("ProfileFragment.kt", "width: ${params.width} \n" +
-                        "height: ${params.height} \n" +
-                       "buttonWidth: ${binding.editButton.width} \n " +
-                        "editConstraint: $editConstraint")
-
-                val set = ConstraintSet()
-                set.clone(binding.profileHeader)
-                set.connect(
-                    binding.editButton.id,
-                    ConstraintSet.START,
-                    binding.profileHeader.id,
-                    ConstraintSet.START,
-                    params.height-4
-                )
-
-                set.applyTo(binding.profileHeader)
-
-                val userHeight = binding.userInfo.height
-                val rem = params.height - userHeight
-
-                Log.d("ProfileFragment.kt", "rem: $rem \n" +
-                "userHeight: $userHeight")
-
-                val set0 = ConstraintSet()
-                set0.clone(binding.profileHeader)
-                set0.connect(
-                    binding.userInfo.id,
-                    ConstraintSet.TOP,
-                    binding.profileHeader.id,
-                    ConstraintSet.TOP,
-                    rem/2
-                )
-                set0.connect(
-                    binding.editButton.id,
-                    ConstraintSet.TOP,
-                    binding.profileHeader.id,
-                    ConstraintSet.TOP,
-                    rem/2
-                )
-
-                set0.applyTo(binding.profileHeader)
-
-                view!!.visibility = View.VISIBLE
-
-//                val params0 = binding.ref.layoutParams
-//                params0.height = params.height
-//                binding.ref.layoutParams = params0
-
-//                val nset = ConstraintSet()
-//                nset.clone(binding.profileHeader)
-//                nset.connect(
-//                    binding.ref.id,
-//                    ConstraintSet.END,
-//                    binding.profileHeader.id,
-//                    ConstraintSet.END,
-//                    editConstraint
-//                )
-
-//                nset.applyTo(binding.profileHeader)
-            }
-        })
+        set.applyTo(binding.profileHeader)
 
     }
 

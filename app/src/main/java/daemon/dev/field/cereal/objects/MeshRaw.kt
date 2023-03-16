@@ -9,7 +9,7 @@ class MeshRaw(val type : Int,
               val requests : List<String>?, //List<Address>
               val newData : HashMap<String,HashMap<String,String>>?, //HashMap<Address,HashCode>
               val posts : List<Post>?,
-              val misc : ByteArray?
+              val misc : String?
                     ){
 
     var mid : Int = 0
@@ -25,11 +25,12 @@ class MeshRaw(val type : Int,
         const val DISCONNECT = 6
         const val CONFIRM = 7
 
+        const val CHANNEL = 8
+        const val DIRECT = 9
     }
 
     fun hash(): String {
-        return type.toString() + nodeInfo?.hash() + requests?.toString() + newData?.toString() + posts?.toString() + misc?.toString(
-        CHARSET)
+        return type.toString() + nodeInfo?.hash() + requests?.toString() + newData?.toString() + posts?.toString() + misc
     }
 
 }

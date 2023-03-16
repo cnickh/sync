@@ -17,17 +17,18 @@
 
     <TextView
         android:id="@+id/doneButton"
-        android:layout_width="42dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="104dp"
-        android:gravity="center"
+        android:layout_marginEnd="76dp"
         android:clickable="true"
+        android:gravity="center"
         android:scaleType="fitCenter"
-        android:textColor="@color/black"
         android:text="Done"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
     <LinearLayout
         android:id="@+id/user_info1"
@@ -39,24 +40,26 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <FrameLayout
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/pic"
             android:layout_width="110dp"
             android:layout_height="110dp"
+            android:layout_marginBottom="12dp"
             android:layout_gravity="center"
-            android:layout_marginBottom="@dimen/m_margin"
-            android:clickable="true"
-            android:background="@drawable/circle" >
+            android:src="@drawable/daisy_purp"
+            app:shapeAppearanceOverlay="@style/roundedImageViewRounded"
+            app:strokeWidth="1dp" />
 
-            <FrameLayout
-                android:id="@+id/camera"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
-                android:background="@drawable/camera"
-                android:scaleType="fitCenter" />
-        </FrameLayout>
-
+        <!--        <FrameLayout-->
+        <!--            android:id="@+id/pic"-->
+        <!--            android:layout_width="110dp"-->
+        <!--            android:layout_height="110dp"-->
+        <!--            android:layout_gravity="center"-->
+        <!--            android:layout_marginBottom="@dimen/m_margin"-->
+        <!--            android:clickable="true"-->
+        <!--            android:background="@drawable/circle" >-->
+        <!--            -->
+        <!--        </FrameLayout>-->
 
         <EditText
             android:id="@+id/username"
@@ -64,17 +67,32 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginBottom="@dimen/c_margin"
+            android:background="@drawable/wht_bg"
+            android:hint="Username"
+            android:imeOptions="actionDone"
+            android:minHeight="42dp"
             android:padding="@dimen/v_margin"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:background="@drawable/wht_bg"
             android:singleLine="true"
-            android:hint="Username"
-            android:imeOptions="actionDone"
             android:textStyle="bold" />
 
 
     </LinearLayout>
+
+
+    <FrameLayout
+        android:id="@+id/camera"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="48dp"
+        android:background="@drawable/camera"
+        android:elevation="2dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

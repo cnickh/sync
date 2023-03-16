@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.os.bundleOf
 import androidx.core.view.marginStart
 import androidx.fragment.app.FragmentActivity
@@ -31,6 +32,7 @@ import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.util.Expander
 import daemon.dev.field.util.Phi
 import java.lang.Thread.sleep
+import kotlin.math.roundToInt
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -94,79 +96,58 @@ class DeviceAdapter(val view : View, val activity : FragmentActivity) : Recycler
                     val ft : FragmentTransaction =
                         activity.supportFragmentManager.beginTransaction();
 
-                    ft.replace(R.id.container_view, selFrag, "FRAGMENT_TAG");
+                    ft.replace(R.id.fragment_view, selFrag);
                     ft.addToBackStack(null)
                     ft.commit();
 
-//                    activity.supportFragmentManager.commit {
-//                        replace<ProfileSelectFragment>(R.id.fragment_view)
-//                        addToBackStack(null)
-//                    }
 
                 }
-
-                binding.card.visibility = View.VISIBLE
 
             }
         }
     }
     private fun beautify(binding: DeviceViewHolderBinding){
 
-        binding.card.viewTreeObserver.addOnGlobalLayoutListener(object :
-            ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
+        val displayMetrics = view.context.resources.displayMetrics
 
-                val v = binding.card
+        val v = binding.card
 
-                v.viewTreeObserver.removeOnGlobalLayoutListener(this)
-
-                val params = v.layoutParams
-                params.width = v.width
-                params.height = Phi().phi(params.width,4)
-                binding.card.layoutParams = params
+        val params = v.layoutParams
+        val width = displayMetrics.widthPixels - (30*displayMetrics.density)
+        params.width = width.roundToInt()
+        params.height = Phi().phi(width.roundToInt(),4)
+        binding.card.layoutParams = params
 
 
-                val offset = (params.height - binding.profileImage.width)/2
+        val offset = (params.height - 60*displayMetrics.density)/2
 
-                //set constraints to comment writer
-                val set = ConstraintSet()
-                set.clone(v)
-//                set.connect(
-//                    binding.ref0.id,
-//                    ConstraintSet.START,
-//                    v.id,
-//                    ConstraintSet.START,
-//                    params.height
-//                )
-                set.connect(
-                    binding.name.id,
-                    ConstraintSet.START,
-                    v.id,
-                    ConstraintSet.START,
-                    params.height
-                )
-                set.connect(
-                    binding.id.id,
-                    ConstraintSet.START,
-                    v.id,
-                    ConstraintSet.START,
-                    params.height
-                )
-                set.connect(
-                    binding.profileImage.id,
-                    ConstraintSet.START,
-                    v.id,
-                    ConstraintSet.START,
-                    offset
-                )
-                set.applyTo(v)
+        //set constraints to comment writer
+        val set = ConstraintSet()
+        set.clone(v)
 
-//                val params0 = binding.ref0.layoutParams
-//                params0.height = params.height
-//                binding.ref0.layoutParams = params0
-//
-            }
-            })
+        set.connect(
+            binding.name.id,
+            ConstraintSet.START,
+            v.id,
+            ConstraintSet.START,
+            params.height
+        )
+        set.connect(
+            binding.id.id,
+            ConstraintSet.START,
+            v.id,
+            ConstraintSet.START,
+            params.height
+        )
+        set.connect(
+            binding.profileImage.id,
+            ConstraintSet.START,
+            v.id,
+            ConstraintSet.START,
+            offset.roundToInt()
+        )
+        set.applyTo(v)
+
     }
 
 }

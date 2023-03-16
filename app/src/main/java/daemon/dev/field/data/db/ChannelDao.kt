@@ -10,6 +10,9 @@ interface ChannelDao {
     @Query("DELETE FROM channel_table")
     fun clear()
 
+    @Query("DELETE FROM channel_table WHERE `name` = :name")
+    suspend fun delete(name : String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: Channel)
 
@@ -25,8 +28,11 @@ interface ChannelDao {
     @Query("UPDATE channel_table SET `contents`=:nwContents WHERE `name` = :name")
     fun updateContents(name : String, nwContents : String)
 
-    @Query("SELECT name FROM channel_table")
-    fun getChannels() : LiveData<List<String>>
+    @Query("UPDATE channel_table SET `key`=:key WHERE `name` = :name")
+    suspend fun updateKey(name : String, key : String)
+
+    @Query("SELECT * FROM channel_table")
+    fun getChannels() : LiveData<List<Channel>>
 
     @Query("SELECT name FROM channel_table")
     suspend fun waitChannels() : List<String>

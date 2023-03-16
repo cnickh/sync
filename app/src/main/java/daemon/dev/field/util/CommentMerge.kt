@@ -15,7 +15,7 @@ class CommentMerge(a : String, b : String) {
 
     init {
 
-        Log.i("merge.kt","Have a: $a and b: $b")
+        Log.i("merge.kt","Comments: \n a: $a \n b: $b")
 
         val list0 = if(a == "null"){
             mutableListOf()
@@ -49,7 +49,7 @@ class CommentMerge(a : String, b : String) {
 
         ret = Json.encodeToString(composed)
 
-        Log.i("merge.kt","Have res: $ret")
+        Log.i("merge.kt","\n ret: $ret")
     }
 
     private fun compose(from : List<Comment>, to : MutableList<Comment>){
@@ -75,6 +75,7 @@ class CommentMerge(a : String, b : String) {
         if(list.size==0){list.add(item);return}
 
         val time = item.time
+
         for(i in list.indices){
             val t = list[i].time
 
@@ -85,6 +86,7 @@ class CommentMerge(a : String, b : String) {
                 list.add(item)
             }
         }
+
     }
 
     private fun hash(cmnt : Comment) : Int{

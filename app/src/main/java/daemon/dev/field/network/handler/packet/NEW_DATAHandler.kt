@@ -64,7 +64,6 @@ class NEW_DATAHandler(val postRepository: PostRepository, val channelAccess: Cha
             }
 
             val json = Json.encodeToString(meta)
-            val bytes = json.toByteArray(CHARSET)
 
             for(p in contents){
                 Log.w("NEW_DATA.kt", "adding $p to send")
@@ -84,7 +83,7 @@ class NEW_DATAHandler(val postRepository: PostRepository, val channelAccess: Cha
                     null,
                     null,
                     postList,
-                    bytes
+                    json
                 )
 
                 Sync.queue(socket.key, newRaw)

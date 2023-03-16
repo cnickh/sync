@@ -7,6 +7,7 @@ import android.bluetooth.le.ScanRecord
 import android.bluetooth.le.ScanResult
 import daemon.dev.field.bluetooth.GattResolver
 import daemon.dev.field.network.Socket
+import daemon.dev.field.nypt.Session
 
 const val SCANNER = 0
 const val GATT = 1
@@ -21,9 +22,20 @@ const val RETRY = 7
 data class ScanEvent(val result : ScanResult)
 
 data class GattEvent(val type : Int,
-                         val device: BluetoothDevice, val bytes : ByteArray?, val gattServer: BluetoothGattServer?, val req : Int?)
+                         val device: BluetoothDevice,
+                     val bytes : ByteArray?,
+                     val gattServer: BluetoothGattServer?,
+                     val req : Int?,
+                     val session : Session?
+                     )
 
 data class ResolverEvent(val type : Int,
-                             val socket: Socket?, val bytes : ByteArray?, val device: BluetoothDevice?, val gatt: BluetoothGatt?, val res : GattResolver?)
+                             val socket: Socket?,
+                         val bytes : ByteArray?,
+                         val device: BluetoothDevice?,
+                         val gatt: BluetoothGatt?,
+                         val res : GattResolver?,
+                         val session : Session?
+                         )
 
 data class AppEvent(val socket : Socket)

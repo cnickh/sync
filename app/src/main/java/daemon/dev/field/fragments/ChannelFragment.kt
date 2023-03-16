@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -43,16 +44,26 @@ class ChannelFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        val channelAdapter = ChannelAdapter(view,syncModel)
+        val channelAdapter = ChannelAdapter(activity!!,view,syncModel)
 
         binding.channelList.adapter = channelAdapter
         binding.channelList.layoutManager = GridLayoutManager(requireContext(),2)
 
         syncModel.channels.observe(viewLifecycleOwner, Observer { list ->
 
+            Log.d("ChannelFrag.kt","Channel fired on $list")
+
             val mList = list.toMutableList()
-            mList.remove("Public")
+
+            val itr = mList.iterator()
+
+            while (itr.hasNext())
+                if (itr.next().name == "Public")
+                    itr.remove()
+
+
             channelAdapter.updateView(mList)
+            channelAdapter.notifyDataSetChanged()
 
         })
 

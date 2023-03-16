@@ -27,6 +27,7 @@ import daemon.dev.field.*
 import daemon.dev.field.network.Async
 import kotlinx.coroutines.runBlocking
 import daemon.dev.field.network.handler.event.*
+import daemon.dev.field.nypt.Session
 
 
 @SuppressLint("MissingPermission")
@@ -39,10 +40,17 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
     private var profileCharacteristic: BluetoothGattCharacteristic? = null
     private var requestCharacteristic: BluetoothGattCharacteristic? = null
 
-    private fun sendEvent(type :Int, device: BluetoothDevice, bytes : ByteArray?, gattServer: BluetoothGattServer?, req : Int?){
+    private var sessionMap = mutableMapOf<String, Session>()
+
+    private fun sendEvent(type :Int,
+                          device: BluetoothDevice,
+                          bytes : ByteArray?,
+                          gattServer: BluetoothGattServer?,
+                          req : Int?,
+                          session: Session?){
         handler.obtainMessage(
             GATT,
-            GattEvent(type,device,bytes,gattServer,req)).sendToTarget()
+            GattEvent(type,device,bytes,gattServer,req,session)).sendToTarget()
     }
 
     fun start() {
@@ -103,7 +111,7 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
             if(!isConnected){
                 device.let{
                     Log.e(GATT_TAG,"onConnectionState was bad am gatt")
-                    sendEvent(DISCONNECT,it,null,gattServer!!,null)
+                    sendEvent(DISCONNECT,it,null,gattServer!!,null,null)
                 }
             }
 
@@ -119,7 +127,10 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
 //            Log.v(GATT_TAG, "onCharacteristicRead")
 
             device?.let {
-                sendEvent(HANDSHAKE,device,null,gattServer!!,requestId)
+                //create session & map & send
+                val session = Session()
+                sessionMap[device.address] = session
+                sendEvent(HANDSHAKE,device,null,gattServer!!,requestId,session)
             }
 
         }
@@ -144,7 +155,8 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
             value?.let {
 
                 //gattServer?.sendResponse(device!!, requestId, 0, 0, null)
-                sendEvent(PACKET,device!!,it,gattServer,requestId)
+                //Got handshake send original session from map
+                sendEvent(PACKET,device!!,it,gattServer,requestId,sessionMap[device.address])
 
             }
 

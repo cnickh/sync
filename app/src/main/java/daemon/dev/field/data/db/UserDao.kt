@@ -2,6 +2,7 @@ package daemon.dev.field.data.db
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import daemon.dev.field.CHARSET
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.cereal.objects.User
 
@@ -15,7 +16,7 @@ interface UserDao {
     suspend fun update(item: User)
 
     @Query("UPDATE user_table SET alias=:nwAlias WHERE `key` = :key")
-    suspend fun setAlias( nwAlias : String, key : String = PUBLIC_KEY)
+    suspend fun setAlias( nwAlias : String, key : String = PUBLIC_KEY.toString(CHARSET))
 
     @Query("SELECT * FROM user_table WHERE `key` IN (:list)")
     fun getUsers(list : List<String>) : LiveData<List<User>>

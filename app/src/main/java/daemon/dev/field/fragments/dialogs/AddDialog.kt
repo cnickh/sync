@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.view.Window
 import android.view.inputmethod.EditorInfo
@@ -76,6 +77,7 @@ class AddDialog(var c: Activity, var dialogModel : DialogModel, var channels : A
         when (v.id) {
             R.id.share -> {
                 //get selected
+                Log.d("AddDialog.kt","Have ${dialogModel.key}")
                 dialogModel.useSelected()
                 dismiss()
             }

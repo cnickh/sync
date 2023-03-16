@@ -64,7 +64,7 @@ android {
 
 dependencies {
 
-    implementation 'org.bouncycastle:bcpkix-jdk15on:1.67'
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
 
     implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
 
@@ -92,6 +92,9 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
 
+
+    implementation 'com.github.bumptech.glide:glide:4.14.2'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.14.2'
 
     def room_version = "2.4.0-beta02" // check latest version from docs
 

@@ -12,25 +12,26 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import daemon.dev.field.cereal.objects.User
-import daemon.dev.field.data.db.SyncDatabase
+import daemon.dev.field.cereal.objects.Comment
 import daemon.dev.field.databinding.ActivityMainBinding
 import daemon.dev.field.fragments.ChannelFragment
 import daemon.dev.field.fragments.InboxFragment
 import daemon.dev.field.fragments.ProfileFragment
-import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.fragments.model.SyncModelFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import daemon.dev.field.fragments.model.*
+import daemon.dev.field.nypt.Signature
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import java.security.SecureRandom
-import kotlin.random.Random
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding : ActivityMainBinding
     lateinit var syncModel : SyncModel
+    lateinit var resModel : ResourceModel
+    lateinit var msgModel : MessengerModel
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,15 +43,19 @@ class MainActivity : AppCompatActivity() {
         val random = SecureRandom()
         random.nextBytes(key)
 
-        PUBLIC_KEY = key.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
-        Log.v("Main","set key $PUBLIC_KEY")
+        val signature = Signature()
+        signature.init()
+        PUBLIC_KEY = signature.getPublic()
+        PRIVATE_KEY = signature.getPrivate()
+        Log.v("Main","set key ${PUBLIC_KEY.toBase64()}")
 
-        val viewModelFactory = SyncModelFactory(this)
-        syncModel = ViewModelProvider(this, viewModelFactory)[SyncModel::class.java]
+        val syncModelFactory = SyncModelFactory(this)
+        val resModelFactory = ResourceModelFactory(this)
+        val msgModelFactory = MessengerModelFactory()
 
-        syncModel.channels.observe(this, Observer { list ->
-            Log.d(MAIN_TAG, "We got this up in this bitch $list")
-        })
+        syncModel = ViewModelProvider(this, syncModelFactory)[SyncModel::class.java]
+        resModel = ViewModelProvider(this, resModelFactory)[ResourceModel::class.java]
+        msgModel = ViewModelProvider(this, msgModelFactory)[MessengerModel::class.java]
 
         requestPermissions(
             arrayOf(LOCATION_FINE_PERM,CONNECTION_PERM),
@@ -66,9 +71,6 @@ class MainActivity : AppCompatActivity() {
             replace<ProfileFragment>(R.id.fragment_view)
             addToBackStack(null)
         }
-
-//        binding.navBar.getOrCreateBadge(R.id.profile).number = 2
-//        binding.navBar.removeBadge(R.id.profile)
 
         binding.navBar.setOnItemSelectedListener {
 
@@ -108,8 +110,30 @@ class MainActivity : AppCompatActivity() {
             toast.show()
         })
 
-    }
+        msgModel.direct.observe(this, Observer {
 
+            val msg = Json.decodeFromString<Comment>(it)
+
+            if(msg.equals("d1sc0nn3ct")){
+                msgModel.zeroSub(msg.key)
+            }else {
+
+                msgModel.createSub(msg.key)
+
+                msgModel.receiveMessage(msg)
+
+//                msgModel.printMsgMap()
+//                val text = msg.comment
+//                val duration = Toast.LENGTH_SHORT
+//                val toast = Toast.makeText(this, text, duration)
+//                toast.show()
+            }
+        })
+
+    }
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
+    }
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onRequestPermissionsResult(
         requestCode: Int,
