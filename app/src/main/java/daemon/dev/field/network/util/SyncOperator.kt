@@ -103,7 +103,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
             }
             MeshRaw.CHANNEL->{
                 mtype = "CHANNEL"
-                channelHandler.handle(raw.misc!!)
+                channelHandler.handle(raw.misc!!,socket.key)
             }
             MeshRaw.DIRECT->{
                 mtype = "CHANNEL"

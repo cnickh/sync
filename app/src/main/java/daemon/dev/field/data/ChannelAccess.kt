@@ -28,7 +28,7 @@ class ChannelAccess(private val sync : ChannelDao) {
     suspend fun getOpenContents() : List<String>{
         val posts = mutableListOf<String>()
 
-        for(c in Sync.open_channels){
+        for(c in Sync.getOpenChannels()){
 
             val content = sync.waitContents(c)
 
@@ -78,7 +78,7 @@ class ChannelAccess(private val sync : ChannelDao) {
 
         val ch_map = hashMapOf<String,MutableList<String>>()
 
-            for(c in Sync.open_channels){
+            for(c in Sync.getOpenChannels()){
                 val content = sync.waitContents(c).split(",")
 
                 ch_map[c] = mutableListOf()
@@ -99,7 +99,7 @@ class ChannelAccess(private val sync : ChannelDao) {
         val ch_map = hashMapOf<String,MutableList<String>>()
 
         for(c in channels){
-            if(Sync.open_channels.contains(c)){
+            if(Sync.getOpenChannels().contains(c)){
                 val content = sync.waitContents(c).split(",")
 
                 ch_map[c] = mutableListOf()

@@ -7,17 +7,22 @@ import android.view.View
 import android.view.ViewTreeObserver
 import android.view.Window
 import android.widget.Button
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import daemon.dev.field.R
+import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.util.Phi
 import kotlin.math.roundToInt
 
-class JoinDialog(var c: Activity, var syncModel : SyncModel, val name : String) : Dialog(c), View.OnClickListener {
+class JoinDialog(val view : View, var c: Activity, var syncModel : SyncModel, val name : String, val user : LiveData<User>) : Dialog(c), View.OnClickListener {
 
     var d: Dialog? = null
     var yes: Button? = null
     var no: Button? = null
+    var share: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,10 +30,23 @@ class JoinDialog(var c: Activity, var syncModel : SyncModel, val name : String) 
         setContentView(R.layout.join_dialog)
         yes = findViewById(R.id.join)
         no = findViewById(R.id.cancel)
+        share = findViewById(R.id.shared)
 
         yes!!.setOnClickListener(this)
         no!!.setOnClickListener(this)
         beautify()
+
+        view.findViewTreeLifecycleOwner()?.let {
+            user.observe(it) { user ->
+
+                share?.let{ textView ->
+                    val start = "Shared by: \n"
+                    textView.text = start + user.alias
+                }
+
+            }
+        }
+
     }
 
     override fun onClick(v: View) {

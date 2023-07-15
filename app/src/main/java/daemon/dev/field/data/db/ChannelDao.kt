@@ -13,7 +13,7 @@ interface ChannelDao {
     @Query("DELETE FROM channel_table WHERE `name` = :name")
     suspend fun delete(name : String)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(item: Channel)
 
     @Update

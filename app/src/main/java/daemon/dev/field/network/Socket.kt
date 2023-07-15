@@ -26,7 +26,7 @@ class Socket(
     private val gatt : BluetoothGatt?,
     val device : BluetoothDevice,
     private val gattServer : BluetoothGattServer?,
-    private val symKey : ByteArray
+    symKey : ByteArray
            ){
 
     companion object {

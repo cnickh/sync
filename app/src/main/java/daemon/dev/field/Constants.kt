@@ -8,14 +8,6 @@ var PUBLIC_KEY: ByteArray = ByteArray(0)
 
 var PRIVATE_KEY: ByteArray = ByteArray(0)
 
-//var PRIVATE_KEY  = "yz8X4lz/FEU8NVhz9R89FqhXONrkqrfZsiylr62Ax+0=".toByteArray()
-//
-//var PRIVATE_KEY  = "KNSAi9he7OrzCwjrT3ni+qqnQujxT9q0/z6udWvbvjE=".toByteArray()
-//
-//var PRIVATE_KEY  = "DLTBZbhcecHkqqHmcF/+Fp0/ntXjqRjqa/iPSlIa3BM=".toByteArray()
-//
-//var PRIVATE_KEY  = "h5wmB88jDA3WlCcmgaK8IXXzYB2vTbWWtf1vCQW9xtU=".toByteArray()
-
 var UNIVERSAL_KEY = "Hello uni-key"
 
 /**Character Encoding*/

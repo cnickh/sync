@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.*
+import kotlin.system.exitProcess
 
 /**@brief this class provides database and network data to UI threads via coroutines.*/
 
@@ -31,7 +32,8 @@ class SyncModel internal constructor(
     val posts = postRepository.posts
     val peers = Async.peers
     val channels = channelAccess.channels
-    var raw_filter = channelAccess.getLiveContents(Sync.open_channels)
+    var raw_filter = channelAccess.getLiveContents(listOf())
+    val openChannels = Sync.liveChannels
     val state : LiveData<Int> = Async.live_state
     val me = userBase.getUser(PUBLIC_KEY.toBase64())
 
@@ -147,13 +149,13 @@ class SyncModel internal constructor(
         }
     }
 
-    fun selectChannel(name : String) : Boolean {
-        val ret = Sync.selectChannel(name)
-        raw_filter = channelAccess.getLiveContents(Sync.open_channels)
+    fun selectChannel(name : String) {
         viewModelScope.launch(Dispatchers.IO) {
+            Sync.selectChannel(name)
+            raw_filter = channelAccess.getLiveContents(Sync.getOpenChannels())
+
             Sync.queueUpdate()
         }
-        return ret
     }
 
     fun disconnect(user : User){
@@ -212,15 +214,19 @@ class SyncModel internal constructor(
 
         val post = Post(PUBLIC_KEY.toBase64(),time,title,body,"null",0)
 
-        if(Sync.open_channels.isEmpty()){
-            Log.e("SyncModel.kt","Err no open channels, post not created")
-            return
-        }
+
         
         viewModelScope.launch(Dispatchers.IO) {
+
+            if(Sync.getOpenChannels().isEmpty()){
+                Log.e("SyncModel.kt","Err no open channels, post not created")
+                ping.postValue("No Open Channels")
+                exitProcess(0)
+            }
+
             Log.v("SyncModel.kt","Created post $post")
             postRepository.add(post)
-            for(c in Sync.open_channels){
+            for(c in Sync.getOpenChannels()){
                 channelAccess.addPost(c,post.address().address)
             }
             filter = channelAccess.getOpenContents()

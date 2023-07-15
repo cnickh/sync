@@ -10,9 +10,11 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import daemon.dev.field.R
 import daemon.dev.field.cereal.objects.Channel
+import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.BinViewHolderBinding
 import daemon.dev.field.fragments.dialogs.JoinDialog
 import daemon.dev.field.fragments.model.SyncModel
@@ -22,6 +24,7 @@ import daemon.dev.field.network.Sync
 class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : SyncModel)  : RecyclerView.Adapter<ChannelAdapter.BinVh>(){
 
     private var itemsList: MutableList<Channel> = arrayListOf()
+    private var openChannels : List<String> = listOf()
 
     override fun getItemCount() = itemsList.size
 
@@ -33,6 +36,12 @@ class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : 
         }
         notifyDataSetChanged()
     }
+
+    fun updateOpenChannels(open : List<String>){
+        openChannels = open
+        notifyDataSetChanged()
+    }
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BinVh {
         val binding =
@@ -54,12 +63,14 @@ class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : 
 
                 Log.d("ChannelAdapter,kt","rebinding ${it.name} with ${it.key}")
 
-                if(it.key != "null"){
+                val chSplit = it.key.split(":")
+
+                if(chSplit[0] != "shared"){
                     Log.d("ChannelAdapter,kt","setUpChannel(binding, it)")
                     setUpChannel(binding, it)
                 }else{
                     Log.d("ChannelAdapter,kt","setUpJoin(binding, it)")
-                    setUpJoin(binding, it)
+                    setUpJoin(binding, it, chSplit[1])
                 }
 
             }
@@ -71,22 +82,23 @@ class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : 
             binding.binName.text = bin_id
             binding.badge.visibility = View.INVISIBLE
 
-            if(Sync.open_channels.contains(bin_id)){
+            if(openChannels.contains(bin_id)){
                 binding.bin.setBackgroundResource(R.drawable.col_bg)
             }else{
                 binding.bin.setBackgroundResource(R.drawable.wht_bg)
             }
 
             binding.bin.setOnClickListener {
-                if(vm.selectChannel(bin_id)){
-                    binding.bin.setBackgroundResource(R.drawable.col_bg)
-                }else{
-                    binding.bin.setBackgroundResource(R.drawable.wht_bg)
-                }
+                vm.selectChannel(bin_id)
+//                if(vm.selectChannel(bin_id)){
+//                    binding.bin.setBackgroundResource(R.drawable.col_bg)
+//                }else{
+//                    binding.bin.setBackgroundResource(R.drawable.wht_bg)
+//                }
             }
         }
 
-        private fun setUpJoin(binding: BinViewHolderBinding, bin : Channel) {
+        private fun setUpJoin(binding: BinViewHolderBinding, bin : Channel, key : String) {
             val bin_id = bin.name
 
             binding.binName.text = bin_id
@@ -94,17 +106,17 @@ class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : 
             binding.badge.visibility = View.VISIBLE
 
             binding.bin.setOnClickListener {
-                createBin(bin.name)
+                createBin(bin.name,vm.getUser(key))
             }
 
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun createBin(name : String) {
+    private fun createBin(name : String, user: LiveData<User>) {
         activity.let {
 
-            val dialog = JoinDialog(it,vm,name)
+            val dialog = JoinDialog(view,it,vm,name,user)
 
             dialog.window?.setBackgroundDrawable(
                 ColorDrawable(

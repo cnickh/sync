@@ -24,6 +24,7 @@ import daemon.dev.field.databinding.FragmentProfileSelectBinding
 import daemon.dev.field.fragments.dialogs.AddDialog
 import daemon.dev.field.fragments.dialogs.BlockDialog
 import daemon.dev.field.fragments.model.DialogModel
+import daemon.dev.field.fragments.model.MessengerModel
 import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.network.Async
@@ -36,6 +37,7 @@ class ProfileSelectFragment : Fragment() {
     private val syncModel : SyncModel by activityViewModels()
     private val resModel : ResourceModel by activityViewModels()
     private val dialogModel : DialogModel by viewModels()
+    private val msgModel : MessengerModel by viewModels()
 
     private lateinit var binding: FragmentProfileSelectBinding
     private lateinit var key: String
@@ -58,18 +60,24 @@ class ProfileSelectFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.v("ProfSel", "onCreate called")
 
+        val unRead = msgModel.getUnRead(key)
+        Log.i("ProfSel","Have unread $unRead")
+        if(unRead != 0 && unRead != null){
+            binding.badge.visibility = View.VISIBLE
+        } else {
+            binding.badge.visibility = View.INVISIBLE
+        }
 
 
         beautify()
-        dialogModel.setUser(key)
-        syncModel.getUser(key).observe(viewLifecycleOwner, Observer { user ->
+
+        syncModel.getUser(key).observe(viewLifecycleOwner) { user ->
             if (user != null) {
                 binding.username.text = user.alias
                 binding.key.text = key
-            } else {
-
             }
-        })
+        }
+
         resModel.getUserProfile(key).observe(viewLifecycleOwner) {
             if (it != null) {
                 val uri = it.toUri()
@@ -84,7 +92,7 @@ class ProfileSelectFragment : Fragment() {
             }
         }
 
-        syncModel.channels.observeOnce(viewLifecycleOwner, Observer {
+        syncModel.channels.observeOnce(viewLifecycleOwner) {
 
             Log.v("ProfSel", "have channels: $it")
 
@@ -96,7 +104,7 @@ class ProfileSelectFragment : Fragment() {
                 binding.add.visibility = View.VISIBLE
             }
 
-        })
+        }
 
         binding.chat.setOnClickListener {
 
@@ -128,7 +136,7 @@ class ProfileSelectFragment : Fragment() {
             }
         }
 
-        dialogModel.blockedStatus.observe(viewLifecycleOwner, Observer { status ->
+        dialogModel.blockedStatus.observe(viewLifecycleOwner) { status ->
 
             if (status == false) {
                 val text = "User Blocked"
@@ -140,18 +148,18 @@ class ProfileSelectFragment : Fragment() {
                 syncModel.blockUser(key)
             }
 
-        })
+        }
 
-        Async.peers.observe(viewLifecycleOwner, Observer { peers ->
+        Async.peers.observe(viewLifecycleOwner) { peers ->
 
-            val connected = peers.contains(User(key, "", 0, "",0))
+            val connected = peers.contains(User(key, "", 0, "", 0))
             if (connected) {
                 binding.connection.setBackgroundResource(R.drawable.circle_col)
             } else {
                 binding.connection.setBackgroundResource(R.drawable.circle)
             }
 
-        })
+        }
     }
 
     private fun <T> LiveData<T>.observeOnce(lifecycleOwner: LifecycleOwner, observer: Observer<T>) {
@@ -169,7 +177,10 @@ class ProfileSelectFragment : Fragment() {
 
     }
 
-    fun add(){
+    private fun add(){
+
+        dialogModel.setUser(key)
+
         activity?.let {
 
             val list = syncModel.channels.value!!
@@ -200,7 +211,7 @@ class ProfileSelectFragment : Fragment() {
         }
     }
 
-    fun block(){
+    private fun block(){
 
         activity?.let {
 
@@ -228,19 +239,16 @@ class ProfileSelectFragment : Fragment() {
         val height = Phi().phi(width.roundToInt(),2)
         params.height = height
 
+        val bParams = binding.buttonLayout.layoutParams
+        val bWidth = displayMetrics.widthPixels - (30*displayMetrics.density)
+        bParams.width = bWidth.roundToInt()
+        val bHeight = Phi().phi(width.roundToInt(),6)
+        bParams.height = bHeight
 
         val offset = ((params.height - 96*displayMetrics.density)/2).roundToInt()
-//
-//        val bParams = binding.buttonLayout.layoutParams
-//        bParams.width = (width - 2*height).roundToInt()
-//        binding.buttonLayout.layoutParams = bParams
-//
         val set = ConstraintSet()
         set.clone(binding.profileCard)
-//
-//        val length = 36*3+32*2
-//        val button_offset = (width.roundToInt() - height - length)/2
-//
+
         set.connect(
             binding.username.id,
             ConstraintSet.START,
@@ -261,13 +269,6 @@ class ProfileSelectFragment : Fragment() {
             binding.profileCard.id,
             ConstraintSet.START,
             offset
-        )
-        set.connect(
-            binding.buttonLayout.id,
-            ConstraintSet.START,
-            binding.profileCard.id,
-            ConstraintSet.START,
-            height
         )
 
         set.applyTo(binding.profileCard)

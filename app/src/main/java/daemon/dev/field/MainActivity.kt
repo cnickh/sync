@@ -10,8 +10,8 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.badge.BadgeDrawable
 import daemon.dev.field.cereal.objects.Comment
 import daemon.dev.field.databinding.ActivityMainBinding
 import daemon.dev.field.fragments.ChannelFragment
@@ -40,7 +40,8 @@ class MainActivity : AppCompatActivity() {
 
         try {
             this.supportActionBar!!.hide()
-        } catch (e: NullPointerException) {
+        } catch (_: NullPointerException) {
+
         }
 
         Log.d(MAIN_TAG, "Main-thread["+Thread.currentThread().name +"]")
@@ -53,8 +54,6 @@ class MainActivity : AppCompatActivity() {
         signature.init()
 
         val keyStore = KeyStore(this)
-
-        //keyStore.clear()
 
         if(keyStore.checkKey()){
             Log.d(MAIN_TAG,"Key retrieved")
@@ -128,6 +127,24 @@ class MainActivity : AppCompatActivity() {
             return@setOnItemSelectedListener true
         }
 
+        syncModel.channels.observe(this) {
+    
+            var badge: BadgeDrawable? = null
+            
+            for (c in it){
+                if(c.key.split(":")[0] == "shared"){
+                    badge = binding.navBar.getOrCreateBadge(R.id.channel)
+                    badge.isVisible = true
+                }
+            }
+            
+            if(badge == null){
+                badge = binding.navBar.getOrCreateBadge(R.id.channel)
+                badge.isVisible = false
+            }
+
+        }
+
         syncModel.ping.observe(this) {
             val text = "Ping from $it"
             val duration = Toast.LENGTH_SHORT
@@ -157,7 +174,7 @@ class MainActivity : AppCompatActivity() {
             msgModel.printMsgMap()
         }
 
-        Async.peers.observe(this) { peers ->
+        syncModel.peers.observe(this) { peers ->
             Log.d(MAIN_TAG, "Main-thread peers Observer")
 
             for (p in peers) {
@@ -167,9 +184,11 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
+
     private fun ByteArray.toBase64() : String {
         return Base64.getEncoder().encodeToString(this)
     }
+
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onRequestPermissionsResult(
         requestCode: Int,

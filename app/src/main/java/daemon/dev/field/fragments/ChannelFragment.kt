@@ -49,9 +49,9 @@ class ChannelFragment : Fragment() {
         binding.channelList.adapter = channelAdapter
         binding.channelList.layoutManager = GridLayoutManager(requireContext(),2)
 
-        syncModel.channels.observe(viewLifecycleOwner, Observer { list ->
+        syncModel.channels.observe(viewLifecycleOwner) { list ->
 
-            Log.d("ChannelFrag.kt","Channel fired on $list")
+            Log.d("ChannelFrag.kt", "Channel fired on $list")
 
             val mList = list.toMutableList()
 
@@ -63,9 +63,19 @@ class ChannelFragment : Fragment() {
 
 
             channelAdapter.updateView(mList)
-            channelAdapter.notifyDataSetChanged()
 
-        })
+        }
+
+        syncModel.openChannels.observe(viewLifecycleOwner) { channels ->
+            channelAdapter.updateOpenChannels(channels)
+
+            if(channels.contains("Public")){
+                binding.publicBin.setBackgroundResource(R.drawable.col_bg)
+            }else{
+                binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
+            }
+
+        }
 
         addPublic()
 
@@ -102,18 +112,8 @@ class ChannelFragment : Fragment() {
 
         binding.binName.text = bin_id
 
-        if(Sync.open_channels.contains(bin_id)){
-            binding.publicBin.setBackgroundResource(R.drawable.col_bg)
-        }else{
-            binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
-        }
-
         binding.publicBin.setOnClickListener {
-            if(syncModel.selectChannel(bin_id)){
-                binding.publicBin.setBackgroundResource(R.drawable.col_bg)
-            }else{
-                binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
-            }
+            syncModel.selectChannel(bin_id)
         }
     }
 

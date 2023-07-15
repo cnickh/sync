@@ -1,6 +1,7 @@
 package daemon.dev.field.network
 
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import daemon.dev.field.SYNC_INTERVAL
 import daemon.dev.field.SYNC_TAG
 import daemon.dev.field.cereal.objects.MeshRaw
@@ -18,8 +19,12 @@ object Sync {
     private lateinit var pr : PostRepository
 
     val open_channels = mutableListOf<String>()
+    val liveChannels = MutableLiveData<List<String>>(listOf())
+
+
     val peer_queue = hashMapOf<String,ArrayDeque<MeshRaw>>()
     val queue_lock = Mutex()
+    val openChannel_lock = Mutex()
 
 
     lateinit var channel_info : HashMap<String,String>
@@ -110,14 +115,29 @@ object Sync {
         queue_lock.unlock()
     }
 
-    fun selectChannel(name : String) : Boolean{
-        return if(open_channels.contains(name)){
+    suspend fun selectChannel(name : String){
+
+        openChannel_lock.lock()
+
+        if(open_channels.contains(name)){
             open_channels.remove(name)
-            false
         }else{
             open_channels.add(name)
-            true
         }
+
+        liveChannels.postValue(open_channels)
+
+        openChannel_lock.unlock()
+
+    }
+
+    suspend fun getOpenChannels() : List<String> {
+
+        openChannel_lock.lock()
+        val list = open_channels
+        openChannel_lock.unlock()
+
+        return list
     }
 
     class SyncThread : Thread() {

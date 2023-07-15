@@ -14,9 +14,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.zip.CRC32
 
-class NEW_DATAHandler(val postRepository: PostRepository, val channelAccess: ChannelAccess) {
+class NEW_DATAHandler(private val postRepository: PostRepository, val channelAccess: ChannelAccess) {
 
-    val crc = CRC32()
+    private val crc = CRC32()
 
     suspend fun handle( raw : MeshRaw, socket : Socket) {
     Log.w("NEW_DATA.kt", "Received NEW_DATA")
