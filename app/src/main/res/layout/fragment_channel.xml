@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/tint_bg"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
@@ -45,11 +46,13 @@
         android:layout_height="629dp"
         android:layout_marginTop="8dp"
         android:layout_gravity="center"
-        android:background="@drawable/wht_bg"
+        android:background="@drawable/tint_bg"
         app:layout_constraintTop_toBottomOf="@+id/public_bin" />
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/create"
+        app:backgroundTint="@color/tertiary"
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"

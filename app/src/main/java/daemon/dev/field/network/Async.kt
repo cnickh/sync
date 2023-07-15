@@ -49,7 +49,7 @@ object Async {
     val peers = MutableLiveData<MutableList<User>>(mutableListOf()) //updates connected peers
     val peerStart = HashMap<String,Long>()
 
-    /**All pasted to SyncOperator, used to notify app of important packets*/
+    /**All pasted to SyncOperator, used to notify app UI of important packets*/
     val ping = MutableLiveData<String>()//updates pings
     val direct = MutableLiveData<String>()//updates on direct message
 
@@ -131,7 +131,6 @@ object Async {
         if(ret && !_peers.contains(user)){
             val time = elapsedRealtime()
             peerStart[user.key] = time
-
             _peers.add(user)
             peers.postValue(_peers)
             Sync.add(user.key)
@@ -237,6 +236,7 @@ object Async {
         }else{
             Log.v(ASYNC_TAG, "Sending ${type2string(raw.type)} for mid ${raw.misc!!}")
         }
+
         val packer = Packer(raw)
 
         val success = socket.send(packer)
@@ -264,13 +264,21 @@ object Async {
         op.receive(bytes,socket)
     }
 
+    fun zeroAll(){
+        for (p in pn.peers()){
+            val dis_cmnt = Comment(p,"d1sc0nn3ct",0L)
+            val json = Json.encodeToString(dis_cmnt)
+            direct.postValue(json)
+        }
+    }
+
     suspend fun idle(){
         val raw = MeshRaw(MeshRaw.DISCONNECT, null, null, null, null, null)
         sendAll(raw)
 
+        zeroAll()
       //  state_lock.lock()
 //        if(state == IDLE){state_lock.unlock();return}
-
         Sync.kill()
 
         pn.clear()
@@ -307,7 +315,9 @@ object Async {
             MeshRaw.PING->{"PING"}
             MeshRaw.DISCONNECT->{"DISCONNECT"}
             MeshRaw.CONFIRM->{"CONFIRM"}
-            else ->{"NO_TYPE"}
+           MeshRaw.DIRECT->{"DIRECT"}
+
+           else ->{"NO_TYPE"}
         }
 
     }

@@ -1,6 +1,5 @@
 package daemon.dev.field.cereal.objects
 
-import daemon.dev.field.CHARSET
 import kotlinx.serialization.Serializable
 
 @Serializable

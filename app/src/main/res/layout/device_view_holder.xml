@@ -6,23 +6,35 @@
     android:id="@+id/card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="@dimen/l_margin"
-    android:layout_marginLeft="@dimen/u_margin"
-    android:layout_marginRight="@dimen/u_margin"
+    android:layout_marginBottom="8dp"
+    android:clipToPadding="false"
+
     android:layout_gravity="center"
-    android:background="@drawable/dev_holder"
+    android:background="@drawable/wht_bg"
     android:orientation="horizontal"
-    android:elevation="@dimen/elevation">
+    >
 
-<!--    <FrameLayout-->
-<!--        android:id="@+id/ref0"-->
-<!--        android:layout_width="3dp"-->
-<!--        android:layout_height="15dp"-->
-<!--        android:layout_gravity="center"-->
-<!--        android:background="@drawable/col_bg"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="parent" />-->
+    <FrameLayout
+        android:id="@+id/badge"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="-4dp"
+        android:layout_marginEnd="4dp"
+        android:visibility="invisible"
+        android:background="@drawable/circle"
+        app:layout_constraintEnd_toEndOf="@+id/card"
+        app:layout_constraintTop_toTopOf="@+id/card"
+    >
 
+        <TextView
+            android:id="@+id/num"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="0"
+            />
+
+    </FrameLayout>
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/profile_image"
@@ -60,5 +72,6 @@
         android:textSize="@dimen/key_text"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/name" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

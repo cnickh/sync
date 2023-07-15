@@ -17,11 +17,13 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.bumptech.glide.Glide
 import com.google.android.flexbox.*
+import daemon.dev.field.PROFILE_TAG
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.*
 import daemon.dev.field.fragments.adapter.DeviceAdapter
+import daemon.dev.field.fragments.model.MessengerModel
 import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.network.Async
@@ -38,6 +40,7 @@ class ProfileFragment : Fragment() {
 
     private val syncModel : SyncModel by activityViewModels()
     private val resModel : ResourceModel by activityViewModels()
+    private val msgModel : MessengerModel by activityViewModels()
 
     private lateinit var binding: FragmentProfileBinding
     private lateinit var deviceAdapter : DeviceAdapter
@@ -46,6 +49,7 @@ class ProfileFragment : Fragment() {
     private var readyButton : ReadyButtonBinding? = null
 
     private var uiState = "IDLE"
+    private var alias = ""
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -64,6 +68,10 @@ class ProfileFragment : Fragment() {
         beautify()
 
         setState()
+
+        binding.create.setOnClickListener {
+            syncModel.clearDB()
+        }
 
         resModel.loadProfileImage()
 
@@ -84,7 +92,9 @@ class ProfileFragment : Fragment() {
         }
 
         syncModel.me.observe(viewLifecycleOwner) {
-            binding.username.text = it.alias
+            alias = it?.alias ?: "No Alias!"
+            binding.username.text = alias
+            Log.i(PROFILE_TAG ,"We pulled user:$alias")
         }
 
         binding.stateFrame.setOnClickListener {
@@ -108,7 +118,7 @@ class ProfileFragment : Fragment() {
         }
 
         binding.key.text = PUBLIC_KEY.toBase64()
-        deviceAdapter = activity?.let { DeviceAdapter(view, it) }!!
+        deviceAdapter = activity?.let { DeviceAdapter(view, it, msgModel) }!!
         binding.userList.adapter = deviceAdapter
 
         //Black magic fuckary to center items in recycle view
@@ -118,10 +128,15 @@ class ProfileFragment : Fragment() {
             flexDirection = FlexDirection.ROW
             flexWrap = FlexWrap.WRAP
         }
+
         binding.userList.layoutManager = layoutManager
 
         syncModel.peers.observe(viewLifecycleOwner) { keys ->
             deviceAdapter.updateView(keys)
+        }
+
+        msgModel.latest.observe(viewLifecycleOwner) { _ ->
+            deviceAdapter.notifyDataSetChanged()
         }
 
         binding.editButton.setOnClickListener {
@@ -161,6 +176,8 @@ class ProfileFragment : Fragment() {
         card.doneButton.layoutParams = binding.editButton.layoutParams
         card.userInfo1.layoutParams = binding.userInfo.layoutParams
 
+        card.username.hint = alias
+
         val old_width = binding.editButton.width
         val old_height = binding.editButton.height
 
@@ -188,6 +205,9 @@ class ProfileFragment : Fragment() {
             val alias = card.username.text.toString()
 
             if(alias != ""){
+
+                Log.i(PROFILE_TAG,"Setting alias $alias")
+
                 syncModel.setAlias(alias)
             }
 
@@ -236,22 +256,29 @@ class ProfileFragment : Fragment() {
 
     private fun idle(){
 
-        if(uiState == "IDLE"){return}
-        else{uiState = "IDLE"}
-
-        if(readyButton != null){
-            binding.userInfo.removeView(readyButton!!.stateFrame)
-            binding.stateFrame.layoutParams = readyButton!!.stateFrame.layoutParams
-            binding.userInfo.addView(binding.stateFrame)
+        when(uiState){
+            "INSYNC"->{
+                uiState = "IDLE"
+                binding.userInfo.removeView(syncButton!!.stateFrame)
+                binding.stateFrame.layoutParams = syncButton!!.stateFrame.layoutParams
+                binding.userInfo.addView(binding.stateFrame)
+                return
+            }
+            "READY"->{
+                uiState = "IDLE"
+                binding.userInfo.removeView(readyButton!!.stateFrame)
+                binding.stateFrame.layoutParams = readyButton!!.stateFrame.layoutParams
+                binding.userInfo.addView(binding.stateFrame)
+                return
+            }
+            "IDLE"->{
+                return
+            }
         }
+
     }
 
     private fun ready(){
-
-        if(uiState == "READY"){return}
-        else{uiState = "READY"}
-
-        binding.userInfo.removeView(binding.stateFrame)
 
         if(readyButton == null){
             readyButton = ReadyButtonBinding.inflate(
@@ -266,18 +293,29 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        readyButton!!.stateFrame.layoutParams = binding.stateFrame.layoutParams
-        binding.userInfo.addView(readyButton!!.stateFrame)
-
+        when(uiState){
+            "INSYNC"->{
+                uiState = "READY"
+                binding.userInfo.removeView(syncButton!!.stateFrame)
+                readyButton!!.stateFrame.layoutParams = syncButton!!.stateFrame.layoutParams
+                binding.userInfo.addView(readyButton!!.stateFrame)
+                return
+            }
+            "READY"->{
+                return
+            }
+            "IDLE"->{
+                uiState = "READY"
+                binding.userInfo.removeView(binding.stateFrame)
+                readyButton!!.stateFrame.layoutParams = binding.stateFrame.layoutParams
+                binding.userInfo.addView(readyButton!!.stateFrame)
+                return
+            }
+        }
 
     }
 
     private fun insync(){
-
-        if(uiState == "INSYNC"){return}
-        else{uiState = "INSYNC"}
-
-        binding.userInfo.removeView(readyButton!!.stateFrame)
 
         if(syncButton == null){
             syncButton = SyncButtonBinding.inflate(
@@ -291,8 +329,27 @@ class ProfileFragment : Fragment() {
                 }
             }
         }
-        syncButton!!.stateFrame.layoutParams = readyButton!!.stateFrame.layoutParams
-        binding.userInfo.addView(syncButton!!.stateFrame)
+
+        when(uiState){
+            "INSYNC"->{
+                return
+            }
+            "READY"->{
+                uiState = "INSYNC"
+                binding.userInfo.removeView(readyButton!!.stateFrame)
+                syncButton!!.stateFrame.layoutParams = readyButton!!.stateFrame.layoutParams
+                binding.userInfo.addView(syncButton!!.stateFrame)
+                return
+            }
+            "IDLE"->{
+                uiState = "INSYNC"
+                binding.userInfo.removeView(binding.stateFrame)
+                syncButton!!.stateFrame.layoutParams = binding.stateFrame.layoutParams
+                binding.userInfo.addView(syncButton!!.stateFrame)
+                return
+            }
+        }
+
     }
 
     private fun beautify(){
@@ -302,19 +359,6 @@ class ProfileFragment : Fragment() {
         val width = displayMetrics.widthPixels - (30*displayMetrics.density)
         params.width = width.roundToInt()
         params.height = Phi().phi(width.roundToInt(),1)
-
-        binding.profileHeader.layoutParams = params
-        val set = ConstraintSet()
-        set.clone(binding.profileHeader)
-        set.connect(
-            binding.editButton.id,
-            ConstraintSet.START,
-            binding.profileHeader.id,
-            ConstraintSet.START,
-            params.height
-        )
-
-        set.applyTo(binding.profileHeader)
 
     }
 

@@ -11,7 +11,7 @@ import daemon.dev.field.cereal.objects.User
 
 @Database(entities =
 [Post::class, User::class, Channel::class, Resource::class],
-    version = 1, exportSchema = false)
+    version = 2)
 internal abstract class SyncDatabase : RoomDatabase() {
 
     abstract val postDao: PostDao
@@ -39,9 +39,16 @@ internal abstract class SyncDatabase : RoomDatabase() {
                         .build()
                     INSTANCE = instance
                 }
+
                 return instance
             }
         }
+
+        fun destroyInstance() {
+            if (INSTANCE != null) INSTANCE!!.close()
+            INSTANCE = null
+        }
+
     }
 
 

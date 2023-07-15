@@ -1,27 +1,24 @@
 package daemon.dev.field.fragments
 
 import android.os.Bundle
-import android.os.SystemClock
-import android.os.SystemClock.elapsedRealtime
 import android.util.Log
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import daemon.dev.field.PUBLIC_KEY
+import daemon.dev.field.MF_TAG
 import daemon.dev.field.R
-import daemon.dev.field.cereal.objects.Comment
+import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.*
+import daemon.dev.field.fragments.adapter.MessageAdapter
 import daemon.dev.field.fragments.model.MessengerModel
 import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.network.Async
-import java.util.Base64
 
 class MessengerFragment: Fragment() {
     private val messenger: MessengerModel by activityViewModels()
@@ -31,6 +28,8 @@ class MessengerFragment: Fragment() {
     private lateinit var binding: MessengerFragmentBinding
 
     private lateinit var key: String
+
+    private lateinit var messageAdapter : MessageAdapter
 
 
     override fun onCreate(savedInstanceState: Bundle?){
@@ -50,18 +49,23 @@ class MessengerFragment: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //setUpTextBox()
-
+        messenger.printMsgMap()
         messenger.createSub(key)
-        val sub = messenger.getKey(key)!!
+        var sub = messenger.getSub(key)!!
 
-        updateSub(sub)
+        Log.i(MF_TAG,"Have sub $sub")
+
+        messageAdapter = activity?.let { MessageAdapter(view, it) }!!
+        binding.messageList.layoutManager = LinearLayoutManager(context)
+        binding.messageList.adapter = messageAdapter
+
+        messageAdapter.updateView(sub)
+        binding.scroll.fullScroll(View.FOCUS_DOWN)
 
         syncModel.getUser(key).observe(viewLifecycleOwner) {
-
             if(it!=null){
                 binding.userAlias.text = it.alias
             }
-
         }
 
         resModel.getUserProfile(key).observe(viewLifecycleOwner) {
@@ -79,84 +83,40 @@ class MessengerFragment: Fragment() {
         }
 
         binding.send.setOnClickListener {
-
             val mesg = binding.messageText.text.toString()
-
-            val delta = elapsedRealtime() - Async.peerStart[key]!!
-
-            val msg = Comment(PUBLIC_KEY.toBase64(),mesg,delta)
-            messenger.send(msg,key)
-
-            addMyMessage(msg)
+            binding.messageText.setText("")//text.clear()
+            messenger.send(mesg,key)
         }
 
         binding.close.setOnClickListener {
             parentFragmentManager.beginTransaction().remove(this).commit()
         }
 
-        messenger.direct.observe(viewLifecycleOwner) {
+        messenger.latest.observe(viewLifecycleOwner) {
 
-            val sub = messenger.getKey(key)!!
-            updateSub(sub)
+            Log.i(MF_TAG,"Firing on latest :: $it")
+            sub = messenger.getSub(key)!!
+            messageAdapter.updateView(sub)
+
+           // binding.scroll.fullScroll(View.FOCUS_DOWN)
 
         }
-    }
 
-    private fun updateSub(root : Comment){
+        binding.messageList.post {
+            //binding.scroll.fullScroll(View.FOCUS_DOWN)
+        }
 
-        binding.something.removeAllViews()
+        Async.peers.observe(viewLifecycleOwner) { peers ->
 
-        root.let{
-            for(c in it.sub){
-                if(c.key == PUBLIC_KEY.toBase64()){
-                    addMyMessage(c)
-                }else{
-                    addRemoteMessage(c)
-                }
+            val connected = peers.contains(User(key, "", 0, ""))
+            if (connected) {
+                binding.connection.setBackgroundResource(R.drawable.circle_col)
+            } else {
+                binding.connection.setBackgroundResource(R.drawable.circle)
             }
+
         }
+
     }
-
-    private fun addMyMessage(msg : Comment){
-        binding.something
-
-
-        val nwCard = MessageHolderBinding.inflate(LayoutInflater.from(context), null, false)
-        nwCard.text.text = msg.comment
-
-        binding.something.addView(nwCard.root)
-        val params = LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT)
-
-        params.gravity = Gravity.END
-
-        nwCard.root.layoutParams = params
-
-        binding.messageText.setText("")
-        binding.scroll.fullScroll(View.FOCUS_DOWN)
-    }
-
-    private fun addRemoteMessage(msg : Comment){
-        val nwCard = MessageHolderBinding.inflate(LayoutInflater.from(context), null, false)
-        nwCard.text.text = msg.comment
-        nwCard.messageCard.setBackgroundResource(R.drawable.cmt_left)
-
-        binding.something.addView(nwCard.root)
-        val params = LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT)
-
-        params.gravity = Gravity.START
-
-        nwCard.root.layoutParams = params
-
-        binding.scroll.fullScroll(View.FOCUS_DOWN)
-    }
-
-    private fun ByteArray.toBase64() : String {
-        return Base64.getEncoder().encodeToString(this)
-    }
-
 
 }

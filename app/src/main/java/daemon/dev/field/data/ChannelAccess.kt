@@ -9,6 +9,10 @@ class ChannelAccess(private val sync : ChannelDao) {
 
     fun getLiveContents(list : List<String>) = sync.getLiveContents(list)
 
+    fun clear(){
+        sync.clear()
+    }
+
     suspend fun waitContents(name : String) : String {
         return sync.waitContents(name)
     }

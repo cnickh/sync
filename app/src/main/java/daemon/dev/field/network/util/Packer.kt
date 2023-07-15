@@ -1,5 +1,6 @@
 package daemon.dev.field.network.util
 
+import android.util.Log
 import daemon.dev.field.CHARSET
 import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.Wrapper
@@ -17,8 +18,9 @@ class Packer(raw : MeshRaw) {
 
     private var bytes : String = Json.encodeToString(raw)
     private val size = bytes.length
-    private val max = size/PACKET_SIZE
+    private var max = size/PACKET_SIZE
     private var packets = mutableListOf<ByteArray>()
+    private var iterations = 0
 
     private var sent : Int = -1
 
@@ -28,21 +30,24 @@ class Packer(raw : MeshRaw) {
         val mid = (1..9999).random()
 
         if(max == 0){
+            max++
             val wrap = Wrapper(type,mid,0,max,bytes)
             packets.add(bytes(wrap))
 
         } else {
 
-            for (i in (0 until max)){
-                val range = IntRange(PACKET_SIZE*i,PACKET_SIZE*(i+1)-1)
-                val wrap = Wrapper(type,mid,i,max,bytes.slice(range))
-                packets.add(i,bytes(wrap))
-            }
+            if(size%PACKET_SIZE!=0) max++
 
-            if(size%PACKET_SIZE != 0){
-                val range = IntRange(max*PACKET_SIZE,size-1)
-                val wrap = Wrapper(type,mid,max,max,bytes.slice(range))
-                packets.add(max,bytes(wrap))
+            for (i in (0 until max)){
+                val range = if(i == max-1){
+                    IntRange(PACKET_SIZE*i,size-1)
+                } else {
+                    IntRange(PACKET_SIZE*i,PACKET_SIZE*(i+1)-1)
+                }
+
+                val wrap = Wrapper(type,mid,i,max,bytes.slice(range))
+                packets.add(bytes(wrap))
+                iterations++
             }
 
         }
@@ -56,7 +61,9 @@ class Packer(raw : MeshRaw) {
 
     fun next() : ByteArray? {
         sent++
-        return if(sent <= max){
+//        Log.i("Packer.kt", "vars :: sent: $sent max: $max packets.size: ${packets.size}" +
+//                "\n iterations: $iterations size: $size PACKET_SIZE: $PACKET_SIZE")
+        return if(sent < max){
             packets[sent]
         } else {
             null

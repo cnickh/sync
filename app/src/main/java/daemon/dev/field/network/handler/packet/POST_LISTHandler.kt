@@ -35,11 +35,5 @@ class POST_LISTHandler(val postRepository: PostRepository, val channelAccess: Ch
 
         Sync.queueUpdate()
     }
-    private fun ByteArray.toBase64() : String {
-        return Base64.getEncoder().encodeToString(this)
-    }
 
-    private fun String.toByteArray() : ByteArray {
-        return Base64.getDecoder().decode(this)
-    }
 }

@@ -123,9 +123,11 @@ class NetworkLooper(val context : Context) : Thread(), Handler.Callback  {
     }
 
     private suspend fun handleScanEvent(event : ScanEvent){
+
+        //Log.i(NETLOOPER_TAG,"Have scan event $event")
+
         if (getDevice(event.result.device.address) && (Async.state() == Async.READY)) {
             Log.i(NETLOOPER_TAG,"Connecting scanning ${event.result.device.address}")
-
             var gattCallback =
                 GattResolver(event.result.device, getHandler())
             event.result.device.connectGatt(context, false, gattCallback, TRANSPORT_AUTO, PHY_LE_CODED)

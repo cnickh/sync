@@ -2,10 +2,19 @@ package daemon.dev.field
 
 import android.Manifest
 import android.net.Uri
-import java.util.UUID
+import java.util.*
 
-var PUBLIC_KEY = ByteArray(1)
-var PRIVATE_KEY = ByteArray(1)
+var PUBLIC_KEY: ByteArray = ByteArray(0)
+
+var PRIVATE_KEY: ByteArray = ByteArray(0)
+
+//var PRIVATE_KEY  = "yz8X4lz/FEU8NVhz9R89FqhXONrkqrfZsiylr62Ax+0=".toByteArray()
+//
+//var PRIVATE_KEY  = "KNSAi9he7OrzCwjrT3ni+qqnQujxT9q0/z6udWvbvjE=".toByteArray()
+//
+//var PRIVATE_KEY  = "DLTBZbhcecHkqqHmcF/+Fp0/ntXjqRjqa/iPSlIa3BM=".toByteArray()
+//
+//var PRIVATE_KEY  = "h5wmB88jDA3WlCcmgaK8IXXzYB2vTbWWtf1vCQW9xtU=".toByteArray()
 
 var UNIVERSAL_KEY = "Hello uni-key"
 
@@ -39,6 +48,7 @@ const val PACKER_TAG = "Packer.kt"
 const val MERGE_TAG = "CommentMerge.kt"
 const val SYNC_TAG = "Sync.kt"
 const val MODEL_TAG = "SyncModel.kt"
+const val MF_TAG = "MessengerFragment.kt"
 
 /*Channel Connection States*/
 const val NOTIFICATION_CHANNEL = "MeshServiceChannel"
@@ -53,7 +63,7 @@ const val BLE_INTERVAL = 1000L //1 second
 
 const val SYNC_INTERVAL = 100L//8000L //8 seconds
 
-const val CONFIRMATION_TIMEOUT = 20000L //20 seconds
+const val CONFIRMATION_TIMEOUT = 10000L //10 seconds
 
 const val SERVER_PORT = 8888
 
@@ -99,3 +109,10 @@ UUID.fromString("7ec2290c-5e53-4414-a116-3f9974cec8cd")
  * https://www.guidgenerator.com/
  *
  */
+private fun ByteArray.toBase64() : String {
+    return Base64.getEncoder().encodeToString(this)
+}
+
+private fun String.toByteArray() : ByteArray {
+    return Base64.getDecoder().decode(this)
+}

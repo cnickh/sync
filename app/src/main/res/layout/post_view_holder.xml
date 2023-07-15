@@ -3,73 +3,93 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/post_card"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/m_margin"
-    android:layout_marginLeft="@dimen/b_margin"
-    android:layout_marginRight="@dimen/b_margin"
+
     android:clickable="true"
-    android:background="@drawable/wht_bg">
+    android:background="@drawable/tint_bg">
 
 
-    <LinearLayout
-        android:id="@+id/header"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/s_margin"
-        android:clickable="true"
-        android:background="@drawable/wht_bg">
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/info"
+        android:orientation="vertical"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
 
-        <FrameLayout
-            android:id="@+id/connection"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_gravity="center"
-            android:background="@drawable/circle" />
 
         <TextView
             android:id="@+id/title"
-            android:layout_weight="1"
+            android:layout_marginBottom="@dimen/s_margin"
+            android:textColor="@color/text_color"
+            android:singleLine="true"
             android:layout_height="wrap_content"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_marginStart="@dimen/l_margin"
             android:layout_gravity="center"
             android:text="Hello"
             android:textSize="18sp"
             android:textStyle="bold"/>
 
-        <TextView
-            android:id="@+id/hop_value"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center_vertical|end"
-            android:background="@drawable/circle"
-            android:gravity="center"
-            android:text="0"
-            android:textSize="12sp"/>
+
+    <TextView
+        android:id="@+id/body"
+        android:textColor="@color/text_color"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:gravity="start|top"
+        android:text="World"
+        android:requiresFadingEdge="vertical"
+        android:fadingEdgeLength="10dp"
+        android:ellipsize="none"
+        android:textSize="16sp" />
+
+        <LinearLayout
+            android:id="@+id/bottom_row"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/s_margin"
+            android:clickable="true">
+
+            <TextView
+                android:id="@+id/time_stamp"
+                android:textColor="@color/text_color"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:gravity="start"
+                android:text="Time"
+                android:textSize="11sp"/>
+            <LinearLayout
+                android:id="@+id/channels"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/s_margin"
+                android:clickable="true"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 
     <TextView
-        android:id="@+id/body"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/s_margin"
-        android:gravity="start|top"
-        android:text="World"
-        android:textSize="16sp" />
-
-    <TextView
-        android:id="@+id/time_stamp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/s_margin"
-        android:gravity="start"
-        android:text="World"
-        android:textSize="11sp"/>
-
+        android:id="@+id/hop_value"
+        android:textColor="@color/text_color"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:background="@drawable/circle_col"
+        android:gravity="center"
+        android:layout_marginStart="@dimen/l_margin"
+        android:layout_marginEnd="@dimen/l_margin"
+        android:text="0"
+        android:textSize="14sp"/>
 
 </LinearLayout>
 

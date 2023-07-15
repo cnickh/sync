@@ -9,8 +9,9 @@
     android:layout_marginTop="@dimen/e_margin"
     android:layout_marginLeft="@dimen/u_margin"
     android:layout_marginRight="@dimen/u_margin"
-    android:background="@drawable/tint_bg"
-    android:elevation="@dimen/elevation"
+    android:layout_marginBottom="24dp"
+    android:background="@drawable/wht_bg"
+    android:elevation="12dp"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent">
@@ -22,6 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="24dp"
+        android:textColor="@color/text_color"
         android:text="Block This User?"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -41,25 +43,34 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/username">
 
-        <Button
-            android:id="@+id/back"
-            android:layout_width="64dp"
-            android:layout_height="42dp"
-            android:layout_gravity="center"
-            android:layout_marginEnd="@dimen/e_margin"
-            android:background="@drawable/col_bg"
-            android:gravity="center"
-            android:text="No" />
 
-        <Button
-            android:id="@+id/block"
-            android:layout_width="64dp"
-            android:layout_height="42dp"
-            android:layout_gravity="center"
-            android:layout_marginStart="@dimen/e_margin"
-            android:background="@drawable/col_bg"
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/back"
+            app:backgroundTint="@color/tertiary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Yes" />
+            android:layout_marginBottom="24dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:text="No"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/block"
+            app:backgroundTint="@color/tertiary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:text="Yes"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
 
     </LinearLayout>
 

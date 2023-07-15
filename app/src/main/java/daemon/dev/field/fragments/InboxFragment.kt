@@ -1,22 +1,20 @@
 package daemon.dev.field.fragments
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.RequiresApi
 import androidx.fragment.app.*
 import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.flexbox.*
 import daemon.dev.field.INBOX_TAG
-import daemon.dev.field.R
 import daemon.dev.field.databinding.FragmentInboxBinding
 import daemon.dev.field.fragments.adapter.PostAdapter
 import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.util.Gen
+import daemon.dev.field.R
+
 
 class InboxFragment : Fragment() {
 
@@ -37,14 +35,25 @@ class InboxFragment : Fragment() {
     @SuppressLint("NotifyDataSetChanged")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        val postAdapter = PostAdapter(requireActivity())
+        val postAdapter = PostAdapter(requireActivity(),sync)
 
         binding.postInbox.adapter = postAdapter
-        binding.postInbox.layoutManager = LinearLayoutManager(requireContext())
+        //binding.postInbox.layoutManager = LinearLayoutManager(requireContext())
+
+        val layoutManager = FlexboxLayoutManager(context).apply {
+            justifyContent = JustifyContent.CENTER
+            alignItems = AlignItems.CENTER
+            flexDirection = FlexDirection.ROW
+            flexWrap = FlexWrap.WRAP
+        }
+
+        binding.postInbox.layoutManager = layoutManager
 
         sync.posts.observe(viewLifecycleOwner, Observer { new_post_list ->
             Log.d(INBOX_TAG,"Observe post_list fired on \n $new_post_list")
+            sync.createTagMap()
             postAdapter.updateView(sync.filter(new_post_list))
+            postAdapter.notifyDataSetChanged()
         })
 
         sync.peers.observe(viewLifecycleOwner, Observer { _ ->
@@ -53,8 +62,9 @@ class InboxFragment : Fragment() {
 
         sync.raw_filter.observe(viewLifecycleOwner, Observer {
             Log.d(INBOX_TAG,"Observe raw_filter fired on \n $it")
-            sync.updateFilter(it)
+            sync.createTagMap()
             postAdapter.updateView(sync.filter(null))
+            postAdapter.notifyDataSetChanged()
         })
 
         binding.create.setOnClickListener {
@@ -63,9 +73,11 @@ class InboxFragment : Fragment() {
                 replace<ComposeFragment>(R.id.container_view)
                 addToBackStack(null)
             }
-
-//            postAdapter.updateView(Gen().genPost())
-
+//            val sr = SecureRandom()
+//            val len = sr.nextInt() % 300
+//            val body = RandomString(len.absoluteValue+5).nextString()
+//            val title = RandomString(10).nextString()
+//            sync.create(title, body)
         }
 
     }

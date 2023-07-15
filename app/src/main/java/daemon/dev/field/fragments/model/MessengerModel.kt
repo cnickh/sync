@@ -1,47 +1,67 @@
 package daemon.dev.field.fragments.model
 
+import android.os.SystemClock
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.cereal.objects.Comment
 import daemon.dev.field.cereal.objects.MeshRaw
+import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Sync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.util.*
+import kotlin.collections.ArrayDeque
 
 class MessengerModel : ViewModel() {
 
     val direct = Async.direct
 
-    val msgMap = mutableListOf<Comment>()
+    private val sessMap = hashMapOf<String, AMSession>()
+    private val waiting_queue = hashMapOf<String, ArrayDeque<String>>()
+
+    val latest = MutableLiveData<Comment>()
+
+    fun setLatest(cmnt : Comment){
+        latest.postValue(cmnt)
+    }
 
     fun printMsgMap(){
-        for ((i, c) in msgMap.withIndex()){
-            //val json = Json.encodeToString(c)
-            Log.v("MessengerModel","User[$i]")
-
-            for (c in c.sub){
-                Log.v("MessengerModel","${c.time}  ${c.comment}")
-            }
-
+        for ((i, c) in sessMap){
+            Log.v("MessengerModel","User[$i] ${sessMap[i]?.nonViewSub()}")
+            c.print()
         }
     }
 
     fun zeroSub(key : String){
-        getKey(key)?.let{
-
-            for (c in it.sub){
-                c.time = 0L
-            }
-
+        sessMap[key]?.let{
+            it.zeroSub()
         }
     }
 
-    fun send(msg : Comment, key : String){
+    fun getSub(key : String) : List<Comment>?{
+        return sessMap[key]?.let{
+            it.sub()
+        }
+    }
 
+    fun getUnRead(key : String) : Int?{
+        return sessMap[key]?.unRead()
+    }
+
+    fun receiveMessage(msg : Comment){
+        sessMap[msg.key]?.addInOrder(msg)
+    }
+
+    fun send(mesg : String, key : String){
+
+        val delta = SystemClock.elapsedRealtime() - Async.peerStart[key]!!
+        val msg = Comment(PUBLIC_KEY.toBase64(),mesg,delta)
         val json = Json.encodeToString(msg)
 
         val raw = MeshRaw(
@@ -54,71 +74,57 @@ class MessengerModel : ViewModel() {
         )
 
         viewModelScope.launch(Dispatchers.IO) {
-            Sync.queue(key, raw)
+
+            Async.peers.value?.let{ peers ->
+                val connected = peers.contains(User(key, "", 0, ""))
+                if (connected) {
+                    Sync.queue(key, raw)
+                    sessMap[key]?.addInOrder(msg)
+                    latest.postValue(msg)
+                } else {
+                    waitQueue(key,mesg)
+                }
+            }
         }
 
-        addMyMessage(msg,key)
+    }
+
+    private fun waitQueue(key : String, cmnt : String){
+        sessMap[key]?.let{
+            if(waiting_queue[key]==null){
+                waiting_queue[key] = ArrayDeque()
+            }
+
+            waiting_queue[key]!!.add(cmnt)
+        }
+    }
+
+    fun dumpQueue(key : String){
+        sessMap[key]?.let{
+
+            val queue = waiting_queue[key]
+
+            queue?.let{
+                while(queue.isNotEmpty()){
+                    send(queue.removeFirst(),key)
+                }
+            }
+
+        }
     }
 
     fun createSub(key : String){
 
-        var root = getKey(key)
-
-        if(root == null){
-            root = Comment(key,"root",0L)
-            msgMap.add(root)
+        if(sessMap[key]==null) {
+            val session = AMSession(key)
+            sessMap[key] = session
         }
 
     }
 
-    fun receiveMessage(msg : Comment) : Boolean{
-        val key = msg.key
 
-        val root = getKey(key)
-
-        if(root != null){
-            addInOrder(msg,root.sub)
-            return true
-        }
-
-        return false
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
     }
-
-    private fun addMyMessage(msg : Comment, key : String) : Boolean {
-
-        val root = getKey(key)
-
-        if(root != null){
-            addInOrder(msg,root.sub)
-            return true
-        }
-
-        return false
-    }
-
-    fun getKey(key : String) : Comment?{
-        for (m in msgMap){
-            if(m.key == key){
-                return m
-            }
-        }
-
-        return null
-    }
-
-    private fun addInOrder(msg : Comment, sub : MutableList<Comment>){
-
-        val time = msg.time
-
-        for ((prev, m) in sub.withIndex()){
-            if(time < m.time){
-                sub.add(prev,msg)
-                return
-            }
-        }
-
-        sub.add(msg)
-    }
-
 
 }

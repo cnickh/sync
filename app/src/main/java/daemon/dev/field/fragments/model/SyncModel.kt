@@ -1,13 +1,12 @@
 package daemon.dev.field.fragments.model
 
+import android.os.Build
+import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import daemon.dev.field.CHARSET
-import daemon.dev.field.MODEL_TAG
-import daemon.dev.field.PUBLIC_KEY
-import daemon.dev.field.UNIVERSAL_KEY
+import daemon.dev.field.*
 import daemon.dev.field.cereal.objects.*
 import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
@@ -36,10 +35,62 @@ class SyncModel internal constructor(
     val state : LiveData<Int> = Async.live_state
     val me = userBase.getUser(PUBLIC_KEY.toBase64())
 
+    val postChannelMap = hashMapOf<String,MutableList<String>>()
     val ping = Async.ping
 
     private var filter : List<String> = listOf()
-    
+
+    fun clearDB(){
+        viewModelScope.launch(Dispatchers.IO) {
+            Sync.open_channels.clear()
+            userBase.clear()
+            postRepository.clear()
+            channelAccess.clear()
+            channelAccess.createChannel("Public", UNIVERSAL_KEY)
+        }
+    }
+
+    fun blockUser(key : String){
+        viewModelScope.launch(Dispatchers.IO) {
+            userBase.setUserStatus(key,1)
+        }
+    }
+
+    fun createTagMap(){
+
+        val contents = hashMapOf<String,List<String>>()
+        viewModelScope.launch(Dispatchers.IO) {
+            channels.value?.let {
+                for (c in it) {
+                    contents[c.name] = channelAccess.waitContents(c.name).split(",")
+                }
+            }
+
+
+            Log.i(SYNC_TAG, "got $contents")
+
+            posts.value?.let {
+                for (p in it) {
+                    val key = p.address().address
+                    postChannelMap[key] = mutableListOf()
+                    for ((c, con) in contents) {
+                        if (con.contains(key)) {
+                            Log.v("SyncModel.kt", "TRUE $c")
+                            postChannelMap[key]!!.add(c)
+                        } else {
+                            Log.v("SyncModel.kt", "FALSE")
+                        }
+                    }
+                }
+            }
+
+
+            Log.i("SYNC_MODEL", "Created map $postChannelMap")
+        }
+    }
+
+
+
     fun filter(posts : List<Post>?) : List<Post> {
 
         raw_filter.value?.let{ updateFilter(it) }
@@ -179,11 +230,13 @@ class SyncModel internal constructor(
     }
 
     fun comment(position : Int, sub : MutableList<Comment>, globalSub : MutableList<Comment>, text : String) : Comment {
-
         Log.v("SyncModel.kt","Creating comment $text")
 
-
-        val time = System.currentTimeMillis()
+        val time = if(Build.VERSION.SDK_INT >= 29){
+            SystemClock.currentNetworkTimeClock().millis()
+        } else {
+            System.currentTimeMillis()
+        }
 
         val comment = Comment(PUBLIC_KEY.toBase64(),text,time)
         sub.add(comment)

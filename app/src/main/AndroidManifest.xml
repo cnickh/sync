@@ -25,13 +25,15 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Field">
+        android:theme="@style/Theme.Field"
+        android:windowSoftInputMode="adjustResize|stateVisible">
 
         <service android:name=".network.MeshService" />
 
         <activity
             android:name="daemon.dev.field.MainActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

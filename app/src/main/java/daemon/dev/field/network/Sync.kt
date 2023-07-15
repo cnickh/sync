@@ -42,25 +42,26 @@ object Sync {
     }
 
     suspend fun add(peer : String){
-        //queue_lock.lock()
+        queue_lock.lock()
         peer_queue[peer] = ArrayDeque()
-       // queue_lock.unlock()
+        queue_lock.unlock()
     }
 
     suspend fun remove(peer : String){
-       // queue_lock.lock()
+        queue_lock.lock()
         peer_queue.remove(peer)
-       // queue_lock.unlock()
+        queue_lock.unlock()
     }
 
     suspend fun queue(peer : String, raw : MeshRaw){
-       // queue_lock.lock()
+        queue_lock.lock()
         peer_queue[peer]?.addFirst(raw)
-      //  queue_lock.unlock()
+        queue_lock.unlock()
     }
 
     suspend fun channelInfo(c : String) : String?{
         queue_lock.lock()
+        Log.i("INFO.kt(Sync.kt)", "comparing $c to ${channel_info[c]}")
         val ret = channel_info[c]
         queue_lock.unlock()
         return ret
@@ -150,9 +151,9 @@ object Sync {
 
         suspend fun kill(){
             active = false
-           // queue_lock.lock()
+            queue_lock.lock()
             peer_queue.clear()
-         //   queue_lock.unlock()
+            queue_lock.unlock()
         }
     }
 

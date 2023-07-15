@@ -69,7 +69,7 @@ class BluetoothAdvertiser(val adapter: BluetoothAdapter) {
 
         val dataBuilder = AdvertiseData.Builder()
             .addServiceUuid(ParcelUuid(SERVICE_UUID))
-//            .addServiceData(ParcelUuid(SERVICE_UUID),sig_bytes)
+            .addServiceData(ParcelUuid(SERVICE_UUID),"sig_bytes".toByteArray())
             .setIncludeDeviceName(false)
 
         /* For example - this will cause advertising to fail (exceeds size limit) */

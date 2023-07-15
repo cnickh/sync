@@ -1,42 +1,26 @@
 package daemon.dev.field.fragments.adapter
 
-import android.app.Activity
 import android.os.Build
-import android.text.TextUtils.replace
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
-import android.widget.LinearLayout
 import androidx.annotation.RequiresApi
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.os.bundleOf
-import androidx.core.view.marginStart
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentTransaction
-import androidx.fragment.app.commit
-import androidx.fragment.app.replace
 import androidx.recyclerview.widget.RecyclerView
 import daemon.dev.field.R
-import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.DeviceViewHolderBinding
-import daemon.dev.field.databinding.UserActionsBinding
-import daemon.dev.field.fragments.PostFragment
-import daemon.dev.field.fragments.ProfileFragment
 import daemon.dev.field.fragments.ProfileSelectFragment
-import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.util.Expander
+import daemon.dev.field.fragments.model.MessengerModel
 import daemon.dev.field.util.Phi
-import java.lang.Thread.sleep
 import kotlin.math.roundToInt
 
 
 @RequiresApi(Build.VERSION_CODES.O)
-class DeviceAdapter(val view : View, val activity : FragmentActivity) : RecyclerView.Adapter<DeviceAdapter.deviceVh>() {
+class DeviceAdapter(val view : View, val activity : FragmentActivity, val msgModel : MessengerModel) : RecyclerView.Adapter<DeviceAdapter.deviceVh>() {
 
     private var itemsList: List<User> = arrayListOf()
 
@@ -82,6 +66,14 @@ class DeviceAdapter(val view : View, val activity : FragmentActivity) : Recycler
 
                 binding.name.text = it.alias
                 binding.id.text = it.key
+
+                msgModel.getUnRead(it.key)?.let{ unRead ->
+
+                    if(unRead > 0){
+                        binding.num.text = unRead.toString()
+                        binding.badge.visibility = View.VISIBLE
+                    }
+                }
 
                 val key = it.key
 

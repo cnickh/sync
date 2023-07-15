@@ -20,6 +20,9 @@ import kotlin.random.Random
 class SyncModelFactory (private val context: Context) : ViewModelProvider.Factory {
     @Suppress("unchecked_cast")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+
+        val pub_key = PUBLIC_KEY.toBase64()
+
         if (modelClass.isAssignableFrom(SyncModel::class.java)) {
 
             val sync = SyncDatabase.getInstance(context)
@@ -30,23 +33,18 @@ class SyncModelFactory (private val context: Context) : ViewModelProvider.Factor
 
             CoroutineScope(Dispatchers.IO).launch {
 
-                userDao.clear()
-                postDao.clear()
-                channelDao.clear()
+                val pub = channelDao.getKey("Public")
 
-                channelDao.insert(Channel("Public", UNIVERSAL_KEY, "null"))
-                Log.i("Fac-Debug" ,"What did we just insert?? ${channelDao.getKey("Public")}")
+                if(pub != UNIVERSAL_KEY){
+                    channelDao.insert(Channel("Public", UNIVERSAL_KEY, "null"))
+                }
 
-                channelDao.insert(Channel("test", "null", "null"))
-
-                val channels = channelDao.waitChannels()
-                Log.i("Facz-Debug" ,"What did we just insert?? $channels")
-
-                if(userDao.wait(PUBLIC_KEY.toBase64()) == null){
+                if(userDao.wait(pub_key) == null){
                     val num = Random.nextInt(999)
-                    val user = User(PUBLIC_KEY.toBase64(),"anon#$num",0, "null")
+                    Log.i("Facz-Debug" ,"We generated:$num")
+                    val user = User(pub_key,"anon#$num",0, "null")
                     userDao.insert(user)
-                    Log.v("Main", "${userDao.wait(PUBLIC_KEY.toBase64())} inserted")
+                    Log.v("Main", "${userDao.wait(pub_key)} inserted")
                 }else{
                     Log.v("Main","user already exists")
                 }

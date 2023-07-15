@@ -1,6 +1,5 @@
 package daemon.dev.field.network.util
 
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.User
@@ -41,8 +40,19 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
         directHandler = DIRECTHandler(liveMsg)
     }
 
-    suspend fun insertUser(user : User){
+    suspend fun insertUser(user : User) : Boolean{
+
+        userBase.wait(user.key)?.let{
+            if(it.Status == User.BLOCKED){
+                return false
+            } else {
+                userBase.add(user)
+                return true
+            }
+        }
+
         userBase.add(user)
+        return true
 //        Log.i("op.kt"," got user: ${userBase.wait(user.key)}")
     }
 

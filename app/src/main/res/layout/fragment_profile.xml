@@ -5,17 +5,17 @@
     android:id="@+id/base"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/wht_bg">
+    android:background="@drawable/tint_bg">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/profile_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
         android:layout_marginTop="@dimen/e_margin"
         android:layout_marginLeft="@dimen/u_margin"
         android:layout_marginRight="@dimen/u_margin"
-        android:background="@drawable/tint_bg"
-        android:elevation="@dimen/elevation"
+        android:background="@drawable/wht_bg"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -34,13 +34,13 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="center"
+            android:layout_marginStart="32dp"
             android:layout_marginTop="24dp"
-            android:elevation="6dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/pencil" />
+            app:srcCompat="@drawable/setting" />
 
         <LinearLayout
             android:id="@+id/user_info"
@@ -66,6 +66,7 @@
 
             <TextView
                 android:id="@+id/username"
+                android:textColor="@color/text_color"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -75,6 +76,7 @@
 
             <TextView
                 android:id="@+id/key"
+                android:textColor="@color/text_color"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -131,11 +133,24 @@
         android:id="@+id/user_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/l_margin"
-
+        android:padding="2dp"
+        android:clipToPadding="false"
+        android:layout_marginTop="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/profile_header" />
 
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/create"
+        app:backgroundTint="@color/tertiary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="Clear DB"
+        app:icon="@drawable/block"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

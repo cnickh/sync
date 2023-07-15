@@ -3,8 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:background="@drawable/wht_bg"
+    android:background="@drawable/tint_bg"
     android:layout_width="match_parent"
+    android:clickable="true"
     android:layout_height="match_parent">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -12,15 +13,13 @@
         android:layout_width="match_parent"
         android:layout_height="96dp"
         android:elevation="2dp"
-        android:background="@drawable/tint_bg"
+        android:background="@drawable/wht_bg"
         android:layout_marginTop="@dimen/u_margin"
         android:layout_marginStart="@dimen/u_margin"
         android:layout_marginEnd="@dimen/u_margin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
-
-
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/user_image"
@@ -36,19 +35,33 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             />
-
-        <TextView
-            android:id="@+id/user_alias"
+        <LinearLayout
+            android:id="@+id/user_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:layout_marginTop="4dp"
             android:layout_marginBottom="8dp"
-            android:gravity="center"
-            android:text="TextView"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/user_image" />
+            app:layout_constraintTop_toBottomOf="@+id/user_image" >
+
+            <FrameLayout
+                android:id="@+id/connection"
+                android:layout_width="9dp"
+                android:layout_height="9dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginTop=".75dp"
+                android:layout_gravity="center"
+                android:background="@drawable/circle" />
+
+            <TextView
+                android:id="@+id/user_alias"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TextView" />
+
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/close"
@@ -69,24 +82,35 @@
         android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/tint_bg"
         app:layout_constraintBottom_toTopOf="@+id/text_box"
         app:layout_constraintTop_toBottomOf="@+id/top_card"
         app:layout_constraintVertical_bias="0.99"
         tools:layout_editor_absoluteX="0dp">
 
-        <LinearLayout
-            android:id="@+id/something"
+<!--        <LinearLayout-->
+<!--            android:id="@+id/something"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:orientation="vertical">-->
+
+<!--            <FrameLayout-->
+<!--                android:id="@+id/spaceHolder"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="390dp" />-->
+
+<!--        </LinearLayout>-->
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/message_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <FrameLayout
-                android:id="@+id/spaceHolder"
-                android:layout_width="match_parent"
-                android:layout_height="178dp" />
-
-        </LinearLayout>
-
+            android:padding="2dp"
+            android:clipToPadding="false"
+            android:layout_marginTop="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profile_header" />
 
     </ScrollView>
 
@@ -118,7 +142,7 @@
             android:layout_height="42dp"
             android:layout_gravity="center_vertical"
             android:layout_weight="3"
-            android:background="@android:color/transparent"
+            android:backgroundTint="@color/tertiary"
             android:foregroundGravity="center_vertical"
             android:padding="4dp"
             android:scaleType="fitCenter"

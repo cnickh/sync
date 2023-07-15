@@ -26,13 +26,12 @@ class INFOHandler(val userBase : UserBase,
 
         val dif = mutableListOf<String>()
 
+        Log.i("INFO.kt", "Receive peer channels $channels")
         for ((c,h) in channels){
             if(Sync.channelInfo(c) != h){
                 dif.add(c)
             }
         }
-
-        Log.i("INFO.kt", "Have channels $channels")
         Log.i("INFO.kt","Have dif $dif")
         if(dif.isNotEmpty()){
             val channel_to_list_of_post_address = channelAccess.resolveChannels(dif)

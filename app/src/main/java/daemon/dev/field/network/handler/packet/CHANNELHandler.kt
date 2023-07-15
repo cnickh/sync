@@ -1,6 +1,5 @@
 package daemon.dev.field.network.handler.packet
 
-import daemon.dev.field.CHARSET
 import daemon.dev.field.data.ChannelAccess
 
 class CHANNELHandler(val channelAccess : ChannelAccess) {

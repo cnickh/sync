@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattServer
 import android.os.Build
 import android.os.ConditionVariable
 import android.util.Log
+import android.util.Range
 import androidx.annotation.RequiresApi
 import daemon.dev.field.*
 import daemon.dev.field.cereal.objects.MeshRaw
@@ -70,7 +71,11 @@ class Socket(
 
         val cipher = symmetric.encrypt(buffer)
 
-        Log.v(SOCKET_TAG,"Have ${buffer.size}b plain & ${cipher.size}b cipher")
+        val r = IntRange(0,16)
+        val subc = cipher.slice(r)
+        val subp = buffer.slice(r)
+
+//        Log.v(SOCKET_TAG,"Have $subp plain & \n $subc cipher")
 
         if(!open){
             Log.e(SOCKET_TAG,"err closed socket")

@@ -2,6 +2,7 @@ package daemon.dev.field.network.util
 
 import android.util.Log
 import daemon.dev.field.CHARSET
+import daemon.dev.field.cereal.objects.HandShake
 import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.Wrapper
 import kotlinx.serialization.decodeFromString
@@ -9,7 +10,7 @@ import kotlinx.serialization.json.Json
 
 class Sorter {
 
-    private val slots = mutableMapOf<Int, MutableList<String>>()
+    private val slots = mutableMapOf<Int, ArrayList<String>>()
 
     fun resolve(bytes : ByteArray) : MeshRaw? {
         val json = bytes.toString(CHARSET)
@@ -17,7 +18,13 @@ class Sorter {
         val wrap = try {
             Json.decodeFromString<Wrapper>(json)
         } catch (e : Exception) {
-            Log.e("Sorter.kt","Could not decode wrapper, possibly handshake \n have $json")
+            try {
+                val shake = Json.decodeFromString<HandShake>(json)
+                Log.e("Sorter.kt","Could not decode wrapper, is handshake \n have $shake")
+            } catch (e : Exception) {
+                Log.e("Sorter.kt","Could not decode wrapper, Not HandShake! Bad Key? \n have $json")
+                null
+            }
             null
         }
 
@@ -28,18 +35,23 @@ class Sorter {
             val data = wrap.bytes
             val max = wrap.max
 
-            Log.v("Sorter.kt","have mid: $mid cur: $cur max: $max")
+//            Log.v("Sorter.kt","have mid: $mid cur: $cur max: $max")
 
             if(slots.keys.contains(mid)){
-                slots[mid]!!.add(cur,data)
+                try {
+                    slots[mid]!!.add(cur,data)
+                } catch (e : Exception) {
+                Log.e("Sorter.kt","ERROR PACKETS OUT OF ORDER" +
+                        "\n mid: $mid cur: $cur max: $max")
+                }
             } else {
                 if(cur == 0){
-                    slots[mid] = mutableListOf()
-                    slots[mid]!!.add(cur,data)
+                    slots[mid] = ArrayList(max)
+                    slots[mid]!!.add(cur, data)
                 }
             }
 
-            if(slots[mid]?.size == max+1){
+            if(slots[mid]?.size == max){
 
                 var raw = ""
 

@@ -8,6 +8,14 @@ class UserBase(private val sync : UserDao) {
 
     val users = sync.getAll()
 
+    suspend fun setUserStatus(key : String, Status : Int){
+        sync.updateStatus(key, Status)
+    }
+
+    fun clear(){
+        sync.clear()
+    }
+
     suspend fun setAlias(alias : String){
         sync.setAlias(alias)
     }

@@ -19,12 +19,14 @@ import androidx.lifecycle.Observer
 import com.bumptech.glide.Glide
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
+import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.FragmentProfileSelectBinding
 import daemon.dev.field.fragments.dialogs.AddDialog
 import daemon.dev.field.fragments.dialogs.BlockDialog
 import daemon.dev.field.fragments.model.DialogModel
 import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
+import daemon.dev.field.network.Async
 import daemon.dev.field.util.Phi
 import kotlin.math.roundToInt
 
@@ -54,14 +56,14 @@ class ProfileSelectFragment : Fragment() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.v("ProfSel","onCreate called")
+        Log.v("ProfSel", "onCreate called")
 
 
 
         beautify()
         dialogModel.setUser(key)
         syncModel.getUser(key).observe(viewLifecycleOwner, Observer { user ->
-            if(user != null) {
+            if (user != null) {
                 binding.username.text = user.alias
                 binding.key.text = key
             } else {
@@ -69,7 +71,7 @@ class ProfileSelectFragment : Fragment() {
             }
         })
         resModel.getUserProfile(key).observe(viewLifecycleOwner) {
-            if(it != null){
+            if (it != null) {
                 val uri = it.toUri()
 
                 Glide
@@ -82,15 +84,15 @@ class ProfileSelectFragment : Fragment() {
             }
         }
 
-        syncModel.channels.observeOnce(viewLifecycleOwner,Observer{
+        syncModel.channels.observeOnce(viewLifecycleOwner, Observer {
 
-            Log.v("ProfSel","have channels: $it")
+            Log.v("ProfSel", "have channels: $it")
 
-            if(it.size == 1 ){
-                Log.v("ProfSel","making add invisible")
+            if (it.size == 1) {
+                Log.v("ProfSel", "making add invisible")
                 binding.add.visibility = View.INVISIBLE
-            }else{
-                Log.v("ProfSel","making add visible")
+            } else {
+                Log.v("ProfSel", "making add visible")
                 binding.add.visibility = View.VISIBLE
             }
 
@@ -104,7 +106,7 @@ class ProfileSelectFragment : Fragment() {
 
             msgFrag.arguments = bundle
 
-            val ft : FragmentTransaction =
+            val ft: FragmentTransaction =
                 activity!!.supportFragmentManager.beginTransaction()
 
 
@@ -128,18 +130,31 @@ class ProfileSelectFragment : Fragment() {
 
         dialogModel.blockedStatus.observe(viewLifecycleOwner, Observer { status ->
 
-            if(status == false){
+            if (status == false) {
                 val text = "User Blocked"
                 val duration = Toast.LENGTH_SHORT
 
                 val toast = Toast.makeText(requireContext(), text, duration)
                 toast.show()
+
+                syncModel.blockUser(key)
             }
 
         })
 
+        Async.peers.observe(viewLifecycleOwner, Observer { peers ->
+
+            val connected = peers.contains(User(key, "", 0, "",0))
+            if (connected) {
+                binding.connection.setBackgroundResource(R.drawable.circle_col)
+            } else {
+                binding.connection.setBackgroundResource(R.drawable.circle)
+            }
+
+        })
     }
-    fun <T> LiveData<T>.observeOnce(lifecycleOwner: LifecycleOwner, observer: Observer<T>) {
+
+    private fun <T> LiveData<T>.observeOnce(lifecycleOwner: LifecycleOwner, observer: Observer<T>) {
         observe(lifecycleOwner, object : Observer<T> {
             override fun onChanged(t: T?) {
                 observer.onChanged(t)
@@ -147,6 +162,7 @@ class ProfileSelectFragment : Fragment() {
             }
         })
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onDestroyView() {
         super.onDestroyView()
@@ -212,15 +228,19 @@ class ProfileSelectFragment : Fragment() {
         val height = Phi().phi(width.roundToInt(),2)
         params.height = height
 
+
         val offset = ((params.height - 96*displayMetrics.density)/2).roundToInt()
-
-        val bParams = binding.buttonLayout.layoutParams
-        bParams.width = (width - 2*height).roundToInt()
-        binding.buttonLayout.layoutParams = bParams
-
+//
+//        val bParams = binding.buttonLayout.layoutParams
+//        bParams.width = (width - 2*height).roundToInt()
+//        binding.buttonLayout.layoutParams = bParams
+//
         val set = ConstraintSet()
         set.clone(binding.profileCard)
-
+//
+//        val length = 36*3+32*2
+//        val button_offset = (width.roundToInt() - height - length)/2
+//
         set.connect(
             binding.username.id,
             ConstraintSet.START,
@@ -235,13 +255,19 @@ class ProfileSelectFragment : Fragment() {
             ConstraintSet.START,
             height
         )
-
         set.connect(
             binding.userImage.id,
             ConstraintSet.START,
             binding.profileCard.id,
             ConstraintSet.START,
             offset
+        )
+        set.connect(
+            binding.buttonLayout.id,
+            ConstraintSet.START,
+            binding.profileCard.id,
+            ConstraintSet.START,
+            height
         )
 
         set.applyTo(binding.profileCard)

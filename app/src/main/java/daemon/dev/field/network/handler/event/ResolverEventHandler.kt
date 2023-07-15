@@ -38,6 +38,12 @@ class ResolverEventHandler {
 
                     val shake = Async.handshake()
                     shake.keyBundle = createSecret(event.session!!)
+                    val publicKey = Ed25519PublicKeyParameters(PUBLIC_KEY)
+
+                    val verified = Signature().verify(shake.keyBundle!!.secret.toByteArray(),
+                        shake.keyBundle!!.sig.toByteArray(), publicKey)
+
+                    Log.v("ResolverHandler","verification: $verified")
 
                     if(shake.state == Async.READY){
                         val service = event.gatt!!.getService(SERVICE_UUID)

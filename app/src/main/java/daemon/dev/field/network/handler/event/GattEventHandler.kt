@@ -18,7 +18,7 @@ import kotlinx.serialization.json.Json
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
 import java.util.*
 
-class GattEventHandler {
+class  GattEventHandler {
 
     @SuppressLint("MissingPermission")
     suspend fun handleGattEvent(event : GattEvent){
@@ -50,7 +50,8 @@ class GattEventHandler {
                         event.gattServer?.sendResponse(
                             event.device, event.req!!, 200, 0, null)
 
-                        val key = computeSharedKey(it,event.session!!)
+                        Log.v("GattHandler","Have shake $it and eventSession ${event.session!!}")
+                        val key = computeSharedKey(it, event.session)
 
                         if (key != null) {
                             Log.v("GattHandler","Have key : ${key.toBase64()}")
@@ -77,7 +78,12 @@ class GattEventHandler {
                 val shake = Async.handshake()
                 shake.keyBundle = createSecret(event.session!!)
                 val json = Json.encodeToString(shake)
+                val publicKey = Ed25519PublicKeyParameters(PUBLIC_KEY)
 
+                val verified = Signature().verify(shake.keyBundle!!.secret.toByteArray(),
+                    shake.keyBundle!!.sig.toByteArray(), publicKey)
+
+                Log.v("GattHandler","verification: $verified")
                 Log.v("GattHandler","Sending shake : $json")
 
                 if(shake.state == Async.READY){

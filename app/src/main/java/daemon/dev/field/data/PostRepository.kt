@@ -25,6 +25,10 @@ class PostRepository(private val sync : PostDao) {
     private val addressCache = HashMap<Address,Post>()
     private val staged = mutableListOf<Post>()
 
+    fun clear(){
+        sync.clear()
+    }
+
     suspend fun add(post : Post){
         val cur = getAt(post.address())
 
@@ -75,6 +79,7 @@ class PostRepository(private val sync : PostDao) {
             if (post != null) {
 
                 val content = post.contentString()
+                crc.reset()
                 crc.update(content.toByteArray(CHARSET))
                 val hash = crc.value.toString(HEX)
 
@@ -82,7 +87,6 @@ class PostRepository(private val sync : PostDao) {
 
                 map[post.address().address] = hash
 
-                crc.reset()
             }
         }
 

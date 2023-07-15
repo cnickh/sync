@@ -48,11 +48,11 @@ class NEW_DATAHandler(val postRepository: PostRepository, val channelAccess: Cha
                     val content = post?.contentString()
 
                     if(content != null){
+                        crc.reset()
                         crc.update(content.toByteArray(CHARSET))
                         val nHash = crc.value.toString(HEX)
 
                         Log.w("NEW_DATA.kt", "Comparing $address {me: $content : $nHash} v {peer: $hash}")
-
 
                         if(nHash != hash){
                             if(!postList.contains(post)){postList.add(post)}

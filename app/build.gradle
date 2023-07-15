@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    compileSdk 32
+    compileSdk 33
 
     externalNativeBuild {
         cmake {
@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId "daemon.dev.field"
         minSdk 27
-        targetSdk 32
+        targetSdk 33
         versionCode 3
         versionName "1.1"
 

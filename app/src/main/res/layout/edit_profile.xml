@@ -9,8 +9,8 @@
     android:layout_marginTop="@dimen/e_margin"
     android:layout_marginLeft="@dimen/u_margin"
     android:layout_marginRight="@dimen/u_margin"
-    android:background="@drawable/tint_bg"
-    android:elevation="@dimen/elevation"
+    android:background="@drawable/wht_bg"
+    android:elevation="12dp"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent">
@@ -39,27 +39,43 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
-
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/pic"
-            android:layout_width="110dp"
-            android:layout_height="110dp"
-            android:layout_marginBottom="12dp"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/pic_constraint"
             android:layout_gravity="center"
-            android:src="@drawable/daisy_purp"
-            app:shapeAppearanceOverlay="@style/roundedImageViewRounded"
-            app:strokeWidth="1dp" />
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:elevation="@dimen/elevation"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <!--        <FrameLayout-->
-        <!--            android:id="@+id/pic"-->
-        <!--            android:layout_width="110dp"-->
-        <!--            android:layout_height="110dp"-->
-        <!--            android:layout_gravity="center"-->
-        <!--            android:layout_marginBottom="@dimen/m_margin"-->
-        <!--            android:clickable="true"-->
-        <!--            android:background="@drawable/circle" >-->
-        <!--            -->
-        <!--        </FrameLayout>-->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/pic"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
+                android:src="@drawable/daisy_purp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:shapeAppearanceOverlay="@style/roundedImageViewRounded"
+                app:strokeWidth="1dp" />
+
+            <FrameLayout
+                android:id="@+id/camera"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="43dp"
+                android:layout_marginEnd="42dp"
+                android:background="@drawable/camera_transparent"
+                android:elevation="2dp"
+                android:scaleType="fitCenter"
+                app:layout_constraintEnd_toEndOf="@+id/pic"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
         <EditText
             android:id="@+id/username"
@@ -67,10 +83,12 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginBottom="@dimen/c_margin"
-            android:background="@drawable/wht_bg"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/etxt_bg"
             android:hint="Username"
             android:imeOptions="actionDone"
             android:minHeight="42dp"
+            android:minWidth="224dp"
             android:padding="@dimen/v_margin"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
@@ -80,19 +98,5 @@
 
     </LinearLayout>
 
-
-    <FrameLayout
-        android:id="@+id/camera"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_gravity="center"
-        android:layout_marginTop="48dp"
-        android:background="@drawable/camera"
-        android:elevation="2dp"
-        android:scaleType="fitCenter"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
+    \
 </androidx.constraintlayout.widget.ConstraintLayout>

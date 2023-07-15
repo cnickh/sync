@@ -17,7 +17,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
-import daemon.dev.field.CHARSET
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
 import daemon.dev.field.cereal.objects.Comment
@@ -26,9 +25,12 @@ import daemon.dev.field.databinding.CommentViewHolderBinding
 import daemon.dev.field.databinding.FragmentPostBinding
 import daemon.dev.field.databinding.NewCommentViewHolderBinding
 import daemon.dev.field.fragments.model.SyncModel
+import daemon.dev.field.util.RandomString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import java.security.SecureRandom
 import java.util.*
+import kotlin.math.absoluteValue
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -105,7 +107,8 @@ class PostFragment : Fragment() {
         addComments(binding.subComment,globalSub,0)
 
         binding.comment.setOnClickListener {
-            commentThis(globalSub, binding.subComment,0)
+           // commentThis(globalSub, 0)
+            autoComment(globalSub,0)
         }
 
     }
@@ -133,7 +136,9 @@ class PostFragment : Fragment() {
             }
 
             card.commentCard.setOnClickListener {
-                commentThis(c.sub, card.subComment,depth+1)
+                //commentThis
+                autoComment(c.sub,depth+1)
+
             }
 
             addComments(card.subComment,c.sub,depth+1)
@@ -146,7 +151,15 @@ class PostFragment : Fragment() {
 
     }
 
-    private fun commentThis(sub : MutableList<Comment>, lLayout: LinearLayout, depth : Int) {
+    private fun autoComment(sub : MutableList<Comment>,depth : Int){
+        val sr = SecureRandom()
+        val len = sr.nextInt() % 100
+        val comment = RandomString(len.absoluteValue+5).nextString()
+
+        syncModel.comment(pid,sub,globalSub,comment)
+    }
+
+    private fun commentThis(sub : MutableList<Comment>,depth : Int) {
 
         if (!commenting && depth <= maxDepth) {
 
@@ -156,8 +169,6 @@ class PostFragment : Fragment() {
             val tempCard = NewCommentViewHolderBinding.inflate(LayoutInflater.from(context), null, false)
 
             tempCard.send.setOnClickListener {
-                val mesg = tempCard.commentText.text.toString()
-                Log.d("PostFragment.kt", "Created comment $mesg")
 
                 commenting = false
 
@@ -169,22 +180,7 @@ class PostFragment : Fragment() {
 
                 val comment:String = tempCard.commentText.text.toString()
 
-                val nwComment = syncModel.comment(pid,sub,globalSub,comment)
-//                val nwCard = CommentViewHolderBinding.inflate(LayoutInflater.from(context), null, false)
-//
-////                nwCard.user.text = comment.user.alias
-//                nwCard.text.text = nwComment.comment
-//                nwCard.commentCard.setOnClickListener {
-//                    commentThis(nwComment.sub, nwCard.subComment,depth+1)
-//                }
-//                lLayout.addView(nwCard.root)
-//                val params = LinearLayout.LayoutParams(
-//                    ViewGroup.LayoutParams.WRAP_CONTENT,
-//                    ViewGroup.LayoutParams.WRAP_CONTENT)
-//
-//                params.gravity = Gravity.END
-//
-//                nwCard.root.layoutParams = params
+                syncModel.comment(pid,sub,globalSub,comment)
             }
 
             tempCard.root.autofillId
