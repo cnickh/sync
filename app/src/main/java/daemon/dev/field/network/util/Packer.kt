@@ -17,7 +17,7 @@ class Packer(raw : MeshRaw) {
     private val PACKET_SIZE = 365
 
     private var bytes : String = Json.encodeToString(raw)
-    private val size = bytes.length
+    val size = bytes.length
     private var max = size/PACKET_SIZE
     private var packets = mutableListOf<ByteArray>()
     private var iterations = 0

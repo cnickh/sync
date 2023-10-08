@@ -16,7 +16,7 @@ import daemon.dev.field.network.handler.packet.*
 
 class SyncOperator(private val postRepository: PostRepository, private val userBase: UserBase, private val channelAccess : ChannelAccess) {
 
-    lateinit var livePing : MutableLiveData<String>
+//    lateinit var livePing : MutableLiveData<String>
     lateinit var liveMsg : MutableLiveData<String>
     lateinit var vr : Verifier
 
@@ -31,9 +31,9 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
         vr = verifier
     }
 
-    fun setPing(ping : MutableLiveData<String>){
-        livePing = ping
-    }
+//    fun setPing(ping : MutableLiveData<String>){
+//        livePing = ping
+//    }
 
     fun setMsg(msg : MutableLiveData<String>){
         liveMsg = msg
@@ -99,7 +99,7 @@ class SyncOperator(private val postRepository: PostRepository, private val userB
             }
             MeshRaw.PING->{
                 mtype = "PING"
-                livePing.postValue(socket.key)
+                //livePing.postValue(socket.key)
             }
             MeshRaw.CHANNEL->{
                 mtype = "CHANNEL"

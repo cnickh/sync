@@ -1,6 +1,5 @@
 package daemon.dev.field.network
 
-import android.R
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
@@ -8,10 +7,8 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import daemon.dev.field.*
 import daemon.dev.field.bluetooth.BluetoothAdvertiser
@@ -20,7 +17,6 @@ import daemon.dev.field.bluetooth.Gatt
 import kotlinx.coroutines.runBlocking
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 class MeshService : Service() {
 
     /*Essentials for Operation*/
@@ -89,12 +85,12 @@ class MeshService : Service() {
 
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this,
-            0, notificationIntent, 0)
+            0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val notification: Notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
             .setContentTitle("Mesh Service")
             .setContentText("connecting...")
-            .setSmallIcon(R.mipmap.sym_def_app_icon)
+            .setSmallIcon(android.R.mipmap.sym_def_app_icon)
             .setContentIntent(pendingIntent)
             .build()
 

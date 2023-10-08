@@ -7,10 +7,18 @@ import daemon.dev.field.SYNC_TAG
 import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+
+/**
+ * This object is meant to keep track of a queue, consisting of post in open/active
+ * channels and notify connected peers of the open channels on this instance of the
+ * app
+ */
 
 object Sync {
 
@@ -164,9 +172,8 @@ object Sync {
                 }
 
                 queue_lock.unlock()
-                sleep(SYNC_INTERVAL)
+                withContext(Dispatchers.IO) { sleep(SYNC_INTERVAL) }
             } }
-
         }
 
         suspend fun kill(){

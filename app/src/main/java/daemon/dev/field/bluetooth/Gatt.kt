@@ -31,7 +31,6 @@ import daemon.dev.field.nypt.Session
 
 
 @SuppressLint("MissingPermission")
-@RequiresApi(Build.VERSION_CODES.O)
 class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val adapter: BluetoothAdapter, val handler : Handler) {
 
     var gattServer: BluetoothGattServer? = null

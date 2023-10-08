@@ -3,6 +3,7 @@ package daemon.dev.field.network
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattServer
 import android.os.Build
 import android.os.ConditionVariable
@@ -18,7 +19,6 @@ import kotlinx.coroutines.runBlocking
 import java.net.Socket
 
 @SuppressLint("MissingPermission")
-@RequiresApi(Build.VERSION_CODES.O)
 class Socket(
     val user : User,
     val type : Int,
@@ -67,6 +67,64 @@ class Socket(
         return symmetric.decrypt(bytes)
     }
 
+    private fun writeSock(buffer : ByteArray){
+        socket!!.getOutputStream().write(buffer)
+    }
+
+    private fun writeGatt(buffer : ByteArray){
+        val service = gatt!!.getService(SERVICE_UUID)
+        val char = service.getCharacteristic(REQUEST_UUID)
+        char.value = buffer
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            gatt.writeCharacteristic(char,buffer,BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
+        }else{
+            gatt.writeCharacteristic(char)
+        }
+
+    }
+
+    private fun writeDev(buffer : ByteArray){
+        val service = gattServer!!.getService(SERVICE_UUID)
+        val char = service.getCharacteristic(PROFILE_UUID)
+        char.value = buffer
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            gattServer.notifyCharacteristicChanged( device, char, true, buffer)
+        } else{
+            gattServer.notifyCharacteristicChanged (device, char, true)
+        }
+    }
+
+    fun type2String() : String{
+        return when(type){
+            BLUETOOTH_GATT -> {"BLUETOOTH_GATT"}
+            BLUETOOTH_DEVICE -> {"BLUETOOTH_DEVICE"}
+            WIFI -> {"WIFI"}
+            else -> {"NONE???"}
+        }
+    }
+
+    fun close(){
+
+        Log.i(SOCKET_TAG,"Close called on $key")
+
+        open = false
+
+        when (type) {
+            BLUETOOTH_GATT -> {
+                gatt?.disconnect()
+                gatt?.close()
+            }
+            BLUETOOTH_DEVICE -> {
+                gattServer?.cancelConnection(device)
+            }
+            WIFI -> {
+                //TODO
+            }
+        }
+    }
+
     fun write(buffer : ByteArray) : Int {
 
         val cipher = symmetric.encrypt(buffer)
@@ -99,55 +157,6 @@ class Socket(
         }
 
         return 0
-    }
-
-    private fun writeSock(buffer : ByteArray){
-        socket!!.getOutputStream().write(buffer)
-    }
-
-    private fun writeGatt(buffer : ByteArray){
-        val service = gatt!!.getService(SERVICE_UUID)
-        val char = service.getCharacteristic(REQUEST_UUID)
-        char.value = buffer
-        gatt.writeCharacteristic(char)
-    }
-
-    private fun writeDev(buffer : ByteArray){
-        val service = gattServer?.getService(SERVICE_UUID)
-        val char = service?.getCharacteristic(PROFILE_UUID)
-        char?.value = buffer
-        char?.let{
-            gattServer?.notifyCharacteristicChanged (device, char, true)
-        }
-    }
-
-    fun type2String() : String{
-        return when(type){
-            BLUETOOTH_GATT -> {"BLUETOOTH_GATT"}
-            BLUETOOTH_DEVICE -> {"BLUETOOTH_DEVICE"}
-            WIFI -> {"WIFI"}
-            else -> {"NONE???"}
-        }
-    }
-
-    fun close(){
-
-        Log.i(SOCKET_TAG,"Close called on $key")
-
-        open = false
-
-        when (type) {
-            BLUETOOTH_GATT -> {
-                gatt?.disconnect()
-                gatt?.close()
-            }
-            BLUETOOTH_DEVICE -> {
-                gattServer?.cancelConnection(device)
-            }
-            WIFI -> {
-                //TODO
-            }
-        }
     }
 
     fun send(packer : Packer): Int{

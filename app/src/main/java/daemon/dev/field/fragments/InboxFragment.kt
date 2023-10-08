@@ -49,23 +49,23 @@ class InboxFragment : Fragment() {
 
         binding.postInbox.layoutManager = layoutManager
 
-        sync.posts.observe(viewLifecycleOwner, Observer { new_post_list ->
-            Log.d(INBOX_TAG,"Observe post_list fired on \n $new_post_list")
+        sync.posts.observe(viewLifecycleOwner) { new_post_list ->
+            Log.d(INBOX_TAG, "Observe post_list fired on \n $new_post_list")
             sync.createTagMap()
             postAdapter.updateView(sync.filter(new_post_list))
             postAdapter.notifyDataSetChanged()
-        })
+        }
 
-        sync.peers.observe(viewLifecycleOwner, Observer { _ ->
+        sync.peers.observe(viewLifecycleOwner) { _ ->
             postAdapter.notifyDataSetChanged()
-        })
+        }
 
-        sync.raw_filter.observe(viewLifecycleOwner, Observer {
-            Log.d(INBOX_TAG,"Observe raw_filter fired on \n $it")
+        sync.raw_filter.observe(viewLifecycleOwner) {
+            Log.d(INBOX_TAG, "Observe raw_filter fired on \n $it")
             sync.createTagMap()
             postAdapter.updateView(sync.filter(null))
             postAdapter.notifyDataSetChanged()
-        })
+        }
 
         binding.create.setOnClickListener {
 

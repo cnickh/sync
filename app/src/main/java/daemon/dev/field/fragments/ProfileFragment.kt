@@ -11,7 +11,6 @@ import android.view.*
 import android.view.View.OnTouchListener
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -20,7 +19,6 @@ import com.google.android.flexbox.*
 import daemon.dev.field.PROFILE_TAG
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
-import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.*
 import daemon.dev.field.fragments.adapter.DeviceAdapter
 import daemon.dev.field.fragments.model.MessengerModel
@@ -61,7 +59,7 @@ class ProfileFragment : Fragment() {
     private fun ByteArray.toBase64() : String {
         return Base64.getEncoder().encodeToString(this)
     }
-    @RequiresApi(Build.VERSION_CODES.O)
+    @SuppressLint("NotifyDataSetChanged")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -131,8 +129,17 @@ class ProfileFragment : Fragment() {
 
         binding.userList.layoutManager = layoutManager
 
+        binding.clearPing.setOnClickListener {
+            msgModel.killLoad()
+            deviceAdapter.notifyDataSetChanged()
+        }
+
         syncModel.peers.observe(viewLifecycleOwner) { keys ->
             deviceAdapter.updateView(keys)
+        }
+
+        syncModel.ping.observe(viewLifecycleOwner) { _ ->
+            deviceAdapter.notifyDataSetChanged()
         }
 
         msgModel.latest.observe(viewLifecycleOwner) { _ ->

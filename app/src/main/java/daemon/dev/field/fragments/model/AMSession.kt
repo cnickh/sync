@@ -3,6 +3,10 @@ package daemon.dev.field.fragments.model
 import android.util.Log
 import daemon.dev.field.cereal.objects.Comment
 
+/**
+ * Used for holding a direct messaging session between two users.
+ */
+
 class AMSession(private val key : String) {
 
     private val inOrder = mutableListOf<Comment>()

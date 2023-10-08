@@ -11,6 +11,7 @@ import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Sync
+import daemon.dev.field.network.util.LoadBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -26,6 +27,30 @@ class MessengerModel : ViewModel() {
     private val waiting_queue = hashMapOf<String, ArrayDeque<String>>()
 
     val latest = MutableLiveData<Comment>()
+
+    val loadControllers = mutableListOf<LoadBox>() //for test purposes
+
+
+    fun init_loadBox(key : String){
+        val box = LoadBox(key,1000)
+        loadControllers.add(box)
+        box.start()
+    }
+
+    fun killLoad(){
+        for (b in loadControllers){
+            b.kill()
+        }
+    }
+
+    fun load(key : String) : Boolean {
+        for (b in loadControllers){
+            if(b.key.equals(key)){
+                return true
+            }
+        }
+        return false
+    }
 
     fun setLatest(cmnt : Comment){
         latest.postValue(cmnt)

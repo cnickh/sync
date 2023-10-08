@@ -1,6 +1,7 @@
 package daemon.dev.field.fragments.adapter
 
 import android.os.Build
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,7 +20,6 @@ import daemon.dev.field.util.Phi
 import kotlin.math.roundToInt
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 class DeviceAdapter(val view : View, val activity : FragmentActivity, val msgModel : MessengerModel) : RecyclerView.Adapter<DeviceAdapter.deviceVh>() {
 
     private var itemsList: List<User> = arrayListOf()
@@ -45,7 +45,6 @@ class DeviceAdapter(val view : View, val activity : FragmentActivity, val msgMod
     }
 
     override fun onBindViewHolder(holder: deviceVh, position: Int) {
-
         holder.bind(getItem(position))
     }
 
@@ -60,12 +59,13 @@ class DeviceAdapter(val view : View, val activity : FragmentActivity, val msgMod
     inner class deviceVh(private val binding: DeviceViewHolderBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        @RequiresApi(Build.VERSION_CODES.O)
         fun bind(item: User?) {
+            Log.d("DEVICEADAPTER.kt","Bind call ${item?.key}")
+
             item?.let {
 
                 binding.name.text = it.alias
-                binding.id.text = it.key
+                binding.id.text = it.key.slice(0..9)
 
                 msgModel.getUnRead(it.key)?.let{ unRead ->
 
@@ -76,6 +76,17 @@ class DeviceAdapter(val view : View, val activity : FragmentActivity, val msgMod
                 }
 
                 val key = it.key
+
+                if (!msgModel.load(key)){
+                    binding.ping.visibility = View.VISIBLE
+                    binding.rateText.visibility = View.INVISIBLE
+                }
+
+                binding.ping.setOnClickListener {
+                    binding.ping.visibility = View.INVISIBLE
+                    binding.rateText.visibility = View.VISIBLE
+                    msgModel.init_loadBox(key)
+                }
 
                 binding.card.setOnClickListener {
 

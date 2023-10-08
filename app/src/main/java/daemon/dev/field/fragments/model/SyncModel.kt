@@ -3,6 +3,7 @@ package daemon.dev.field.fragments.model
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,6 +14,7 @@ import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.network.Async
 import daemon.dev.field.network.Sync
+import daemon.dev.field.network.util.LoadBox
 import daemon.dev.field.nypt.ChannelBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -238,7 +240,7 @@ class SyncModel internal constructor(
     fun comment(position : Int, sub : MutableList<Comment>, globalSub : MutableList<Comment>, text : String) : Comment {
         Log.v("SyncModel.kt","Creating comment $text")
 
-        val time = if(Build.VERSION.SDK_INT >= 29){
+        val time = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
             SystemClock.currentNetworkTimeClock().millis()
         } else {
             System.currentTimeMillis()

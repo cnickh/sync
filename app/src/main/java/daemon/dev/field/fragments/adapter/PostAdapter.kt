@@ -149,7 +149,7 @@ class PostAdapter(val activity : FragmentActivity, val syncModel: SyncModel) : R
 
     fun getDateTime(s: Long): String? {
         return try {
-            val sdf = SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
+            val sdf = SimpleDateFormat("MM/dd/yyyy HH:mm:ss") 
             val netDate = Date(s)
             sdf.format(netDate)
         } catch (e: Exception) {

@@ -18,7 +18,6 @@ import daemon.dev.field.fragments.ChannelFragment
 import daemon.dev.field.fragments.InboxFragment
 import daemon.dev.field.fragments.ProfileFragment
 import daemon.dev.field.fragments.model.*
-import daemon.dev.field.network.Async
 import daemon.dev.field.nypt.Signature
 import daemon.dev.field.util.KeyStore
 import kotlinx.serialization.decodeFromString
@@ -34,7 +33,6 @@ class MainActivity : AppCompatActivity() {
     lateinit var resModel : ResourceModel
     lateinit var msgModel : MessengerModel
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -146,11 +144,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         syncModel.ping.observe(this) {
-            val text = "Ping from $it"
-            val duration = Toast.LENGTH_SHORT
+            //val text = "Ping from $it"
+            //val duration = Toast.LENGTH_SHORT
 
-            val toast = Toast.makeText(this, text, duration)
-            toast.show()
+            //val toast = Toast.makeText(this, it, duration)
+            //toast.show()
+            binding.byteRate.text = it
         }
 
         msgModel.direct.observe(this) {

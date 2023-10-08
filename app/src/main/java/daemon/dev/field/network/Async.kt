@@ -41,7 +41,7 @@ object Async {
 
     val live_state = MutableLiveData(IDLE)
     private var state = IDLE
-    private val state_lock = Mutex()
+    //private val state_lock = Mutex()
 
     private var message_number = 0
 
@@ -49,7 +49,7 @@ object Async {
     val peers = MutableLiveData<MutableList<User>>(mutableListOf()) //updates connected peers
     val peerStart = HashMap<String,Long>()
 
-    /**All pasted to SyncOperator, used to notify app UI of important packets*/
+    /**All passed to SyncOperator, used to notify app UI of important packets*/
     val ping = MutableLiveData<String>()//updates pings
     val direct = MutableLiveData<String>()//updates on direct message
 
@@ -91,14 +91,14 @@ object Async {
 
         sw = switch
         this.nl = nl
-        vr = Verifier()
+        vr = Verifier(ping)
 
         ds = SyncDatabase.getInstance(context)
         val ca = ChannelAccess(ds.channelDao)
         val pr = PostRepository(ds.postDao)
         op = SyncOperator(pr, UserBase(ds.userDao), ca)
 
-        op.setPing(ping)
+//        op.setPing(ping)
         op.setVerifier(vr)
         op.setMsg(direct)
 
@@ -220,9 +220,12 @@ object Async {
 
     }
 
+    suspend fun canSend(key : String) : Boolean{
+        return pn.gattConnection(key) != null
+    }
 
     suspend fun send(raw : MeshRaw, key : String){
-        pn.getAny(key)?.let { send(raw, it) }
+        pn.gattConnection(key)?.let { send(raw, it) }
     }
 
     suspend fun send(raw : MeshRaw, socket : Socket){
@@ -247,8 +250,9 @@ object Async {
             disconnectSocket(socket);return
         }
 
+        val cur = System.currentTimeMillis()
         if(raw.type != MeshRaw.CONFIRM){
-            vr.add(socket, raw.mid)
+            vr.add(socket, Triple(raw.mid,packer.size,cur))
         }
 
     }
