@@ -63,7 +63,7 @@ class ServiceLauncher(val context : Context) {
 
                 val mIntent = Intent(context, MeshService::class.java)
                 mIntent.putExtra("ME", Json.encodeToString(profile))
-                bound = context.bindService(mIntent, mServiceConnection, BIND_AUTO_CREATE)
+               // bound = context.bindService(mIntent, mServiceConnection, BIND_AUTO_CREATE)
             }
         }
 
@@ -71,7 +71,7 @@ class ServiceLauncher(val context : Context) {
             val mIntent = Intent(context, MeshService::class.java)
             mIntent.putExtra("ME", Json.encodeToString(profile))
             ContextCompat.startForegroundService(context, mIntent!!);
-            context.bindService(mIntent, mServiceConnection, BIND_AUTO_CREATE)
+            //context.bindService(mIntent, mServiceConnection, BIND_AUTO_CREATE)
         }
 
         return running
