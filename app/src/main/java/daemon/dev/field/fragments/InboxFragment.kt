@@ -51,8 +51,9 @@ class InboxFragment : Fragment() {
 
         sync.posts.observe(viewLifecycleOwner) { new_post_list ->
             Log.d(INBOX_TAG, "Observe post_list fired on \n $new_post_list")
-            sync.createTagMap()
-            postAdapter.updateView(sync.filter(new_post_list))
+            //sync.createTagMap()
+            //postAdapter.updateView(sync.filter(new_post_list))
+            postAdapter.updateView(new_post_list)
             postAdapter.notifyDataSetChanged()
         }
 
@@ -60,12 +61,12 @@ class InboxFragment : Fragment() {
             postAdapter.notifyDataSetChanged()
         }
 
-        sync.raw_filter.observe(viewLifecycleOwner) {
-            Log.d(INBOX_TAG, "Observe raw_filter fired on \n $it")
-            sync.createTagMap()
-            postAdapter.updateView(sync.filter(null))
-            postAdapter.notifyDataSetChanged()
-        }
+//        sync.raw_filter.observe(viewLifecycleOwner) {
+//            Log.d(INBOX_TAG, "Observe raw_filter fired on \n $it")
+//            sync.createTagMap()
+//            postAdapter.updateView(sync.filter(null))
+//            postAdapter.notifyDataSetChanged()
+//        }
 
         binding.create.setOnClickListener {
 

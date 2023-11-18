@@ -254,13 +254,21 @@ class MainActivity : AppCompatActivity() {
                 }
                 "SCANNER" ->{
                     //String device address
-                    devices.add(it)
-                    syncModel.devices.postValue(devices)
+                    /*
+                        @PrimaryKey(autoGenerate = false) val key : String,
+                        var alias : String,
+                        val clout : Int,
+                        var channels : String,
+                        var Status : Int = 0,
+                     */
+                    val temp = User("null",it,0,"",0)
+                    peers.add(temp)
+                    syncModel.peers.postValue(peers)
                 }
                 "CONNECT" ->{
                     //User object
                     val peer = Json.decodeFromString<User>(it)
-                    peers.add(peer)
+                    peers.add(0,peer)
                     syncModel.peers.postValue(peers)
                 }
                 "DISCONNECT" ->{

@@ -91,27 +91,49 @@ class MeshService : Service() {
         if (me != null) {
             this.me = Json.decodeFromString<User>(me)
         }//get shake
-
-        enableNotification()
-        launchNetworkProcesses()
+        start()
+//        enableNotification()
+//        launchNetworkProcesses()
 
         return START_NOT_STICKY
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    fun start(){
+        enableNotification()
+        launchNetworkProcesses()
+    }
 
+    fun kill(){
         bluetoothLeScanner.stopScanning()
         bluetoothAdvertiser.stopAdvertising()
         gatt.stopServer()
         looper.kill()
+
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+
         Log.i(MESH_TAG,"Killed successfully")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i(MESH_TAG,"onDestroy() called")
+
+        kill()
     }
 
     private val mBinder: IBinder = LocalBinder()
 
     override fun onBind(p0: Intent?): IBinder {
+        val me = p0?.extras?.getString("ME")
+        if (me != null) {
+            this.me = Json.decodeFromString<User>(me)
+        }//get shake
         return mBinder
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        return super.onUnbind(intent)
     }
 
     inner class LocalBinder : Binder() {

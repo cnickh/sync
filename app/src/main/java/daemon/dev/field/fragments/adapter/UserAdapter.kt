@@ -63,6 +63,16 @@ class UserAdapter(val view : View, val activity : FragmentActivity, val loadCont
         fun bind(item: User?) {
 
             item?.let {
+                Log.i(PROFILE_TAG,"have ${it.key}")
+
+                if(it.key == "null"){
+                    binding.name.text = it.alias
+                    binding.id.visibility = View.INVISIBLE
+                    binding.ping.visibility = View.INVISIBLE
+                    binding.rateText.visibility = View.INVISIBLE
+                    binding.profileImage.visibility = View.INVISIBLE
+                    return
+                }
 
                 binding.name.text = it.alias
                 binding.id.text = it.key.slice(0..9)

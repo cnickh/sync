@@ -11,6 +11,7 @@ import android.view.*
 import android.view.View.OnTouchListener
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -43,7 +44,7 @@ class ProfileFragment : Fragment() {
 
     private lateinit var binding: FragmentProfileBinding
     private lateinit var userAdapter : UserAdapter
-    private lateinit var deviceAdapter : DeviceAdapter
+    //private lateinit var deviceAdapter : DeviceAdapter
 
 
     private var syncButton : SyncButtonBinding? = null
@@ -101,8 +102,10 @@ class ProfileFragment : Fragment() {
         binding.stateFrame.setOnClickListener {
 
            CoroutineScope(Dispatchers.IO).launch {
-               mServiceController.checkStartMesh(syncModel.me.value!!)
-            }
+               val ret = mServiceController.checkStartMesh(syncModel.me.value!!)
+               Log.i(PROFILE_TAG ,"Hitting IDLE $ret")
+
+           }
 
         }
 
@@ -121,16 +124,16 @@ class ProfileFragment : Fragment() {
         binding.userList.layoutManager = layoutManager
 
 
-        val lManager = FlexboxLayoutManager(context).apply {
-            justifyContent = JustifyContent.CENTER
-            alignItems = AlignItems.CENTER
-            flexDirection = FlexDirection.ROW
-            flexWrap = FlexWrap.WRAP
-        }
-
-        deviceAdapter = activity?.let { DeviceAdapter(view, it) }!!
-        binding.deviceList.adapter = deviceAdapter
-        binding.deviceList.layoutManager = lManager
+//        val lManager = FlexboxLayoutManager(context).apply {
+//            justifyContent = JustifyContent.CENTER
+//            alignItems = AlignItems.CENTER
+//            flexDirection = FlexDirection.ROW
+//            flexWrap = FlexWrap.WRAP
+//        }
+//
+//        deviceAdapter = activity?.let { DeviceAdapter(view, it) }!!
+//        binding.deviceList.adapter = deviceAdapter
+//        binding.deviceList.layoutManager = lManager
 
 
         binding.clearPing.setOnClickListener {
@@ -138,13 +141,18 @@ class ProfileFragment : Fragment() {
             userAdapter.notifyDataSetChanged()
         }
 
+        binding.userList.setOnClickListener {
+            Log.i("Fac-Debug" ,"Hitting UserList")
+
+        }
+
         syncModel.peers.observe(viewLifecycleOwner) { keys ->
             userAdapter.updateView(keys)
         }
-
-        syncModel.devices.observe(viewLifecycleOwner) { dev ->
-            deviceAdapter.updateView(dev)
-        }
+//
+//        syncModel.devices.observe(viewLifecycleOwner) { dev ->
+//            deviceAdapter.updateView(dev)
+//        }
 //
 //        syncModel.ping.observe(viewLifecycleOwner) { _ ->
 //            userAdapter.notifyDataSetChanged()
@@ -306,7 +314,9 @@ class ProfileFragment : Fragment() {
             )
             readyButton!!.stateFrame.setOnClickListener {
                 CoroutineScope(Dispatchers.IO).launch {
-                    mServiceController.checkKillMesh()
+                    val ret = mServiceController.checkKillMesh()
+                    Log.i("Fac-Debug" ,"Hitting READY button -- $ret")
+
                 }
             }
         }
@@ -377,6 +387,21 @@ class ProfileFragment : Fragment() {
         val width = displayMetrics.widthPixels - (30*displayMetrics.density)
         params.width = width.roundToInt()
         params.height = Phi().phi(width.roundToInt(),1)
+
+//        val set = ConstraintSet()
+//        set.clone(binding.base)
+//
+//        val margin = displayMetrics.widthPixels - (32*displayMetrics.density)
+//
+//        set.connect(
+//            binding.userList.id,
+//            ConstraintSet.TOP,
+//            binding.profileHeader.id,
+//            ConstraintSet.BOTTOM,
+//            params.height
+//        )
+//
+//        set.applyTo(binding.base)
 
     }
 

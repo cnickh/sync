@@ -160,9 +160,14 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
                 val res = it.connect()
                 Log.i(NETLOOPER_TAG,"gatt.connect() : $res")
                 if(res){
-                    val send = it.send(packer)
+                    val send = it.send(Packer(event.raw))
                     Log.i(NETLOOPER_TAG,"send 2nd attempt : $send")
-
+                } else {
+                    pn.closeSocket(it)
+                    val user = it.user
+                    val intent = Intent(netDef.code2String(DISCONNECT))
+                    intent.putExtra("extra", Json.encodeToString(user))
+                    context.sendBroadcast(intent)
                 }
             }
         }

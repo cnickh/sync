@@ -30,7 +30,7 @@ class SyncModel internal constructor(
 ) : ViewModel()  {
 
     val peers = MutableLiveData<List<User>>() //Sync.peers
-    val devices = MutableLiveData<List<String>>()//Async.devices
+    //val devices = MutableLiveData<List<String>>()//Async.devices
     val state = MutableLiveData("IDLE")// = Async.live_state
 //    val ping = Async.ping
     //val openChannels = Sync.liveChannels
@@ -234,9 +234,9 @@ class SyncModel internal constructor(
 //                ping.postValue("No Open Channels")
 //                exitProcess(0)
 //            }
-//
-//            Log.v("SyncModel.kt","Created post $post")
-//            postRepository.add(post)
+
+            Log.v("SyncModel.kt","Created post $post")
+            postRepository.add(post)
 //            for(c in Sync.getOpenChannels()){
 //                channelAccess.addPost(c,post.address().address)
 //            }
