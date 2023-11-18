@@ -18,7 +18,6 @@ import daemon.dev.field.fragments.adapter.MessageAdapter
 import daemon.dev.field.fragments.model.MessengerModel
 import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.network.Async
 
 class MessengerFragment: Fragment() {
     private val messenger: MessengerModel by activityViewModels()
@@ -106,7 +105,7 @@ class MessengerFragment: Fragment() {
             //binding.scroll.fullScroll(View.FOCUS_DOWN)
         }
 
-        Async.peers.observe(viewLifecycleOwner) { peers ->
+        syncModel.peers.observe(viewLifecycleOwner) { peers ->
 
             val connected = peers.contains(User(key, "", 0, ""))
             if (connected) {

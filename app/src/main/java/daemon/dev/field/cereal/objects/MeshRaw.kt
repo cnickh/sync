@@ -4,11 +4,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class MeshRaw(val type : Int,
-              val nodeInfo : User?,
-              val requests : List<String>?, //List<Address>
-              val newData : HashMap<String,HashMap<String,String>>?, //HashMap<Address,HashCode>
-              val posts : List<Post>?,
-              val misc : String?
+              val nodeInfo : User? = null,
+              val requests : List<String>? = null, //List<Address>
+              val newData : HashMap<String,HashMap<String,String>>? = null, //HashMap<Address,HashCode>
+              val posts : List<Post>? = null,
+              val misc : String? = null
                     ){
 
     var mid : Int = 0
@@ -26,6 +26,9 @@ class MeshRaw(val type : Int,
 
         const val CHANNEL = 8
         const val DIRECT = 9
+
+        const val DECODE_ERROR = 10
+        const val DECODE_ERROR_ = 11
     }
 
     fun hash(): String {

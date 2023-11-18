@@ -21,10 +21,11 @@ import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
 import daemon.dev.field.databinding.*
 import daemon.dev.field.fragments.adapter.DeviceAdapter
+import daemon.dev.field.fragments.adapter.UserAdapter
 import daemon.dev.field.fragments.model.MessengerModel
 import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.network.Async
+import daemon.dev.field.network.util.LoadController
 import daemon.dev.field.util.Phi
 import daemon.dev.field.util.ServiceLauncher
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +42,9 @@ class ProfileFragment : Fragment() {
     private val msgModel : MessengerModel by activityViewModels()
 
     private lateinit var binding: FragmentProfileBinding
+    private lateinit var userAdapter : UserAdapter
     private lateinit var deviceAdapter : DeviceAdapter
+
 
     private var syncButton : SyncButtonBinding? = null
     private var readyButton : ReadyButtonBinding? = null
@@ -49,6 +52,8 @@ class ProfileFragment : Fragment() {
     private var uiState = "IDLE"
     private var alias = ""
 
+    private lateinit var mServiceController : ServiceLauncher
+    private lateinit var loadController : LoadController
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -63,13 +68,11 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        mServiceController = syncModel.getServiceController()
+        loadController = LoadController(mServiceController)
         beautify()
 
-        setState()
-
-        binding.create.setOnClickListener {
-            syncModel.clearDB()
-        }
+        setState(syncModel.state.value!!)
 
         resModel.loadProfileImage()
 
@@ -85,8 +88,8 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        syncModel.state.observe(viewLifecycleOwner) { _ ->
-            setState()
+        syncModel.state.observe(viewLifecycleOwner) {
+            setState(it)
         }
 
         syncModel.me.observe(viewLifecycleOwner) {
@@ -98,26 +101,14 @@ class ProfileFragment : Fragment() {
         binding.stateFrame.setOnClickListener {
 
            CoroutineScope(Dispatchers.IO).launch {
-               ServiceLauncher(view.context).checkStartMesh()
+               mServiceController.checkStartMesh(syncModel.me.value!!)
             }
 
-            binding.state.text = Async.state2String()
-//            val keys = listOf(
-//
-//                User("ALKFDJ)@#{P","TonyJboyz",0,"None"),
-//                User("ALKFDJ)@#{P","Tim Halaberton",0,"None"),
-//                User("ALKFDJ)@#{P","HQ_yamean",0,"None")
-//
-//            )
-//
-//
-//            Log.d("ProfileFragment.kt", "defuq boi")
-//            deviceAdapter.updateView(keys)
         }
 
         binding.key.text = PUBLIC_KEY.toBase64()
-        deviceAdapter = activity?.let { DeviceAdapter(view, it, msgModel) }!!
-        binding.userList.adapter = deviceAdapter
+        userAdapter = activity?.let { UserAdapter(view, it, loadController) }!!
+        binding.userList.adapter = userAdapter
 
         //Black magic fuckary to center items in recycle view
         val layoutManager = FlexboxLayoutManager(context).apply {
@@ -129,21 +120,38 @@ class ProfileFragment : Fragment() {
 
         binding.userList.layoutManager = layoutManager
 
+
+        val lManager = FlexboxLayoutManager(context).apply {
+            justifyContent = JustifyContent.CENTER
+            alignItems = AlignItems.CENTER
+            flexDirection = FlexDirection.ROW
+            flexWrap = FlexWrap.WRAP
+        }
+
+        deviceAdapter = activity?.let { DeviceAdapter(view, it) }!!
+        binding.deviceList.adapter = deviceAdapter
+        binding.deviceList.layoutManager = lManager
+
+
         binding.clearPing.setOnClickListener {
-            msgModel.killLoad()
-            deviceAdapter.notifyDataSetChanged()
+            loadController.killLoad()
+            userAdapter.notifyDataSetChanged()
         }
 
         syncModel.peers.observe(viewLifecycleOwner) { keys ->
-            deviceAdapter.updateView(keys)
+            userAdapter.updateView(keys)
         }
 
-        syncModel.ping.observe(viewLifecycleOwner) { _ ->
-            deviceAdapter.notifyDataSetChanged()
+        syncModel.devices.observe(viewLifecycleOwner) { dev ->
+            deviceAdapter.updateView(dev)
         }
+//
+//        syncModel.ping.observe(viewLifecycleOwner) { _ ->
+//            userAdapter.notifyDataSetChanged()
+//        }
 
         msgModel.latest.observe(viewLifecycleOwner) { _ ->
-            deviceAdapter.notifyDataSetChanged()
+            userAdapter.notifyDataSetChanged()
         }
 
         binding.editButton.setOnClickListener {
@@ -154,9 +162,13 @@ class ProfileFragment : Fragment() {
 
     }
 
-    private fun setState(){
-        val state = Async.state2String()
+    override fun onStop() {
+        super.onStop()
+        Log.i("Fac-Debug" ,"Prof onStop() called")
+        loadController.killLoad()
+    }
 
+    private fun setState(state : String){
         when(state){
             "IDLE"->{idle()}
             "READY"->{ready()}
@@ -251,7 +263,6 @@ class ProfileFragment : Fragment() {
 
     }
 
-    @RequiresApi(Build.VERSION_CODES.KITKAT)
     private val getContent = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         //Handle the returned Uri
         val img = uri
@@ -295,7 +306,7 @@ class ProfileFragment : Fragment() {
             )
             readyButton!!.stateFrame.setOnClickListener {
                 CoroutineScope(Dispatchers.IO).launch {
-                    ServiceLauncher(view!!.context).checkKillMesh()
+                    mServiceController.checkKillMesh()
                 }
             }
         }
@@ -332,7 +343,7 @@ class ProfileFragment : Fragment() {
             )
             syncButton!!.stateFrame.setOnClickListener {
                 CoroutineScope(Dispatchers.IO).launch {
-                    ServiceLauncher(view!!.context).checkKillMesh()
+                    mServiceController.checkKillMesh()
                 }
             }
         }

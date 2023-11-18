@@ -13,7 +13,7 @@ data class User(
     var alias : String,
     val clout : Int,
     var channels : String,
-    var Status : Int = 0
+    var Status : Int = 0,
 
     ){
 

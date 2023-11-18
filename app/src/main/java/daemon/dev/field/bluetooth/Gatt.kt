@@ -18,20 +18,28 @@ package daemon.dev.field.bluetooth
 import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.*
-import android.content.Context
-import android.os.Build
 import android.os.Handler
 import android.util.Log
-import androidx.annotation.RequiresApi
 import daemon.dev.field.*
-import daemon.dev.field.network.Async
+import daemon.dev.field.cereal.objects.HandShake
+import daemon.dev.field.cereal.objects.KeyBundle
+import daemon.dev.field.network.Socket
 import kotlinx.coroutines.runBlocking
-import daemon.dev.field.network.handler.event.*
+import daemon.dev.field.network.util.NetworkEventDefinition.*
+import daemon.dev.field.network.util.NetworkEventDefinition.Companion.GATT
+import daemon.dev.field.network.util.NetworkEventDefinition.Companion.CONNECT
+import daemon.dev.field.network.util.NetworkEventDefinition.Companion.PACKET
 import daemon.dev.field.nypt.Session
+import daemon.dev.field.nypt.Signature
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
+import java.util.Base64
 
 
 @SuppressLint("MissingPermission")
-class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val adapter: BluetoothAdapter, val handler : Handler) {
+class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val adapter: BluetoothAdapter, val handler : Handler,  val shake: HandShake) {
 
     var gattServer: BluetoothGattServer? = null
     private var gattServerCallback: BluetoothGattServerCallback? = null
@@ -39,23 +47,26 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
     private var profileCharacteristic: BluetoothGattCharacteristic? = null
     private var requestCharacteristic: BluetoothGattCharacteristic? = null
 
-    private var sessionMap = mutableMapOf<String, Session>()
+    private var sessionMap = mutableMapOf<String, Session?>()
+    private var socketMap = mutableMapOf<String, Socket?>()
+
+
+    fun forget(device : String){
+        sessionMap[device] = null
+        socketMap[device] = null
+    }
 
     private fun sendEvent(type :Int,
-                          device: BluetoothDevice,
                           bytes : ByteArray?,
-                          gattServer: BluetoothGattServer?,
-                          req : Int?,
-                          session: Session?){
+                          socket : Socket
+                        ){
         handler.obtainMessage(
             GATT,
-            GattEvent(type,device,bytes,gattServer,req,session)).sendToTarget()
+            GattEvent(type,bytes,socket)).sendToTarget()
     }
 
     fun start() {
-
         setupGattServer(app)
-
     }
 
     fun stopServer() {
@@ -98,6 +109,39 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
 
     }
 
+    private fun computeSharedKey(shake: HandShake,session : Session) : ByteArray?{
+        val publicKey = Ed25519PublicKeyParameters(shake.me.key.toByteArray())
+        val secret = shake.keyBundle!!.secret
+        val sig = shake.keyBundle!!.sig
+
+        val verified = Signature().verify(secret.toByteArray(),sig.toByteArray(),publicKey)
+
+        return if(verified){
+            session.computeAgreement(secret.toByteArray())
+        }else{
+            Log.e(NETLOOPER_TAG,"GattHandlerEvent: verification failed")
+            null
+        }
+    }
+
+    private fun createSecret(session: Session) : KeyBundle {
+        val signature = Signature()
+        signature.init(PUBLIC_KEY, PRIVATE_KEY)
+
+        val secret = session.generateSecret()
+        val sig = signature.sign(secret)!!
+
+        return KeyBundle(secret.toBase64(),sig.toBase64())
+    }
+
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
+    }
+
+    private fun String.toByteArray() : ByteArray {
+        return Base64.getDecoder().decode(this)
+    }
+
     private inner class GattServerCallback : BluetoothGattServerCallback() {
 
         override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
@@ -110,8 +154,11 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
             if(!isConnected){
                 device.let{
                     Log.e(GATT_TAG,"onConnectionState was bad am gatt")
-                    sendEvent(DISCONNECT,it,null,gattServer!!,null,null)
+//                    socketMap[it.address]?.let { it1 -> sendEvent(DISCONNECT,null, it1) }
+//                    sessionMap[it.address] = null
+//                    socketMap[it.address] = null
                 }
+                //gattServer?.connect(device, true)
             }
 
         }
@@ -123,13 +170,24 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
             characteristic: BluetoothGattCharacteristic?
         ) {
 
-//            Log.v(GATT_TAG, "onCharacteristicRead")
+            Log.v(GATT_TAG, "onCharacteristicRead $device")
 
             device?.let {
-                //create session & map & send
+                Log.v(GATT_TAG, "have device ${device.address}")
+
                 val session = Session()
                 sessionMap[device.address] = session
-                sendEvent(HANDSHAKE,device,null,gattServer!!,requestId,session)
+                socketMap[device.address] = null
+
+                //create session & map & send
+                shake.keyBundle = createSecret(session)
+                val json = Json.encodeToString(shake)
+
+                Log.v(GATT_TAG,"Sending shake : $json")
+
+                gattServer?.sendResponse(
+                    device, requestId, 0, 0, json.toByteArray(CHARSET))
+
             }
 
         }
@@ -151,25 +209,67 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
                 offset,
                 value)
 
-            value?.let {
-
-                //gattServer?.sendResponse(device!!, requestId, 0, 0, null)
-                //Got handshake send original session from map
-                sendEvent(PACKET,device!!,it,gattServer,requestId,sessionMap[device.address])
-
+            if (device != null) {
+                Log.i(GATT_TAG, "Gatt have write from ${device.address}")
             }
 
+            value?.let { bytes->
 
+                gattServer?.sendResponse(
+                    device, requestId, 200, 0, null)
+
+
+                var sock = socketMap[device?.address]
+
+                if(sock == null){
+
+                    val json = bytes.toString(CHARSET)
+
+                    Log.v(GATT_TAG,"Have shake : $json")
+
+                    val shake = try{
+                        Json.decodeFromString<HandShake>(json)
+                    }catch(e : Exception){
+                        null
+                    }
+
+                    shake?.let {
+                        sock =
+                            sessionMap[device!!.address]?.let { session ->
+                                val key = computeSharedKey(it, session)
+                                Log.i(GATT_TAG, "Gatt establishing key ${key!!.toBase64()}")
+
+                                Socket(
+                                    it.me,
+                                    Socket.BLUETOOTH_DEVICE,
+                                    null,
+                                    null,
+                                    device,
+                                    gattServer,
+                                    key
+                                )
+                            }
+                        socketMap[device.address] = sock!!
+
+                        sendEvent(CONNECT,null, sock!!)
+
+                    }
+
+
+                }else{
+                    sendEvent(PACKET,bytes, sock!!)
+                }
+
+            }
 
         }
 
         override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
             super.onNotificationSent(device, status)
 
-//            Log.d(GATT_TAG, "OnNotificationSent(): exe-thread["+Thread.currentThread().name +"]")
-            device?.let{
-                    dev -> val socket = runBlocking { Async.getSocket(dev) }
-                socket?.response?.open()
+            device?.let{ dev->
+                Log.d(GATT_TAG, "OnNotificationSent(): exe-thread["+Thread.currentThread().name +"] from device[${device.address}]")
+                socketMap[dev.address]?.response?.open()
             }
 
         }

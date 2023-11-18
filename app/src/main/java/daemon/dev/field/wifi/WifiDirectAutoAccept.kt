@@ -15,6 +15,7 @@
  */
 package daemon.dev.field.wifi
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
@@ -40,6 +41,7 @@ import java.lang.reflect.Proxy
  * objects of this class and call its public methods in API 15, but no
  * dialogs will be intercepted in that case.
  */
+@SuppressLint("PrivateApi")
 class WifiDirectAutoAccept private constructor(context: Context?, m: WifiP2pManager?, c: WifiP2pManager.Channel?) {
     private var manager: WifiP2pManager? = null
     private var channel: WifiP2pManager.Channel? = null
@@ -177,6 +179,7 @@ class WifiDirectAutoAccept private constructor(context: Context?, m: WifiP2pMana
          * PIN-based group formation before passing the config to
          * manager.connect.
          */
+        @SuppressLint("MissingPermission")
         fun onConnectionRequested(device: WifiP2pDevice, config: WifiP2pConfig) {
             Log.d(TAG, "onConnectionRequested")
             Log.d(TAG, "    device: " + device.deviceAddress + " " + device.deviceName)

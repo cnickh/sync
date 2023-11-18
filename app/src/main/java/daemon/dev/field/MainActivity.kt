@@ -1,18 +1,22 @@
 package daemon.dev.field
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.badge.BadgeDrawable
-import daemon.dev.field.cereal.objects.Comment
+import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.ActivityMainBinding
 import daemon.dev.field.fragments.ChannelFragment
 import daemon.dev.field.fragments.InboxFragment
@@ -20,6 +24,7 @@ import daemon.dev.field.fragments.ProfileFragment
 import daemon.dev.field.fragments.model.*
 import daemon.dev.field.nypt.Signature
 import daemon.dev.field.util.KeyStore
+import daemon.dev.field.util.ServiceLauncher
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.security.SecureRandom
@@ -32,6 +37,11 @@ class MainActivity : AppCompatActivity() {
     lateinit var syncModel : SyncModel
     lateinit var resModel : ResourceModel
     lateinit var msgModel : MessengerModel
+
+    val mGattUpdateReceiver = MyReceiver()
+    private val mServiceController = ServiceLauncher(this)
+
+    var msg : Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,6 +89,8 @@ class MainActivity : AppCompatActivity() {
         syncModel = ViewModelProvider(this, syncModelFactory)[SyncModel::class.java]
         resModel = ViewModelProvider(this, resModelFactory)[ResourceModel::class.java]
         msgModel = ViewModelProvider(this, msgModelFactory)[MessengerModel::class.java]
+
+        syncModel.setServiceController(mServiceController)
 
         requestPermissions(
             arrayOf(LOCATION_FINE_PERM,CONNECTION_PERM),
@@ -143,46 +155,53 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        syncModel.ping.observe(this) {
-            //val text = "Ping from $it"
-            //val duration = Toast.LENGTH_SHORT
-
-            //val toast = Toast.makeText(this, it, duration)
-            //toast.show()
-            binding.byteRate.text = it
-        }
-
-        msgModel.direct.observe(this) {
-            Log.d(MAIN_TAG, "Main-thread direct Observer")
-
-            val msg = Json.decodeFromString<Comment>(it)
-
-            if (msg.comment == "d1sc0nn3ct") {
-                msgModel.zeroSub(msg.key)
-            } else {
-
-                msgModel.createSub(msg.key)
-                msgModel.receiveMessage(msg)
-                msgModel.setLatest(msg)
-
-                val text = msg.comment
-                val duration = Toast.LENGTH_SHORT
-                val toast = Toast.makeText(this, text, duration)
-                toast.show()
-            }
-            msgModel.printMsgMap()
-        }
-
-        syncModel.peers.observe(this) { peers ->
-            Log.d(MAIN_TAG, "Main-thread peers Observer")
-
-            for (p in peers) {
-                msgModel.dumpQueue(p.key)
-            }
-            msgModel.printMsgMap()
-        }
+//        msgModel.direct.observe(this) {
+//            Log.d(MAIN_TAG, "Main-thread direct Observer")
+//
+//            val msg = Json.decodeFromString<Comment>(it)
+//
+//            if (msg.comment == "d1sc0nn3ct") {
+//                msgModel.zeroSub(msg.key)
+//            } else {
+//
+//                msgModel.createSub(msg.key)
+//                msgModel.receiveMessage(msg)
+//                msgModel.setLatest(msg)
+//
+//                val text = msg.comment
+//                val duration = Toast.LENGTH_SHORT
+//                val toast = Toast.makeText(this, text, duration)
+//                toast.show()
+//            }
+//            msgModel.printMsgMap()
+//        }
+//
+//        syncModel.peers.observe(this) { peers ->
+//            Log.d(MAIN_TAG, "Main-thread peers Observer")
+//
+//            for (p in peers) {
+//                msgModel.dumpQueue(p.key)
+//            }
+//            msgModel.printMsgMap()
+//        }
 
     }
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter())
+    }
+    private fun makeGattUpdateIntentFilter(): IntentFilter? {
+        val intentFilter = IntentFilter()
+        intentFilter.addAction("STATE")
+        intentFilter.addAction("SCANNER")
+        intentFilter.addAction("CONNECT")
+        intentFilter.addAction("DISCONNECT" )
+        intentFilter.addAction("PING" )
+
+        return intentFilter
+    }
+
 
     private fun ByteArray.toBase64() : String {
         return Base64.getEncoder().encodeToString(this)
@@ -219,6 +238,45 @@ class MainActivity : AppCompatActivity() {
         manager.createNotificationChannel(serviceChannel)
     }
 
+    inner class MyReceiver: BroadcastReceiver() {
+
+        val peers = mutableListOf<User>()
+        val devices = mutableListOf<String>()
+        @SuppressLint("SetTextI18n")
+        override fun onReceive(context: Context, intent: Intent) {
+
+            val it = intent.extras!!.getString("extra")!!
+
+            when(intent.action){
+                "STATE" ->{
+                    //String state
+                    syncModel.state.postValue(it)
+                }
+                "SCANNER" ->{
+                    //String device address
+                    devices.add(it)
+                    syncModel.devices.postValue(devices)
+                }
+                "CONNECT" ->{
+                    //User object
+                    val peer = Json.decodeFromString<User>(it)
+                    peers.add(peer)
+                    syncModel.peers.postValue(peers)
+                }
+                "DISCONNECT" ->{
+                    //User object
+                    val peer = Json.decodeFromString<User>(it)
+                    peers.remove(peer)
+                    syncModel.peers.postValue(peers)
+                }
+                "PING" ->{
+                    binding.byteRate.text = "${it.slice(0..4)} -- ${msg++}"
+                }
+
+            }
+
+        }
+    }
 
 
 }

@@ -23,9 +23,10 @@ const val PERMISSION_REQUEST_STORAGE = 102
 const val PERMISSION_REQUEST_LOCATION = 101
 const val PERMISSION_REQUEST_CONNECTION = 103
 /*Class TAGs*/
+const val OPERATOR_TAG = "SyncOperator.kt"
 const val DB_OP = "PostDatabase.kt"
 const val AD_TAG = "BluetoothAdvertiser.kt"
-const val GATT_TAG = "BluetoothGATT.kt"
+const val GATT_TAG = "Gatt.kt"
 const val MAIN_TAG = "MainActivity.kt"
 const val MESH_TAG = "MeshService.kt"
 const val SCANNER_TAG = "BluetoothScanner.kt"
@@ -53,9 +54,9 @@ const val MTU = 512
 
 const val BLE_INTERVAL = 1000L //1 second
 
-const val SYNC_INTERVAL = 100L//8000L //8 seconds
+const val SYNC_INTERVAL = 1000L //1 second
 
-const val CONFIRMATION_TIMEOUT = 10000L //10 seconds
+const val CONFIRMATION_TIMEOUT = 5000L //5 seconds
 
 const val SERVER_PORT = 8888
 

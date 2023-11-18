@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,14 +12,11 @@ import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
-import daemon.dev.field.R
 import daemon.dev.field.databinding.FragmentChannelBinding
 import daemon.dev.field.fragments.adapter.ChannelAdapter
 import daemon.dev.field.fragments.dialogs.CreateDialog
 import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.network.Sync
 
 class ChannelFragment : Fragment() {
 
@@ -41,7 +37,6 @@ class ChannelFragment : Fragment() {
     }
 
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         val channelAdapter = ChannelAdapter(activity!!,view,syncModel)
@@ -49,33 +44,33 @@ class ChannelFragment : Fragment() {
         binding.channelList.adapter = channelAdapter
         binding.channelList.layoutManager = GridLayoutManager(requireContext(),2)
 
-        syncModel.channels.observe(viewLifecycleOwner) { list ->
+//        syncModel.channels.observe(viewLifecycleOwner) { list ->
+//
+//            Log.d("ChannelFrag.kt", "Channel fired on $list")
+//
+//            val mList = list.toMutableList()
+//
+//            val itr = mList.iterator()
+//
+//            while (itr.hasNext())
+//                if (itr.next().name == "Public")
+//                    itr.remove()
+//
+//
+//            channelAdapter.updateView(mList)
+//
+//        }
 
-            Log.d("ChannelFrag.kt", "Channel fired on $list")
-
-            val mList = list.toMutableList()
-
-            val itr = mList.iterator()
-
-            while (itr.hasNext())
-                if (itr.next().name == "Public")
-                    itr.remove()
-
-
-            channelAdapter.updateView(mList)
-
-        }
-
-        syncModel.openChannels.observe(viewLifecycleOwner) { channels ->
-            channelAdapter.updateOpenChannels(channels)
-
-            if(channels.contains("Public")){
-                binding.publicBin.setBackgroundResource(R.drawable.col_bg)
-            }else{
-                binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
-            }
-
-        }
+//        syncModel.openChannels.observe(viewLifecycleOwner) { channels ->
+//            channelAdapter.updateOpenChannels(channels)
+//
+//            if(channels.contains("Public")){
+//                binding.publicBin.setBackgroundResource(R.drawable.col_bg)
+//            }else{
+//                binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
+//            }
+//
+//        }
 
         addPublic()
 

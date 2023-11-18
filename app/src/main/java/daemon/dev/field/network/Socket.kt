@@ -17,6 +17,7 @@ import daemon.dev.field.network.util.Packer
 import daemon.dev.field.nypt.Symmetric
 import kotlinx.coroutines.runBlocking
 import java.net.Socket
+import java.util.Base64
 
 @SuppressLint("MissingPermission")
 class Socket(
@@ -26,7 +27,7 @@ class Socket(
     private val gatt : BluetoothGatt?,
     val device : BluetoothDevice,
     private val gattServer : BluetoothGattServer?,
-    symKey : ByteArray
+    private val symKey : ByteArray
            ){
 
     companion object {
@@ -63,7 +64,15 @@ class Socket(
 //        Log.d(SOCKET_TAG,"Peer initialized successfully type[${type2String()}]")
     }
 
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
+    }
+
     fun decrypt(bytes: ByteArray) : ByteArray {
+        val r = IntRange(0,16)
+        val subp = bytes.slice(r)
+        Log.v(SOCKET_TAG,"decrypt key: ${symKey.toBase64()} & \n cipher $subp")
+
         return symmetric.decrypt(bytes)
     }
 
@@ -85,6 +94,7 @@ class Socket(
     }
 
     private fun writeDev(buffer : ByteArray){
+        Log.v(SOCKET_TAG,"Writting dev with char Notify")
         val service = gattServer!!.getService(SERVICE_UUID)
         val char = service.getCharacteristic(PROFILE_UUID)
         char.value = buffer
@@ -94,6 +104,7 @@ class Socket(
         } else{
             gattServer.notifyCharacteristicChanged (device, char, true)
         }
+
     }
 
     fun type2String() : String{
@@ -107,7 +118,7 @@ class Socket(
 
     fun close(){
 
-        Log.i(SOCKET_TAG,"Close called on $key")
+        Log.i(SOCKET_TAG,"Close called on ${symKey.toBase64()}")
 
         open = false
 
@@ -125,6 +136,10 @@ class Socket(
         }
     }
 
+    fun connect() : Boolean{
+        return gatt?.connect() ?: false
+    }
+
     fun write(buffer : ByteArray) : Int {
 
         val cipher = symmetric.encrypt(buffer)
@@ -133,7 +148,8 @@ class Socket(
         val subc = cipher.slice(r)
         val subp = buffer.slice(r)
 
-//        Log.v(SOCKET_TAG,"Have $subp plain & \n $subc cipher")
+        Log.v(SOCKET_TAG,"Socket writing to device[${device.address}]")
+        Log.v(SOCKET_TAG,"encrypt key: ${symKey.toBase64()} & \ncipher $subc")
 
         if(!open){
             Log.e(SOCKET_TAG,"err closed socket")
@@ -175,6 +191,7 @@ class Socket(
 
             if(!response.block(BLE_INTERVAL)){
                 Log.e(SOCKET_TAG,"response timeout for $count / ${packer.count()}")
+                return -1
             }
 
             response.close()

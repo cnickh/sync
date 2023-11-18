@@ -3,7 +3,6 @@ package daemon.dev.field.bluetooth
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.le.*
-import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.ParcelUuid
@@ -11,8 +10,8 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import daemon.dev.field.SCANNER_TAG
 import daemon.dev.field.SERVICE_UUID
-import daemon.dev.field.network.handler.event.SCANNER
-import daemon.dev.field.network.handler.event.ScanEvent
+import daemon.dev.field.network.util.NetworkEventDefinition.Companion.SCANNER
+import daemon.dev.field.network.util.NetworkEventDefinition.ScanEvent
 
 
 @SuppressLint("MissingPermission")

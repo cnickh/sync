@@ -3,8 +3,8 @@ package daemon.dev.field.fragments.model
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import daemon.dev.field.*
@@ -12,16 +12,14 @@ import daemon.dev.field.cereal.objects.*
 import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
-import daemon.dev.field.network.Async
-import daemon.dev.field.network.Sync
-import daemon.dev.field.network.util.LoadBox
+import daemon.dev.field.network.NSM
 import daemon.dev.field.nypt.ChannelBuilder
+import daemon.dev.field.util.ServiceLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.*
-import kotlin.system.exitProcess
 
 /**@brief this class provides database and network data to UI threads via coroutines.*/
 
@@ -31,22 +29,34 @@ class SyncModel internal constructor(
     private val channelAccess: ChannelAccess
 ) : ViewModel()  {
 
+    val peers = MutableLiveData<List<User>>() //Sync.peers
+    val devices = MutableLiveData<List<String>>()//Async.devices
+    val state = MutableLiveData("IDLE")// = Async.live_state
+//    val ping = Async.ping
+    //val openChannels = Sync.liveChannels
+
     val posts = postRepository.posts
-    val peers = Async.peers
     val channels = channelAccess.channels
     var raw_filter = channelAccess.getLiveContents(listOf())
-    val openChannels = Sync.liveChannels
-    val state : LiveData<Int> = Async.live_state
+
     val me = userBase.getUser(PUBLIC_KEY.toBase64())
 
     val postChannelMap = hashMapOf<String,MutableList<String>>()
-    val ping = Async.ping
 
     private var filter : List<String> = listOf()
 
+    private lateinit var mServiceController : ServiceLauncher
+
+    fun setServiceController(mServiceController : ServiceLauncher){
+        this.mServiceController = mServiceController
+    }
+
+    fun getServiceController() : ServiceLauncher{
+        return mServiceController
+    }
+
     fun clearDB(){
         viewModelScope.launch(Dispatchers.IO) {
-            Sync.open_channels.clear()
             userBase.clear()
             postRepository.clear()
             channelAccess.clear()
@@ -153,23 +163,22 @@ class SyncModel internal constructor(
 
     fun selectChannel(name : String) {
         viewModelScope.launch(Dispatchers.IO) {
-            Sync.selectChannel(name)
-            raw_filter = channelAccess.getLiveContents(Sync.getOpenChannels())
-
-            Sync.queueUpdate()
+            NSM.selectChannel(name)
+            raw_filter = channelAccess.getLiveContents(NSM.getOpenChannels())
+            //Sync.queueUpdate()
         }
     }
 
-    fun disconnect(user : User){
-        viewModelScope.launch(Dispatchers.IO) {
-            Async.disconnect(user)
-        }
-    }
+//    fun disconnect(user : User){
+//        viewModelScope.launch(Dispatchers.IO) {
+//            Async.disconnect(user)
+//        }
+//    }
 
     fun sendToTarget(raw : MeshRaw, key : String){
         viewModelScope.launch(Dispatchers.IO) {
 //            Async.send(raw, key)
-            Sync.queue(key,raw)
+           // Sync.queue(key,raw)
         }
     }
 
@@ -220,19 +229,19 @@ class SyncModel internal constructor(
         
         viewModelScope.launch(Dispatchers.IO) {
 
-            if(Sync.getOpenChannels().isEmpty()){
-                Log.e("SyncModel.kt","Err no open channels, post not created")
-                ping.postValue("No Open Channels")
-                exitProcess(0)
-            }
-
-            Log.v("SyncModel.kt","Created post $post")
-            postRepository.add(post)
-            for(c in Sync.getOpenChannels()){
-                channelAccess.addPost(c,post.address().address)
-            }
-            filter = channelAccess.getOpenContents()
-            Sync.queueUpdate()
+//            if(Sync.getOpenChannels().isEmpty()){
+//                Log.e("SyncModel.kt","Err no open channels, post not created")
+//                ping.postValue("No Open Channels")
+//                exitProcess(0)
+//            }
+//
+//            Log.v("SyncModel.kt","Created post $post")
+//            postRepository.add(post)
+//            for(c in Sync.getOpenChannels()){
+//                channelAccess.addPost(c,post.address().address)
+//            }
+//            filter = channelAccess.getOpenContents()
+//            Sync.queueUpdate()
         }
 
     }
@@ -255,7 +264,7 @@ class SyncModel internal constructor(
         viewModelScope.launch(Dispatchers.IO) {
             postRepository.stage(listOf(post))
             postRepository.commit()
-            Sync.queueUpdate()
+            //Sync.queueUpdate()
         }
 
         return comment

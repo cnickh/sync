@@ -1,7 +1,6 @@
 package daemon.dev.field.data
 import daemon.dev.field.cereal.objects.Channel
 import daemon.dev.field.data.db.ChannelDao
-import daemon.dev.field.network.Sync
 
 class ChannelAccess(private val sync : ChannelDao) {
 
@@ -25,10 +24,10 @@ class ChannelAccess(private val sync : ChannelDao) {
         sync.updateKey(name,key)
     }
 
-    suspend fun getOpenContents() : List<String>{
+    suspend fun getContents(channels: List<String>) : List<String>{
         val posts = mutableListOf<String>()
 
-        for(c in Sync.getOpenChannels()){
+        for(c in channels){
 
             val content = sync.waitContents(c)
 
@@ -74,11 +73,11 @@ class ChannelAccess(private val sync : ChannelDao) {
         return sync.getKey(name)
     }
 
-    suspend fun mapOpenChannels(): HashMap<String,MutableList<String>>{
+    suspend fun mapOpenChannels(channels: List<String>): HashMap<String,MutableList<String>>{
 
         val ch_map = hashMapOf<String,MutableList<String>>()
 
-            for(c in Sync.getOpenChannels()){
+            for(c in channels){
                 val content = sync.waitContents(c).split(",")
 
                 ch_map[c] = mutableListOf()
@@ -94,12 +93,12 @@ class ChannelAccess(private val sync : ChannelDao) {
         return ch_map
     }
 
-    suspend fun resolveChannels(channels : List<String>) : HashMap<String,MutableList<String>>{
+    suspend fun resolveChannels(channels : List<String>, open : List<String>) : HashMap<String,MutableList<String>>{
 
         val ch_map = hashMapOf<String,MutableList<String>>()
 
         for(c in channels){
-            if(Sync.getOpenChannels().contains(c)){
+            if(open.contains(c)){
                 val content = sync.waitContents(c).split(",")
 
                 ch_map[c] = mutableListOf()

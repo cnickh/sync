@@ -8,10 +8,6 @@ import androidx.lifecycle.viewModelScope
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.cereal.objects.Comment
 import daemon.dev.field.cereal.objects.MeshRaw
-import daemon.dev.field.cereal.objects.User
-import daemon.dev.field.network.Async
-import daemon.dev.field.network.Sync
-import daemon.dev.field.network.util.LoadBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -21,36 +17,13 @@ import kotlin.collections.ArrayDeque
 
 class MessengerModel : ViewModel() {
 
-    val direct = Async.direct
+    val direct = MutableLiveData<String>()//Async.direct
 
     private val sessMap = hashMapOf<String, AMSession>()
     private val waiting_queue = hashMapOf<String, ArrayDeque<String>>()
 
     val latest = MutableLiveData<Comment>()
 
-    val loadControllers = mutableListOf<LoadBox>() //for test purposes
-
-
-    fun init_loadBox(key : String){
-        val box = LoadBox(key,1000)
-        loadControllers.add(box)
-        box.start()
-    }
-
-    fun killLoad(){
-        for (b in loadControllers){
-            b.kill()
-        }
-    }
-
-    fun load(key : String) : Boolean {
-        for (b in loadControllers){
-            if(b.key.equals(key)){
-                return true
-            }
-        }
-        return false
-    }
 
     fun setLatest(cmnt : Comment){
         latest.postValue(cmnt)
@@ -85,7 +58,7 @@ class MessengerModel : ViewModel() {
 
     fun send(mesg : String, key : String){
 
-        val delta = SystemClock.elapsedRealtime() - Async.peerStart[key]!!
+        val delta = SystemClock.elapsedRealtime() //Async.peerStart[key]!!
         val msg = Comment(PUBLIC_KEY.toBase64(),mesg,delta)
         val json = Json.encodeToString(msg)
 
@@ -100,16 +73,16 @@ class MessengerModel : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
 
-            Async.peers.value?.let{ peers ->
-                val connected = peers.contains(User(key, "", 0, ""))
-                if (connected) {
-                    Sync.queue(key, raw)
-                    sessMap[key]?.addInOrder(msg)
-                    latest.postValue(msg)
-                } else {
-                    waitQueue(key,mesg)
-                }
-            }
+//            Async.peers.value?.let{ peers ->
+//                val connected = peers.contains(User(key, "", 0, ""))
+//                if (connected) {
+//                    Sync.queue(key, raw)
+//                    sessMap[key]?.addInOrder(msg)
+//                    latest.postValue(msg)
+//                } else {
+//                    waitQueue(key,mesg)
+//                }
+//            }
         }
 
     }

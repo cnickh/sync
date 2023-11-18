@@ -18,9 +18,7 @@ import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.BinViewHolderBinding
 import daemon.dev.field.fragments.dialogs.JoinDialog
 import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.network.Sync
 
-@RequiresApi(Build.VERSION_CODES.O)
 class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : SyncModel)  : RecyclerView.Adapter<ChannelAdapter.BinVh>(){
 
     private var itemsList: MutableList<Channel> = arrayListOf()
@@ -112,7 +110,6 @@ class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : 
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun createBin(name : String, user: LiveData<User>) {
         activity.let {
 

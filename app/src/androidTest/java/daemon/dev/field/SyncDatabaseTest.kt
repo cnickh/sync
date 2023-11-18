@@ -24,6 +24,7 @@ import daemon.dev.field.data.db.*
 import junit.framework.Assert.assertNotNull
 import kotlinx.coroutines.runBlocking
 import org.junit.*
+import java.util.Base64
 
 
 /**
@@ -40,6 +41,9 @@ class SyncDatabaseTest {
 
     private lateinit var db: SyncDatabase
 
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
+    }
     @Before
     fun createDb() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -65,7 +69,7 @@ class SyncDatabaseTest {
         val body = "body"
         val time: Long = 0
 
-        var post = Post(PUBLIC_KEY,time,title,body,"null",0)
+        var post = Post(PUBLIC_KEY.toBase64(),time,title,body,"null",0)
 
         val obj = runBlocking {
             sync.insert(post)
@@ -88,7 +92,7 @@ class SyncDatabaseTest {
         val body = "body"
         val time: Long = 0
 
-        var post = Post(PUBLIC_KEY,time,title,body,"null",0)
+        var post = Post(PUBLIC_KEY.toBase64(),time,title,body,"null",0)
 
         val obj = runBlocking {
             sync.insert(post)
@@ -113,7 +117,7 @@ class SyncDatabaseTest {
         val body = "body"
         val time: Long = 0
 
-        var post = Post(PUBLIC_KEY,time,title,body,"null",0)
+        var post = Post(PUBLIC_KEY.toBase64(),time,title,body,"null",0)
 
         val obj = runBlocking {
             sync.insert(post)
@@ -131,7 +135,7 @@ class SyncDatabaseTest {
 
             Assert.assertNotNull(obj0)
 
-            obj0?.let{
+            obj0.let{
                 Assert.assertEquals(title, obj0.title)
                 Assert.assertEquals(body, obj0.body)
                 Assert.assertEquals(time, obj0.time)

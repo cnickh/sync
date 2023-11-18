@@ -1,6 +1,5 @@
 package daemon.dev.field.network.util
 
-import android.util.Log
 import daemon.dev.field.CHARSET
 import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.Wrapper

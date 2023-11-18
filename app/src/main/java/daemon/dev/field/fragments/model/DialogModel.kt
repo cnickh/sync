@@ -4,10 +4,7 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import daemon.dev.field.CHARSET
 import daemon.dev.field.cereal.objects.MeshRaw
-import daemon.dev.field.network.Async
-import daemon.dev.field.network.Sync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -55,7 +52,7 @@ class DialogModel  : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             Log.d("DialogModel.kt","Sending channel to $key")
-            Sync.queue(key!!, raw)
+            //Sync.queue(key!!, raw)
             clearSelection()
         }
     }

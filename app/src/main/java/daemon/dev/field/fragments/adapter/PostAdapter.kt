@@ -36,7 +36,6 @@ import daemon.dev.field.databinding.PostViewHolderBinding
 import daemon.dev.field.databinding.SingleChipLayoutBinding
 import daemon.dev.field.fragments.PostFragment
 import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.network.Async
 import daemon.dev.field.util.Phi
 import java.text.SimpleDateFormat
 import java.util.*
@@ -96,7 +95,7 @@ class PostAdapter(val activity : FragmentActivity, val syncModel: SyncModel) : R
                 }
 
                 binding.hopValue.text = it.hops.toString()
-                Async.peers.value?.let {
+                syncModel.peers.value?.let {
 
                     val connected = it.contains(User(post.key, "", 0, ""))
 

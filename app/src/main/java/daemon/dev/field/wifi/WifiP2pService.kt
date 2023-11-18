@@ -45,12 +45,13 @@ class WifiP2pService : Service(){
 
     /**Initialized vals*/
     private val intentFilter = IntentFilter()
-    @RequiresApi(Build.VERSION_CODES.O)
+
     private val service: WifiP2pUpnpServiceInfo =
         WifiP2pUpnpServiceInfo.newInstance(WIFI_UUID.toString(), DEVICE_NAME, listOf("postID[$PUBLIC_KEY]"))
+
     private val request: WifiP2pUpnpServiceRequest = WifiP2pUpnpServiceRequest.newInstance()
 
-    override fun onBind(p0: Intent?): IBinder? {
+    override fun onBind(p0: Intent?): IBinder {
         return LocalBinder()
     }
 

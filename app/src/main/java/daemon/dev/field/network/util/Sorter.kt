@@ -7,11 +7,14 @@ import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.Wrapper
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import java.util.Base64
 
 class Sorter {
 
     private val slots = mutableMapOf<Int, ArrayList<String>>()
-
+    private fun ByteArray.toBase64() : String {
+        return Base64.getEncoder().encodeToString(this)
+    }
     fun resolve(bytes : ByteArray) : MeshRaw? {
         val json = bytes.toString(CHARSET)
 
@@ -22,7 +25,7 @@ class Sorter {
                 val shake = Json.decodeFromString<HandShake>(json)
                 Log.e("Sorter.kt","Could not decode wrapper, is handshake \n have $shake")
             } catch (e : Exception) {
-                Log.e("Sorter.kt","Could not decode wrapper, Not HandShake! Bad Key? \n have $json")
+                Log.e("Sorter.kt","Could not decode wrapper, Not HandShake! Bad Key? \n have ${bytes.toBase64()}")
                 null
             }
             null
@@ -60,7 +63,11 @@ class Sorter {
                 }
 
                 slots.remove(mid)
-                Json.decodeFromString<MeshRaw>(raw)
+                try {
+                    Json.decodeFromString<MeshRaw>(raw)
+                } catch (e : Exception){
+                    MeshRaw(MeshRaw.DECODE_ERROR_)
+                }
 
             } else {
                 null

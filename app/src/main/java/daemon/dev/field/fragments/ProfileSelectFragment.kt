@@ -8,7 +8,6 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
@@ -17,7 +16,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.bumptech.glide.Glide
-import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.FragmentProfileSelectBinding
@@ -27,7 +25,6 @@ import daemon.dev.field.fragments.model.DialogModel
 import daemon.dev.field.fragments.model.MessengerModel
 import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
-import daemon.dev.field.network.Async
 import daemon.dev.field.util.Phi
 import kotlin.math.roundToInt
 
@@ -150,7 +147,7 @@ class ProfileSelectFragment : Fragment() {
 
         }
 
-        Async.peers.observe(viewLifecycleOwner) { peers ->
+        syncModel.peers.observe(viewLifecycleOwner) { peers ->
 
             val connected = peers.contains(User(key, "", 0, "", 0))
             if (connected) {
