@@ -27,6 +27,7 @@ import daemon.dev.field.fragments.model.MessengerModel
 import daemon.dev.field.fragments.model.ResourceModel
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.network.util.LoadController
+import daemon.dev.field.toBase64
 import daemon.dev.field.util.Phi
 import daemon.dev.field.util.ServiceLauncher
 import kotlinx.coroutines.CoroutineScope
@@ -62,9 +63,7 @@ class ProfileFragment : Fragment() {
         binding = FragmentProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
-    private fun ByteArray.toBase64() : String {
-        return Base64.getEncoder().encodeToString(this)
-    }
+
     @SuppressLint("NotifyDataSetChanged")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

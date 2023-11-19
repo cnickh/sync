@@ -109,39 +109,6 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
 
     }
 
-    private fun computeSharedKey(shake: HandShake,session : Session) : ByteArray?{
-        val publicKey = Ed25519PublicKeyParameters(shake.me.key.toByteArray())
-        val secret = shake.keyBundle!!.secret
-        val sig = shake.keyBundle!!.sig
-
-        val verified = Signature().verify(secret.toByteArray(),sig.toByteArray(),publicKey)
-
-        return if(verified){
-            session.computeAgreement(secret.toByteArray())
-        }else{
-            Log.e(NETLOOPER_TAG,"GattHandlerEvent: verification failed")
-            null
-        }
-    }
-
-    private fun createSecret(session: Session) : KeyBundle {
-        val signature = Signature()
-        signature.init(PUBLIC_KEY, PRIVATE_KEY)
-
-        val secret = session.generateSecret()
-        val sig = signature.sign(secret)!!
-
-        return KeyBundle(secret.toBase64(),sig.toBase64())
-    }
-
-    private fun ByteArray.toBase64() : String {
-        return Base64.getEncoder().encodeToString(this)
-    }
-
-    private fun String.toByteArray() : ByteArray {
-        return Base64.getDecoder().decode(this)
-    }
-
     private inner class GattServerCallback : BluetoothGattServerCallback() {
 
         override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
@@ -180,7 +147,7 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
                 socketMap[device.address] = null
 
                 //create session & map & send
-                shake.keyBundle = createSecret(session)
+                shake.keyBundle = session.createSecret()
                 val json = Json.encodeToString(shake)
 
                 Log.v(GATT_TAG,"Sending shake : $json")
@@ -236,7 +203,7 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
                     shake?.let {
                         sock =
                             sessionMap[device!!.address]?.let { session ->
-                                val key = computeSharedKey(it, session)
+                                val key = session.computeSharedKey(it.keyBundle!!,it.me.key)
                                 Log.i(GATT_TAG, "Gatt establishing key ${key!!.toBase64()}")
 
                                 Socket(

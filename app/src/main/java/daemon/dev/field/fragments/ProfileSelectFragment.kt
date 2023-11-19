@@ -168,7 +168,6 @@ class ProfileSelectFragment : Fragment() {
         })
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onDestroyView() {
         super.onDestroyView()
 

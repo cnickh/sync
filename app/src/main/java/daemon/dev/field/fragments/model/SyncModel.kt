@@ -30,10 +30,7 @@ class SyncModel internal constructor(
 ) : ViewModel()  {
 
     val peers = MutableLiveData<List<User>>() //Sync.peers
-    //val devices = MutableLiveData<List<String>>()//Async.devices
     val state = MutableLiveData("IDLE")// = Async.live_state
-//    val ping = Async.ping
-    //val openChannels = Sync.liveChannels
 
     val posts = postRepository.posts
     val channels = channelAccess.channels
@@ -247,15 +244,15 @@ class SyncModel internal constructor(
     }
 
     fun comment(position : Int, sub : MutableList<Comment>, globalSub : MutableList<Comment>, text : String) : Comment {
-        Log.v("SyncModel.kt","Creating comment $text")
+        Log.v("SyncModel.kt", "Creating comment $text")
 
-        val time = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+        val time = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             SystemClock.currentNetworkTimeClock().millis()
         } else {
             System.currentTimeMillis()
         }
 
-        val comment = Comment(PUBLIC_KEY.toBase64(),text,time)
+        val comment = Comment(PUBLIC_KEY.toBase64(), text, time)
         sub.add(comment)
 
         val post = get(position)!!
@@ -268,12 +265,5 @@ class SyncModel internal constructor(
         }
 
         return comment
-    }
-    private fun ByteArray.toBase64() : String {
-        return Base64.getEncoder().encodeToString(this)
-    }
-
-    private fun String.toByteArray() : ByteArray {
-        return Base64.getDecoder().decode(this)
     }
 }

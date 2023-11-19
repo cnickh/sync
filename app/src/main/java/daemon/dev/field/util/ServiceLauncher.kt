@@ -71,27 +71,48 @@ class ServiceLauncher(val context : Context) {
             val mIntent = Intent(context, MeshService::class.java)
             mIntent.putExtra("ME", Json.encodeToString(profile))
             ContextCompat.startForegroundService(context, mIntent!!);
-            //context.bindService(mIntent, mServiceConnection, BIND_AUTO_CREATE)
+            bound = context.bindService(mIntent, mServiceConnection, BIND_AUTO_CREATE)
         }
 
         return running
     }
 
 
+//    fun checkKillMesh() : Boolean{
+//
+//        mBluetoothLeService?. let {
+//            val mIntent = Intent(context, MeshService::class.java)
+//            context.stopService(mIntent)
+//            //it.stopService(mIntent)
+////            Log.i("no jutsu", "$bound")
+////            it.unbindService(mServiceConnection)
+//////          it.kill()
+//            return true
+//        } ?: run {
+//            return false
+//        }
+//
+//    }
     fun checkKillMesh() : Boolean{
+        val serviceClass = MeshService::class.java
 
-        mBluetoothLeService?. let {
-            val mIntent = Intent(context, MeshService::class.java)
-            context.stopService(mIntent)
-            //it.stopService(mIntent)
-//            Log.i("no jutsu", "$bound")
-//            it.unbindService(mServiceConnection)
-////          it.kill()
-            return true
-        } ?: run {
-            return false
+        val manager = context.getSystemService(AppCompatActivity.ACTIVITY_SERVICE) as ActivityManager
+
+        for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+            if (serviceClass.name == service.service.className) {
+                killService()
+                return true
+            }
         }
 
+        return false
     }
 
+    private fun killService(){
+        if(bound){
+            context.unbindService(mServiceConnection)
+        }
+        val mIntent = Intent(context, MeshService::class.java)
+        context.stopService(mIntent)
+    }
 }

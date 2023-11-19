@@ -37,31 +37,6 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
         var session : Session? = null
         var die = false
 
-    private fun createSecret(session: Session) : KeyBundle {
-        val signature = Signature()
-        signature.init(PUBLIC_KEY, PRIVATE_KEY)
-
-        val secret = session.generateSecret()
-        val sig = signature.sign(secret)!!
-
-        return KeyBundle(secret.toBase64(),sig.toBase64())
-    }
-
-    private fun computeSharedKey(shake: HandShake, session : Session) : ByteArray?{
-        val publicKey = Ed25519PublicKeyParameters(shake.me.key.toByteArray())
-        val secret = shake.keyBundle!!.secret
-        val sig = shake.keyBundle!!.sig
-
-        val verified = Signature().verify(secret.toByteArray(),sig.toByteArray(),publicKey)
-
-        return if(verified){
-            session.computeAgreement(secret.toByteArray())
-        }else{
-            Log.e(GATT_RESOLVER_TAG,"handleResolverEvent: verification Failed")
-            null
-        }
-    }
-
     private var connected : Boolean = false
     private val connectLock = Mutex()
     private suspend fun connect(){
@@ -83,16 +58,6 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
 
         connectLock.unlock()
     }
-
-
-    private fun ByteArray.toBase64() : String {
-        return Base64.getEncoder().encodeToString(this)
-    }
-
-    private fun String.toByteArray() : ByteArray {
-        return Base64.getDecoder().decode(this)
-    }
-
 
         private fun sendEvent(type : Int,
                               bytes : ByteArray?,
@@ -170,7 +135,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
             Log.d(GATT_RESOLVER_TAG, "have remotehost $remoteHost")
 
             session = Session()
-            shake.keyBundle = createSecret(session!!)
+            shake.keyBundle = session!!.createSecret()
             val publicKey = Ed25519PublicKeyParameters(PUBLIC_KEY)
 
             val verified = Signature().verify(shake.keyBundle!!.secret.toByteArray(),
@@ -230,7 +195,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
 
                 shake?.let {
 
-                    val key = computeSharedKey(it, session!!)
+                    val key = session!!.computeSharedKey(it.keyBundle!!,it.me.key)
                     Log.i(GATT_RESOLVER_TAG, "Resolver establishing key ${key!!.toBase64()}")
                     val sock = Socket(
                         it.me,
@@ -239,7 +204,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
                         gatt,
                         device,
                         null,
-                        key!!
+                        key
                     )
                     socket = sock
                     remoteHost = null

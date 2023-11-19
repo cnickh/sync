@@ -63,6 +63,7 @@ class UserAdapter(val view : View, val activity : FragmentActivity, val loadCont
         fun bind(item: User?) {
 
             item?.let {
+
                 Log.i(PROFILE_TAG,"have ${it.key}")
 
                 if(it.key == "null"){
@@ -76,6 +77,7 @@ class UserAdapter(val view : View, val activity : FragmentActivity, val loadCont
 
                 binding.name.text = it.alias
                 binding.id.text = it.key.slice(0..9)
+                Log.i(PROFILE_TAG,"set id text: ${ binding.id.text}")
 
 //                msgModel.getUnRead(it.key)?.let{ unRead ->
 //

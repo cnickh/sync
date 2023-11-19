@@ -102,10 +102,14 @@ UUID.fromString("7ec2290c-5e53-4414-a116-3f9974cec8cd")
  * https://www.guidgenerator.com/
  *
  */
-private fun ByteArray.toBase64() : String {
+
+/**
+ * Global extension functions
+ */
+fun ByteArray.toBase64() : String {
     return Base64.getEncoder().encodeToString(this)
 }
 
-private fun String.toByteArray() : ByteArray {
+fun String.toByteArray() : ByteArray {
     return Base64.getDecoder().decode(this)
 }

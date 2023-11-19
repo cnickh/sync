@@ -25,6 +25,7 @@ import daemon.dev.field.databinding.CommentViewHolderBinding
 import daemon.dev.field.databinding.FragmentPostBinding
 import daemon.dev.field.databinding.NewCommentViewHolderBinding
 import daemon.dev.field.fragments.model.SyncModel
+import daemon.dev.field.toBase64
 import daemon.dev.field.util.RandomString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -33,7 +34,6 @@ import java.util.*
 import kotlin.math.absoluteValue
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 class PostFragment : Fragment() {
     private val syncModel : SyncModel by activityViewModels()
     private lateinit var binding: FragmentPostBinding
@@ -61,7 +61,6 @@ class PostFragment : Fragment() {
         return binding.root
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Log.d("PostFragment.kt","Have $pid")
         post = syncModel.get(pid)!!
@@ -211,9 +210,6 @@ class PostFragment : Fragment() {
 
         }
 
-    }
-    private fun ByteArray.toBase64() : String {
-        return Base64.getEncoder().encodeToString(this)
     }
 
 }
