@@ -30,7 +30,7 @@ import java.util.Base64
 
 
 @SuppressLint("MissingPermission")
-class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake: HandShake) : BluetoothGattCallback() {
+class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake: HandShake, val adKey : String) : BluetoothGattCallback() {
 
         var socket : Socket? = null
         var remoteHost : ByteArray? = null
@@ -48,11 +48,16 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
     }
 
 
-    private suspend fun check(){
+    private suspend fun check(gatt: BluetoothGatt?){
         connectLock.lock()
 
+        Log.i(GATT_RESOLVER_TAG, "check connection $connected")
+        Log.i(GATT_RESOLVER_TAG, "address - $adKey")
+
+
         if(!connected){
-            sendEvent(RETRY,null, null, device)
+//            sendEvent(RETRY,adKey.toByteArray(), null, null)
+            gatt?.disconnect()
             die = true
         }
 
@@ -73,33 +78,33 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
             Log.d(GATT_RESOLVER_TAG, "onConnectionStateChange: @${device.address} success: $isSuccess connected: $isConnected")
-            if(die){Log.e(GATT_RESOLVER_TAG,"onConnectionStateChange called in dead resolver")}
+            if(die){Log.e(GATT_RESOLVER_TAG,"onConnectionStateChange called in dead resolver"); gatt.disconnect();return}
 
             if (isSuccess && isConnected) {
                 gatt.requestMtu(MTU)
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    delay(CONFIRMATION_TIMEOUT) //10 seconds
-                    check()
-                }
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    delay(CONFIRMATION_TIMEOUT) //10 seconds
+//                    check(gatt)
+//                }
 
             } else {
-                Log.e(GATT_RESOLVER_TAG,"onConnectionStateChange was bad am resolver time to forget :p")
-                //remoteHost = null
-                sendEvent(RETRY,null, null, device)
+                Log.e(GATT_RESOLVER_TAG,"onConnectionStateChange was bad am resolver time to forget :$adKey")
+                gatt.close()
+                sendEvent(RETRY,adKey.toByteArray(), null, null)
                 die = true
             }
         }
 
         override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
             super.onMtuChanged(gatt, mtu, status)
-            if(die){Log.e(GATT_RESOLVER_TAG,"onMtuChanged called in dead resolver")}
+            if(die){Log.e(GATT_RESOLVER_TAG,"onMtuChanged called in dead resolver"); gatt?.disconnect();return}
             Log.d(GATT_RESOLVER_TAG,"onMtuChanged success")
             gatt?.discoverServices()
         }
 
         override fun onServicesDiscovered(discoveredGatt: BluetoothGatt, status: Int) {
-            if(die){Log.e(GATT_RESOLVER_TAG,"onServicesDiscovered called in dead resolver")}
+            if(die){Log.e(GATT_RESOLVER_TAG,"onServicesDiscovered called in dead resolver"); discoveredGatt.disconnect();return}
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.d(GATT_RESOLVER_TAG, "onServicesDiscovered: Have gatt $discoveredGatt")
@@ -126,7 +131,7 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
             characteristic: BluetoothGattCharacteristic?,
             status: Int,
         ) {
-            if(die){Log.e(GATT_RESOLVER_TAG,"onCharacteristicRead called in dead resolver")}
+            if(die){Log.e(GATT_RESOLVER_TAG,"onCharacteristicRead called in dead resolver"); gatt?.disconnect();return}
 
             Log.d(GATT_RESOLVER_TAG, "onCharacteristicRead called $status")
 
@@ -153,18 +158,6 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
                 gatt.writeCharacteristic(char)
             }
 
-//            if(shake.state == Async.READY){
-//                val service = gatt?.getService(SERVICE_UUID)
-//                val char = service?.getCharacteristic(REQUEST_UUID)
-//                val json = Json.encodeToString(shake)
-//                Log.v(GATT_RESOLVER_TAG,"Sending shake : $json")
-//
-//                if (char != null) {
-//                    char.value = json.toByteArray(CHARSET)
-//                    gatt.writeCharacteristic(char)
-//                }
-//            }
-
         }
 
         override fun onCharacteristicWrite(
@@ -173,14 +166,16 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
             status: Int,
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
-            if(die){Log.e(GATT_RESOLVER_TAG,"onCharacteristicWrite called in dead resolver")}
+            if(die){Log.e(GATT_RESOLVER_TAG,"onCharacteristicWrite called in dead resolver"); gatt?.disconnect();return}
 
             Log.d(
                 GATT_RESOLVER_TAG,
                 "onCharacteristicWrite called w/ status[$status] remoteHost: $remoteHost"
             )
 
-            socket?.response?.open()
+            if(status == 200){
+                socket?.response?.open()
+            }
 
             remoteHost?.let { bytes ->
 
@@ -209,8 +204,9 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
                     socket = sock
                     remoteHost = null
 
-                    sendEvent(CONNECT,null,sock,null)
+                    sendEvent(CONNECT,null,sock,device)
                     runBlocking { connect() }
+
                 }
 
             }
@@ -221,22 +217,19 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
             characteristic: BluetoothGattCharacteristic?
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            if(die){Log.e(GATT_RESOLVER_TAG,"onCharacteristicChanged called in dead resolver")}
+            if(die){Log.e(GATT_RESOLVER_TAG,"onCharacteristicChanged called in dead resolver"); gatt?.disconnect();return}
 
             Log.d(GATT_RESOLVER_TAG, "onCharacteristicChanged called")
-            var data: ByteArray? = null
 
             if(socket!=null) {
 
-                data = characteristic?.value
-
-                data?.let { bytes ->
+                characteristic?.value?.let { bytes ->
                     sendEvent(PACKET,bytes, socket!!,null)
                 }
 
             } else {
             //do something
-                Log.d(GATT_RESOLVER_TAG, "onCharacteristicChanged called with socket null")
+                Log.e(GATT_RESOLVER_TAG, "onCharacteristicChanged called with socket null")
             }
 
 

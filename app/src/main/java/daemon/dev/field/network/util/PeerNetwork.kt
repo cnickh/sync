@@ -1,8 +1,11 @@
 package daemon.dev.field.network.util
 
 import android.util.Log
+import daemon.dev.field.AdKey
 import daemon.dev.field.PEER_NET
 import daemon.dev.field.network.Socket
+import daemon.dev.field.toBase64
+import daemon.dev.field.toByteArray
 
 
 class PeerNetwork {
@@ -13,13 +16,20 @@ class PeerNetwork {
 
     fun peers() = active_connections.keys
 
-    fun add(socket : Socket) {
+    private var gattConnections = 0
+    private var deviceConnections = 0
+
+    fun add(socket : Socket) : Pair<Int,Int>{
         Log.d(PEER_NET,"add() called ${socket.key}, ${socket.type2String()}")
 
+        if(socket.type == Socket.BLUETOOTH_GATT){
+            gattConnections++
+        } else if (socket.type == Socket.BLUETOOTH_DEVICE) {
+            deviceConnections++
+        }
+
         if(socket.key in active_connections.keys){
-
             val socks = active_connections[socket.key]!!
-
             for(s in socks){
                 if(s.type == socket.type){
                     Log.d(PEER_NET,"Found peer with same type socket replacing")
@@ -27,16 +37,13 @@ class PeerNetwork {
                     break
                 }
             }
-
             socks.add(socket)
             active_connections[socket.key] = socks
-
         }else{
-
             active_connections[socket.key] = mutableListOf(socket)
-
         }
 
+        return Pair(gattConnections,deviceConnections)
     }
 
     fun get(key : String, type : Int) : Socket?{
@@ -48,9 +55,13 @@ class PeerNetwork {
         return null
     }
 
-    fun closeSocket(socket : Socket) : Int{
+    fun closeSocket(socket : Socket) : Pair<Int,Int>{
         Log.i(PEER_NET,"closeSocket() called ${socket.key}, ${socket.type2String()}")
-
+        if(socket.type == Socket.BLUETOOTH_GATT){
+            gattConnections--
+        } else if (socket.type == Socket.BLUETOOTH_DEVICE) {
+            deviceConnections--
+        }
         val key = socket.key
         val type = socket.type
 
@@ -62,7 +73,7 @@ class PeerNetwork {
             }
         } ?: run {socket.close()}
 
-        return if(active_connections[key] == null){ 0 }else{ active_connections[key]!!.size }
+        return Pair(gattConnections,deviceConnections)
     }
 
     fun clear() {
@@ -78,6 +89,15 @@ class PeerNetwork {
 
     fun contains(key : String) : Boolean{
         return active_connections[key] != null
+    }
+
+    fun containsAd(key : String) : Boolean{
+        for (k in active_connections.keys){
+            if(key == k.AdKey()){
+                return gattConnection(k) == null
+            }
+        }
+        return true
     }
 
     fun gattConnection(key : String) : Socket? {

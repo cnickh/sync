@@ -81,6 +81,8 @@ class MainActivity : AppCompatActivity() {
 
         Log.v("Main","set key ${PUBLIC_KEY.toBase64()}")
         Log.v("Main","set key ${PRIVATE_KEY.toBase64()}")
+        Log.v("Main","set key size ${PRIVATE_KEY.size}")
+
 
         val syncModelFactory = SyncModelFactory(this)
         val resModelFactory = ResourceModelFactory(this)
@@ -198,6 +200,7 @@ class MainActivity : AppCompatActivity() {
         intentFilter.addAction("CONNECT")
         intentFilter.addAction("DISCONNECT" )
         intentFilter.addAction("PING" )
+        intentFilter.addAction("RM_DEVICE")
 
         return intentFilter
     }
@@ -251,24 +254,29 @@ class MainActivity : AppCompatActivity() {
                 "STATE" ->{
                     //String state
                     syncModel.state.postValue(it)
+                    if(it == "IDLE"){
+                        peers.clear()
+                        syncModel.peers.postValue(peers)
+                    }
                 }
                 "SCANNER" ->{
                     //String device address
-                    /*
-                        @PrimaryKey(autoGenerate = false) val key : String,
-                        var alias : String,
-                        val clout : Int,
-                        var channels : String,
-                        var Status : Int = 0,
-                     */
-                    val temp = User("null",it,0,"",0)
+                    val temp = User(it,"null",0,"",0)
                     peers.add(temp)
+                    syncModel.peers.postValue(peers)
+                }
+                "RM_DEVICE" ->{
+                    //String device address
+                    val temp = User(it,"null",0,"",0)
+                    peers.remove(temp)
                     syncModel.peers.postValue(peers)
                 }
                 "CONNECT" ->{
                     //User object
                     val peer = Json.decodeFromString<User>(it)
-                    peers.add(0,peer)
+                    val temp = User(peer.key.AdKey(),"null",0,"",0)
+                    peers.remove(temp)
+                    if (!peers.contains(peer)) {peers.add(0,peer)}
                     syncModel.peers.postValue(peers)
                 }
                 "DISCONNECT" ->{

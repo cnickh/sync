@@ -28,6 +28,7 @@ import kotlinx.coroutines.runBlocking
 import daemon.dev.field.network.util.NetworkEventDefinition.*
 import daemon.dev.field.network.util.NetworkEventDefinition.Companion.GATT
 import daemon.dev.field.network.util.NetworkEventDefinition.Companion.CONNECT
+import daemon.dev.field.network.util.NetworkEventDefinition.Companion.DISCONNECT
 import daemon.dev.field.network.util.NetworkEventDefinition.Companion.PACKET
 import daemon.dev.field.nypt.Session
 import daemon.dev.field.nypt.Signature
@@ -52,6 +53,9 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
 
 
     fun forget(device : String){
+        socketMap[device]?.let{
+            sendEvent(DISCONNECT,null, it)
+        }
         sessionMap[device] = null
         socketMap[device] = null
     }
@@ -118,14 +122,9 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
                 GATT_TAG,
                 "onConnectionStateChange: Server $device ${device.name} success: $isSuccess connected: $isConnected"
             )
-            if(!isConnected){
-                device.let{
-                    Log.e(GATT_TAG,"onConnectionState was bad am gatt")
-//                    socketMap[it.address]?.let { it1 -> sendEvent(DISCONNECT,null, it1) }
-//                    sessionMap[it.address] = null
-//                    socketMap[it.address] = null
-                }
-                //gattServer?.connect(device, true)
+
+            if(!isSuccess || !isConnected){
+                forget(device.address)
             }
 
         }
@@ -154,7 +153,6 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
 
                 gattServer?.sendResponse(
                     device, requestId, 0, 0, json.toByteArray(CHARSET))
-
             }
 
         }
@@ -177,16 +175,15 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
                 value)
 
             if (device != null) {
-                Log.i(GATT_TAG, "Gatt have write from ${device.address}")
+                Log.i(GATT_TAG, "Gatt have write from ${device.address} gatt $gattServer")
             }
 
             value?.let { bytes->
 
                 gattServer?.sendResponse(
-                    device, requestId, 200, 0, null)
+                    device!!, requestId, 200, 0, null)
 
-
-                var sock = socketMap[device?.address]
+                var sock = socketMap[device!!.address]
 
                 if(sock == null){
 
@@ -202,7 +199,7 @@ class Gatt(val app: Application, val bluetoothManager : BluetoothManager, val ad
 
                     shake?.let {
                         sock =
-                            sessionMap[device!!.address]?.let { session ->
+                            sessionMap[device.address]?.let { session ->
                                 val key = session.computeSharedKey(it.keyBundle!!,it.me.key)
                                 Log.i(GATT_TAG, "Gatt establishing key ${key!!.toBase64()}")
 

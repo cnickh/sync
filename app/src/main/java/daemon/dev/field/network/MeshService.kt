@@ -35,6 +35,7 @@ class MeshService : Service() {
     private lateinit var adapter : BluetoothAdapter
     private lateinit var bluetoothLeScanner: BluetoothScanner
     private lateinit var bluetoothAdvertiser: BluetoothAdvertiser
+    private lateinit var switch : NetworkSwitch
 
     private lateinit var gatt : Gatt
     private lateinit var looper : NetworkLooper
@@ -43,36 +44,52 @@ class MeshService : Service() {
 
     class NetworkSwitch(val bluetoothAdvertiser: BluetoothAdvertiser, val scanner : BluetoothScanner){
 
+        var scanState = false
+        var adState = false
+
         fun on(){
+            scanState = true
+            adState = true
             bluetoothAdvertiser.startAdvertisement()
             scanner.startScanning()
         }
 
         fun off(){
+            scanState = false
+            adState = false
             bluetoothAdvertiser.stopAdvertising()
             scanner.stopScanning()
         }
 
+        fun stopScanning(){
+            if(scanState){
+                scanState = false
+                scanner.stopScanning()
+            }
+        }
+
+        fun startScanning(){
+            if(!scanState){
+                scanState = true
+                scanner.startScanning()
+            }
+        }
+
+        fun stopAdvertising(){
+            if(adState){
+                adState = false
+                bluetoothAdvertiser.stopAdvertising()
+            }
+        }
+
+        fun startAdvertising(){
+            if(!adState){
+                adState = true
+                bluetoothAdvertiser.startAdvertisement()
+            }
+        }
 
     }
-//    class LocalBinder : Binder() {
-//        val service: MeshService
-//            get() = this@MeshService
-//    }
-//
-//    override fun onBind(intent: Intent?): IBinder? {
-//        return mBinder
-//    }
-//
-//    override fun onUnbind(intent: Intent?): Boolean {
-//        // After using a given device, you should make sure that BluetoothGatt.close() is called
-//        // such that resources are cleaned up properly.  In this particular example, close() is
-//        // invoked when the UI is disconnected from the Service.
-//        close()
-//        return super.onUnbind(intent)
-//    }
-//
-//    private val mBinder: IBinder = LocalBinder()
 
     override fun onCreate() {
         super.onCreate()
@@ -92,8 +109,6 @@ class MeshService : Service() {
             this.me = Json.decodeFromString<User>(me)
         }//get shake
         start()
-//        enableNotification()
-//        launchNetworkProcesses()
 
         return START_NOT_STICKY
     }
@@ -104,8 +119,7 @@ class MeshService : Service() {
     }
 
     fun kill(){
-        bluetoothLeScanner.stopScanning()
-        bluetoothAdvertiser.stopAdvertising()
+        switch.off()
         gatt.stopServer()
         looper.kill()
 
@@ -118,7 +132,6 @@ class MeshService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.i(MESH_TAG,"onDestroy() called")
-
         kill()
     }
 
@@ -172,17 +185,17 @@ class MeshService : Service() {
         Log.d(MESH_TAG,"launchNetworkProcesses() called")
 
         this.sendBroadcast(Intent(""))
-
         looper = NetworkLooper(this@MeshService,me)
         looper.start()
+
+        bluetoothAdvertiser = BluetoothAdvertiser(adapter)
+        bluetoothLeScanner = BluetoothScanner(adapter, looper.getHandler())
+        switch = NetworkSwitch(bluetoothAdvertiser,bluetoothLeScanner)
 
         gatt = Gatt(this.application, bluetoothManager, adapter, looper.getHandler(), HandShake(0,me,null,null))
 
         looper.setGatt(gatt)
-
-        bluetoothAdvertiser = BluetoothAdvertiser(adapter)
-        bluetoothLeScanner = BluetoothScanner(adapter, looper.getHandler())
-        val switch = NetworkSwitch(bluetoothAdvertiser,bluetoothLeScanner)
+        looper.setSwitch(switch)
 
         gatt.start()
 

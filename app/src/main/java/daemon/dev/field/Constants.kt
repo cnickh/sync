@@ -56,7 +56,9 @@ const val BLE_INTERVAL = 1000L //1 second
 
 const val SYNC_INTERVAL = 1000L //1 second
 
-const val CONFIRMATION_TIMEOUT = 5000L //5 seconds
+const val CONFIRMATION_TIMEOUT = 3000L //5 seconds
+
+const val DEVICE_SUSPEND = 2000L //2 seconds
 
 const val SERVER_PORT = 8888
 
@@ -112,4 +114,8 @@ fun ByteArray.toBase64() : String {
 
 fun String.toByteArray() : ByteArray {
     return Base64.getDecoder().decode(this)
+}
+
+fun String.AdKey() : String {
+    return this.toByteArray().slice(0..19).toByteArray().toBase64()
 }

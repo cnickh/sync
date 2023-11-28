@@ -52,7 +52,6 @@ class ProfileSelectFragment : Fragment() {
         return binding.root
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.v("ProfSel", "onCreate called")
@@ -103,23 +102,23 @@ class ProfileSelectFragment : Fragment() {
 
         }
 
-        binding.chat.setOnClickListener {
-
-            val bundle = bundleOf("key" to key)
-
-            val msgFrag = MessengerFragment()
-
-            msgFrag.arguments = bundle
-
-            val ft: FragmentTransaction =
-                activity!!.supportFragmentManager.beginTransaction()
-
-
-            ft.replace(R.id.container_view, msgFrag);
-            ft.addToBackStack(null)
-            ft.commit();
-
-        }
+//        binding.chat.setOnClickListener {
+//
+//            val bundle = bundleOf("key" to key)
+//
+//            val msgFrag = MessengerFragment()
+//
+//            msgFrag.arguments = bundle
+//
+//            val ft: FragmentTransaction =
+//                activity!!.supportFragmentManager.beginTransaction()
+//
+//
+//            ft.replace(R.id.container_view, msgFrag);
+//            ft.addToBackStack(null)
+//            ft.commit();
+//
+//        }
         binding.add.setOnClickListener { add() }
         binding.block.setOnClickListener { block() }
 

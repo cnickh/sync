@@ -4,12 +4,11 @@ import android.util.Log
 import daemon.dev.field.GATT_RESOLVER_TAG
 import daemon.dev.field.PRIVATE_KEY
 import daemon.dev.field.PUBLIC_KEY
-import daemon.dev.field.cereal.objects.HandShake
 import daemon.dev.field.cereal.objects.KeyBundle
 import daemon.dev.field.toBase64
+import daemon.dev.field.toByteArray
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair
-import org.bouncycastle.crypto.AsymmetricCipherKeyPairGenerator
 import org.bouncycastle.crypto.agreement.X25519Agreement
 import org.bouncycastle.crypto.generators.X25519KeyPairGenerator
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
@@ -17,7 +16,6 @@ import org.bouncycastle.crypto.params.X25519KeyGenerationParameters
 import org.bouncycastle.crypto.util.PublicKeyFactory
 import org.bouncycastle.crypto.util.SubjectPublicKeyInfoFactory
 import java.security.SecureRandom
-import java.util.Base64
 
 
 class Session {
@@ -56,6 +54,7 @@ class Session {
     }
 
     fun computeSharedKey(keyBundle : KeyBundle, key : String) : ByteArray?{
+        Log.i("Session.kt","Have $key w/ len ${key.toByteArray().size}")
         val publicKey = Ed25519PublicKeyParameters(key.toByteArray())
         val secret = keyBundle.secret
         val sig = keyBundle.sig

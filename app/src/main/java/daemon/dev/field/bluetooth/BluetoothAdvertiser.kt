@@ -6,17 +6,23 @@ import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
-import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
-import androidx.annotation.RequiresApi
 import daemon.dev.field.AD_TAG
-import daemon.dev.field.CHARSET
+import daemon.dev.field.PRIVATE_KEY
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.SERVICE_UUID
+import daemon.dev.field.cereal.objects.KeyBundle
+import daemon.dev.field.nypt.AdvertisingSession
+import daemon.dev.field.nypt.Signature
+import daemon.dev.field.toBase64
+import daemon.dev.field.toByteArray
+
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.security.SecureRandom
 
 @SuppressLint("MissingPermission")
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class BluetoothAdvertiser(val adapter: BluetoothAdapter) {
 
     // This property will be null if bluetooth is not enabled or if advertising is not
@@ -25,6 +31,7 @@ class BluetoothAdvertiser(val adapter: BluetoothAdapter) {
     private var advertiseCallback: AdvertiseCallback? = null
     private var advertiseSettings: AdvertiseSettings = buildAdvertiseSettings()
     private var advertiseData: AdvertiseData = buildAdvertiseData()
+
     /**
      * Start advertising this device so other BLE devices can see it and connect
      */
@@ -51,6 +58,17 @@ class BluetoothAdvertiser(val adapter: BluetoothAdapter) {
 
     }
 
+    private fun createSig() : String {
+        val signature = Signature()
+        signature.init(PUBLIC_KEY, PRIVATE_KEY)
+
+        val nonsense = ByteArray(2)
+        SecureRandom().nextBytes(nonsense)
+        val sig = signature.sign(nonsense)!!
+
+        return sig.toBase64()
+    }
+
     /**
      * Returns an AdvertiseData object which includes the Service UUID and Device Name.
      */
@@ -66,11 +84,13 @@ class BluetoothAdvertiser(val adapter: BluetoothAdapter) {
          * AdvertiseCallback.ADVERTISE_FAILED_DATA_TOO_LARGE. Catch this error in the
          * onStartFailure() method of an AdvertiseCallback implementation.
          */
-
+        val sig = PUBLIC_KEY.slice(0..19)
         val dataBuilder = AdvertiseData.Builder()
             .addServiceUuid(ParcelUuid(SERVICE_UUID))
-            .addServiceData(ParcelUuid(SERVICE_UUID),"sig_bytes".toByteArray())
+            .addServiceData(ParcelUuid(SERVICE_UUID),sig.toByteArray())
             .setIncludeDeviceName(false)
+
+        Log.d(AD_TAG, "Added ${sig.toByteArray().size} bytes to advertisement \n ${sig.toByteArray().toBase64()}")
 
         /* For example - this will cause advertising to fail (exceeds size limit) */
         //String failureData = "asdghkajsghalkxcjhfa;sghtalksjcfhalskfjhasldkjfhdskf";

@@ -64,20 +64,21 @@ class UserAdapter(val view : View, val activity : FragmentActivity, val loadCont
 
             item?.let {
 
-                Log.i(PROFILE_TAG,"have ${it.key}")
+//                Log.i(PROFILE_TAG,"have ${it.key}")
 
-                if(it.key == "null"){
-                    binding.name.text = it.alias
+                if(it.alias == "null"){
+                    binding.name.text = it.key
                     binding.id.visibility = View.INVISIBLE
                     binding.ping.visibility = View.INVISIBLE
                     binding.rateText.visibility = View.INVISIBLE
                     binding.profileImage.visibility = View.INVISIBLE
                     return
                 }
-
+                binding.id.visibility = View.VISIBLE
+                binding.profileImage.visibility = View.INVISIBLE
                 binding.name.text = it.alias
                 binding.id.text = it.key.slice(0..9)
-                Log.i(PROFILE_TAG,"set id text: ${ binding.id.text}")
+//                Log.i(PROFILE_TAG,"set id text: ${ binding.id.text}")
 
 //                msgModel.getUnRead(it.key)?.let{ unRead ->
 //

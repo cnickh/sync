@@ -134,7 +134,7 @@
         android:id="@+id/user_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="300dp"
+        android:layout_marginTop="245dp"
         android:clipToPadding="false"
         android:padding="2dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -146,10 +146,10 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:layout_marginEnd="32dp"
+        android:layout_marginStart="16dp"
         android:text="Stop Ping"
         app:backgroundTint="@color/tertiary"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="@+id/base" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

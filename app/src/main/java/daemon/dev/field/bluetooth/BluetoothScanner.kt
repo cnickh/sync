@@ -12,6 +12,7 @@ import daemon.dev.field.SCANNER_TAG
 import daemon.dev.field.SERVICE_UUID
 import daemon.dev.field.network.util.NetworkEventDefinition.Companion.SCANNER
 import daemon.dev.field.network.util.NetworkEventDefinition.ScanEvent
+import daemon.dev.field.toBase64
 
 
 @SuppressLint("MissingPermission")
@@ -55,6 +56,10 @@ class BluetoothScanner(val adapter: BluetoothAdapter, val handler: Handler) {
         /*onScanResults passes one result to our viewModel via addSingleItems method*/
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
+            val data = result.scanRecord?.getServiceData(ScanFilterServiceUUID)
+//            if (data != null) {
+//                Log.i("Scanner.kt","Data: ${data.toBase64()}")
+//            }
             handler.obtainMessage(SCANNER,ScanEvent(result)).sendToTarget()
         }
 
