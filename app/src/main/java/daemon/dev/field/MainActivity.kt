@@ -16,6 +16,7 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.badge.BadgeDrawable
+import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.ActivityMainBinding
 import daemon.dev.field.fragments.ChannelFragment
@@ -189,11 +190,12 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onResume() {
         super.onResume()
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter())
     }
-    private fun makeGattUpdateIntentFilter(): IntentFilter? {
+    private fun makeGattUpdateIntentFilter(): IntentFilter {
         val intentFilter = IntentFilter()
         intentFilter.addAction("STATE")
         intentFilter.addAction("SCANNER")
@@ -201,6 +203,8 @@ class MainActivity : AppCompatActivity() {
         intentFilter.addAction("DISCONNECT" )
         intentFilter.addAction("PING" )
         intentFilter.addAction("RM_DEVICE")
+        intentFilter.addAction("INFO")
+
 
         return intentFilter
     }
@@ -287,6 +291,10 @@ class MainActivity : AppCompatActivity() {
                 }
                 "PING" ->{
                     binding.byteRate.text = "${it.slice(0..4)} -- ${msg++}"
+                }
+                "INFO" ->{
+                    val raw = Json.decodeFromString<MeshRaw>(it)
+                    val user = raw.nodeInfo!!
                 }
 
             }

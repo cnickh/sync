@@ -31,16 +31,13 @@ class SyncOperator(val context : Context) {
         channelAccess= ChannelAccess(channelDao)
     }
 
-    //lateinit var vr : Verifier
-
     private val sorter = Sorter()
     private val infoHandler = INFOHandler(userBase,channelAccess,postRepository)
     private val newDataHandler = NEW_DATAHandler(postRepository,channelAccess)
     private val postListHandler = POST_LISTHandler(postRepository,channelAccess)
     private val channelHandler = CHANNELHandler(channelAccess)
 
-
-    fun receive(bytes : ByteArray, socket : Socket) : Int?{
+    fun receive(bytes : ByteArray, socket : Socket) : MeshRaw?{
 
         val plain = socket.decrypt(bytes)
         val msg : MeshRaw? = sorter.resolve(plain)
@@ -51,54 +48,27 @@ class SyncOperator(val context : Context) {
 
     }
 
+    private fun dataToReceive(raw : MeshRaw, socket : Socket) : MeshRaw? {
 
-    private fun dataToReceive(raw : MeshRaw, socket : Socket) : Int? {
-
-        if(raw.type != MeshRaw.CONFIRM && raw.type != MeshRaw.DECODE_ERROR_){
-            val newRaw = MeshRaw(MeshRaw.CONFIRM,null,null,null,null,raw.mid.toString())
-
-            //Async.send(newRaw, socket)
-            //Sync.queue(socket.key,raw)
-
-            Log.i(OPERATOR_TAG,"Received ${type2String(raw.type)} , mid: ${raw.mid} from peer[${socket.key}]")
-        } else {
-            Log.i(OPERATOR_TAG,"Received ${type2String(raw.type)} , mid: ${raw.misc.toString()} from peer[${socket.key}]")
-
-        }
+        Log.i(OPERATOR_TAG,"Received ${type2String(raw.type)} , mid: ${raw.misc.toString()} from peer[${socket.key}]")
 
         return when(raw.type){
-            MeshRaw.INFO ->{
-                infoHandler.handle(raw,socket)
-                null
-            }
             MeshRaw.POST_LIST->{
                 postListHandler.handle(raw)
                 null
             }
-            MeshRaw.POST_W_ATTACH->{null}
-            MeshRaw.REQUEST -> {null}
             MeshRaw.NEW_DATA -> {
                 newDataHandler.handle(raw,socket)
                 null
-            }
-            MeshRaw.PING->{
-                MeshRaw.PING
             }
             MeshRaw.CHANNEL->{
                 channelHandler.handle(raw.misc!!,socket.key)
                 null
             }
-            MeshRaw.DIRECT->{
-                MeshRaw.DIRECT
-            }
-            MeshRaw.DISCONNECT->{
-                MeshRaw.DISCONNECT
-            }
-            MeshRaw.CONFIRM->{
-                MeshRaw.CONFIRM
-            }
-            MeshRaw.DECODE_ERROR->{null}
-            MeshRaw.DECODE_ERROR_->{null}
+            MeshRaw.INFO ->{ raw }
+            MeshRaw.PING->{ raw }
+            MeshRaw.DIRECT->{ raw }
+            MeshRaw.DISCONNECT->{ raw }
             else -> {null}
         }
 
@@ -115,8 +85,6 @@ class SyncOperator(val context : Context) {
             MeshRaw.DIRECT -> { "DIRECT" }
             MeshRaw.DISCONNECT -> { "DISCONNECT" }
             MeshRaw.CONFIRM -> { "CONFIRM" }
-//            MeshRaw.DECODE_ERROR -> { }
-//            MeshRaw.DECODE_ERROR_ -> { }
             else -> { "NO_TYPE" }
         }
     }

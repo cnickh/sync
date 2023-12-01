@@ -17,7 +17,7 @@ class INFOHandler(val userBase : UserBase,
                   val channelAccess : ChannelAccess,
                   val postRepository : PostRepository) {
 
-        fun handle( raw : MeshRaw, socket: Socket){
+    fun handle( raw : MeshRaw, socket: Socket){
         Log.i("INFO.kt","Received INFO")
 
         val info = raw.nodeInfo!!
@@ -52,8 +52,6 @@ class INFOHandler(val userBase : UserBase,
                     }
 
                     val newRaw = MeshRaw(MeshRaw.NEW_DATA, null, null, data_map, null, null)
-                    //Async.send(raw,socket)
-//                    Sync.queue(socket.key, newRaw)
                 }
             }
         }

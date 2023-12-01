@@ -32,37 +32,10 @@ import java.util.Base64
 @SuppressLint("MissingPermission")
 class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake: HandShake, val adKey : String) : BluetoothGattCallback() {
 
-        var socket : Socket? = null
-        var remoteHost : ByteArray? = null
-        var session : Session? = null
-        var die = false
-
-    private var connected : Boolean = false
-    private val connectLock = Mutex()
-    private suspend fun connect(){
-        connectLock.lock()
-
-        connected = true
-
-        connectLock.unlock()
-    }
-
-
-    private suspend fun check(gatt: BluetoothGatt?){
-        connectLock.lock()
-
-        Log.i(GATT_RESOLVER_TAG, "check connection $connected")
-        Log.i(GATT_RESOLVER_TAG, "address - $adKey")
-
-
-        if(!connected){
-//            sendEvent(RETRY,adKey.toByteArray(), null, null)
-            gatt?.disconnect()
-            die = true
-        }
-
-        connectLock.unlock()
-    }
+        private var socket : Socket? = null
+        private var remoteHost : ByteArray? = null
+        private var session : Session? = null
+        private var die = false
 
         private fun sendEvent(type : Int,
                               bytes : ByteArray?,
@@ -82,12 +55,6 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
 
             if (isSuccess && isConnected) {
                 gatt.requestMtu(MTU)
-
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    delay(CONFIRMATION_TIMEOUT) //10 seconds
-//                    check(gatt)
-//                }
-
             } else {
                 Log.e(GATT_RESOLVER_TAG,"onConnectionStateChange was bad am resolver time to forget :$adKey")
                 gatt.close()
@@ -189,7 +156,6 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
                 }
 
                 shake?.let {
-
                     val key = session!!.computeSharedKey(it.keyBundle!!,it.me.key)
                     Log.i(GATT_RESOLVER_TAG, "Resolver establishing key ${key!!.toBase64()}")
                     val sock = Socket(
@@ -205,8 +171,6 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
                     remoteHost = null
 
                     sendEvent(CONNECT,null,sock,device)
-                    runBlocking { connect() }
-
                 }
 
             }

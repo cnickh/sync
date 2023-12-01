@@ -58,8 +58,6 @@ const val SYNC_INTERVAL = 1000L //1 second
 
 const val CONFIRMATION_TIMEOUT = 3000L //5 seconds
 
-const val DEVICE_SUSPEND = 2000L //2 seconds
-
 const val SERVER_PORT = 8888
 
 const val DEVICE_NAME = ""

@@ -71,8 +71,6 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
     private val connection = ConditionVariable(true)
     private val handlerMutex = Mutex()
 
-
-
     fun setGatt(gatt : Gatt){
         this.gatt = gatt
     }
@@ -197,7 +195,6 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
                             HandShake(0, profile, null, null),
                             it.toBase64()
                         )
-
                     event.result.device.connectGatt(
                         context,
                         false,
@@ -238,8 +235,6 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
         when(event.type){
             CONNECT ->{
                 add(event.socket!!)
-                pn.print_state()
-
                 connection.open()
                 val user = event.socket.user
                 val intent = Intent(netDef.code2String(CONNECT))
@@ -252,20 +247,13 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
                 res?.let{resHandler(it,socket)}
             }
             RETRY ->{
-                //removeDev(event.bytes!!.toBase64())
-
                 connection.open()
-
                 val intent = Intent("RM_DEVICE")
                 intent.putExtra("extra", event.bytes!!.toBase64())
                 context.sendBroadcast(intent)
-
-               // suspendConnection(event.bytes.toBase64())
             }
             DISCONNECT->{
                 closeSocket(event.socket!!)
-                pn.print_state()
-
                 val user = event.socket.user
                 val intent = Intent(netDef.code2String(DISCONNECT))
                 intent.putExtra("extra", Json.encodeToString(user))
@@ -275,8 +263,13 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
 
     }
 
-    private fun resHandler(res : Int, sock : Socket){
-        when(res){
+    private fun resHandler(res : MeshRaw, sock : Socket){
+        when(res.type){
+            MeshRaw.INFO->{
+                val intent = Intent("INFO")
+                intent.putExtra("extra", Json.encodeToString(res))
+                context.sendBroadcast(intent)
+            }
             MeshRaw.PING->{
                 val intent = Intent("PING")
                 intent.putExtra("extra", sock.key)
@@ -284,11 +277,6 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
             }
             MeshRaw.DIRECT->{
                 val intent = Intent("DIRECT")
-                intent.putExtra("extra", sock.key)
-                context.sendBroadcast(intent)
-            }
-            MeshRaw.CONFIRM->{
-                val intent = Intent("CONFIRM")
                 intent.putExtra("extra", sock.key)
                 context.sendBroadcast(intent)
             }
@@ -323,10 +311,10 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
             context.sendBroadcast(intent)
         }
 
-        if(deviceConnectionCount < MAX_PEERS+2){
+        if(deviceConnectionCount < MAX_PEERS*2){
             switch.startAdvertising()
         }
-
+        pn.print_state()
     }
 
     private fun add(socket : Socket){
@@ -341,9 +329,9 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
             context.sendBroadcast(intent)
         }
 
-        if(deviceConnectionCount == MAX_PEERS+2){
+        if(deviceConnectionCount == MAX_PEERS*2){
             switch.stopAdvertising()
         }
-
+        pn.print_state()
     }
 }//NetLooper
