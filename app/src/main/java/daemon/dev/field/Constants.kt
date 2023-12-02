@@ -2,6 +2,8 @@ package daemon.dev.field
 
 import android.Manifest
 import android.net.Uri
+import android.os.Build
+import android.os.SystemClock
 import java.util.*
 
 var PUBLIC_KEY: ByteArray = ByteArray(0)
@@ -106,6 +108,14 @@ UUID.fromString("7ec2290c-5e53-4414-a116-3f9974cec8cd")
 /**
  * Global extension functions
  */
+fun getTime() : Long{
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        SystemClock.currentNetworkTimeClock().millis()
+    } else {
+        System.currentTimeMillis()
+    }
+}
+
 fun ByteArray.toBase64() : String {
     return Base64.getEncoder().encodeToString(this)
 }

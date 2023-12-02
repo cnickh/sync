@@ -1,7 +1,5 @@
 package daemon.dev.field.fragments.model
 
-import android.os.Build
-import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,15 +10,15 @@ import daemon.dev.field.cereal.objects.*
 import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import daemon.dev.field.data.UserBase
-import daemon.dev.field.network.NSM
 import daemon.dev.field.nypt.ChannelBuilder
 import daemon.dev.field.util.ServiceLauncher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.buildJsonArray
-import java.util.*
+import kotlin.system.exitProcess
 
 /**@brief this class provides database and network data to UI threads via coroutines.*/
 
@@ -30,19 +28,16 @@ class SyncModel internal constructor(
     private val channelAccess: ChannelAccess
 ) : ViewModel()  {
 
-    val peers = MutableLiveData<List<User>>() //Sync.peers
-    val state = MutableLiveData("IDLE")// = Async.live_state
+    private val selectedChannels = mutableListOf<String>()
+    val peers = MutableLiveData<List<User>>()
+    val state = MutableLiveData("IDLE")
 
-    val posts = postRepository.posts
+    var posts = postRepository.posts
     val channels = channelAccess.channels
-    var raw_filter = channelAccess.getLiveContents(listOf())
-
     val me = userBase.getUser(PUBLIC_KEY.toBase64())
 
-    val postChannelMap = hashMapOf<String,MutableList<String>>()
-
-    private var filter : List<String> = listOf()
-
+    private val pendingInfo = mutableListOf<Job>()
+    private var openChannelMap = hashMapOf<String,MutableList<String>>()
     private lateinit var mServiceController : ServiceLauncher
 
     fun setServiceController(mServiceController : ServiceLauncher){
@@ -69,115 +64,94 @@ class SyncModel internal constructor(
     }
 
     fun createTagMap(){
-
-        val contents = hashMapOf<String,List<String>>()
         viewModelScope.launch(Dispatchers.IO) {
-            channels.value?.let {
-                for (c in it) {
-                    contents[c.name] = channelAccess.waitContents(c.name).split(",")
+
+            openChannelMap = postRepository.mapOpenChannels(selectedChannels)
+
+            Log.i("SYNC_MODEL", "Created map $openChannelMap")
+        }
+    }
+
+    fun getChannels(address: Address) : List<String> {
+        val channels = mutableListOf<String>()
+        for ((c,l) in openChannelMap){
+            if (l.contains(address.toString())){
+                channels.add(c)
+            }
+        }
+        return channels
+    }
+
+    fun selected(name : String) : Boolean {
+        return selectedChannels.contains(name)
+    }
+
+    fun selectChannel(name : String) : Boolean{
+
+        return if (name in selectedChannels){
+            selectedChannels.remove(name)
+            createTagMap()
+            false
+        } else {
+            selectedChannels.add(name)
+            createTagMap()
+            buildInfo(null)
+            Log.d("SyncModel","Setting selected Channels to $selectedChannels")
+            posts = postRepository.getListPostFromChannelQuery(selectedChannels)
+            true
+        }
+    }
+
+    fun disconnect(key : String){
+        mServiceController //TODO create service disconnect method
+    }
+    fun buildInfo(key : String?){
+
+        if(key == null){
+            for (j in pendingInfo){
+                j.cancel()
+            }
+        }
+
+        val open = selectedChannels
+
+        val job = viewModelScope.launch(Dispatchers.IO) {
+            delay(5000) //delay 5 seconds
+
+            val info = userBase.wait(PUBLIC_KEY.toBase64())!!
+            val channelInfo = hashMapOf<String, String>()
+            val map = channelAccess.mapOpenChannels(open)
+
+            for ((c, l) in map) {
+                val hash = postRepository.hashListCombined(l)
+                if (hash != "null") {
+                    channelInfo[c] = postRepository.hashListCombined(l)
                 }
             }
 
+            if (channelInfo.isEmpty()){ return@launch }
 
-            Log.i(SYNC_TAG, "got $contents")
+            info.channels = Json.encodeToString(channelInfo)
 
-            posts.value?.let {
-                for (p in it) {
-                    val key = p.address().address
-                    postChannelMap[key] = mutableListOf()
-                    for ((c, con) in contents) {
-                        if (con.contains(key)) {
-                            Log.v("SyncModel.kt", "TRUE $c")
-                            postChannelMap[key]!!.add(c)
-                        } else {
-                            Log.v("SyncModel.kt", "FALSE")
-                        }
+            val raw = MeshRaw(MeshRaw.INFO, info, null, null, null, null)
+
+            if (key == null){
+                peers.value?.let{
+                    for (p in it){
+                        mServiceController.send(p.key,raw)
                     }
                 }
-            }
-
-
-            Log.i("SYNC_MODEL", "Created map $postChannelMap")
-        }
-    }
-
-
-
-    fun filter(posts : List<Post>?) : List<Post> {
-
-        raw_filter.value?.let{ updateFilter(it) }
-
-        val ret = mutableListOf<Post>()
-
-        if(posts != null){
-            Log.d(MODEL_TAG,"filter posts: $posts")
-            Log.d(MODEL_TAG,"filter: $filter")
-            for (p in posts) {
-                if (filter.contains(p.address().address)) {
-                    ret.add(p)
-                }
-            }
-        }else{
-            val posts_last = this.posts.value ?: return ret
-            Log.d(MODEL_TAG,"filter posts_last: $posts_last")
-            Log.d(MODEL_TAG,"filter: $filter")
-
-            for (p in posts_last) {
-                if (filter.contains(p.address().address)) {
-                    ret.add(p)
-                }
+            } else {
+                mServiceController.send(key,raw)
             }
         }
 
-        Log.d(MODEL_TAG,"filter ret: $ret")
-        return ret
+        pendingInfo.add(job)
     }
 
-    fun updateFilter(content : List<String>){
-
-        val posts = mutableListOf<String>()
-
-        for(c in content){
-            
-            if(c!="null") {
-                for (p in c.split(",")) {
-                    if (!posts.contains(p)) posts.add(p)
-                }
-            }
-
-        }
-
-        filter = posts
-    }
-
-    fun listContent2Log(channels : List<String>) {
-        viewModelScope.launch(Dispatchers.IO){
-            for (c in channels){
-                val contents = channelAccess.waitContents(c)
-                Log.i("SyncModel","$c :: $contents")
-            }
-        }
-    }
-
-    fun selectChannel(name : String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            NSM.selectChannel(name)
-            raw_filter = channelAccess.getLiveContents(NSM.getOpenChannels())
-            //Sync.queueUpdate()
-        }
-    }
-
-//    fun disconnect(user : User){
-//        viewModelScope.launch(Dispatchers.IO) {
-//            Async.disconnect(user)
-//        }
-//    }
 
     fun sendToTarget(raw : MeshRaw, key : String){
-        viewModelScope.launch(Dispatchers.IO) {
-//            Async.send(raw, key)
-           // Sync.queue(key,raw)
-        }
+        mServiceController.send(key,raw)
     }
 
     fun setAlias(alias : String){
@@ -209,7 +183,6 @@ class SyncModel internal constructor(
 
     fun addChannel(name : String){
         val builder = ChannelBuilder(name)
-
         viewModelScope.launch(Dispatchers.IO) {
             channelAccess.createChannel(name,builder.key().toBase64())
         }
@@ -223,23 +196,19 @@ class SyncModel internal constructor(
 
         val post = Post(PUBLIC_KEY.toBase64(),time,title,body,"null",0)
 
-
-        
         viewModelScope.launch(Dispatchers.IO) {
 
-//            if(Sync.getOpenChannels().isEmpty()){
-//                Log.e("SyncModel.kt","Err no open channels, post not created")
-//                ping.postValue("No Open Channels")
-//                exitProcess(0)
-//            }
+            if(selectedChannels.isEmpty()){
+                Log.e("SyncModel.kt","Err no open channels, post not created")
+                exitProcess(0)
+            }
 
-            Log.v("SyncModel.kt","Created post $post")
             postRepository.add(post)
-//            for(c in Sync.getOpenChannels()){
-//                channelAccess.addPost(c,post.address().address)
-//            }
-//            filter = channelAccess.getOpenContents()
-//            Sync.queueUpdate()
+
+            for(c in selectedChannels){
+                postRepository.addPostToChannel(c, post.address())
+            }
+            buildInfo(null)
         }
 
     }
@@ -247,13 +216,7 @@ class SyncModel internal constructor(
     fun comment(position : Int, sub : MutableList<Comment>, globalSub : MutableList<Comment>, text : String) : Comment {
         Log.v("SyncModel.kt", "Creating comment $text")
 
-        val time = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            SystemClock.currentNetworkTimeClock().millis()
-        } else {
-            System.currentTimeMillis()
-        }
-
-        val comment = Comment(PUBLIC_KEY.toBase64(), text, time)
+        val comment = Comment(PUBLIC_KEY.toBase64(), text, getTime())
         sub.add(comment)
 
         val post = get(position)!!
@@ -262,7 +225,6 @@ class SyncModel internal constructor(
         viewModelScope.launch(Dispatchers.IO) {
             postRepository.stage(listOf(post))
             postRepository.commit()
-            //Sync.queueUpdate()
         }
 
         return comment

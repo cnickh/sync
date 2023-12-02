@@ -32,7 +32,7 @@ class SyncOperator(val context : Context) {
     }
 
     private val sorter = Sorter()
-    private val infoHandler = INFOHandler(userBase,channelAccess,postRepository)
+//    private val infoHandler = INFOHandler(userBase,channelAccess,postRepository)
     private val newDataHandler = NEW_DATAHandler(postRepository,channelAccess)
     private val postListHandler = POST_LISTHandler(postRepository,channelAccess)
     private val channelHandler = CHANNELHandler(channelAccess)

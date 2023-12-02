@@ -11,6 +11,5 @@ data class Channel(
     /* Network Information */
     @PrimaryKey(autoGenerate = false) val name : String,
     val key : String,
-    val contents : String
 
     )

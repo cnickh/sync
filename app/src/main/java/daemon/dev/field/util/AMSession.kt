@@ -1,4 +1,4 @@
-package daemon.dev.field.fragments.model
+package daemon.dev.field.util
 
 import android.util.Log
 import daemon.dev.field.cereal.objects.Comment

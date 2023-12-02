@@ -158,36 +158,6 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-//        msgModel.direct.observe(this) {
-//            Log.d(MAIN_TAG, "Main-thread direct Observer")
-//
-//            val msg = Json.decodeFromString<Comment>(it)
-//
-//            if (msg.comment == "d1sc0nn3ct") {
-//                msgModel.zeroSub(msg.key)
-//            } else {
-//
-//                msgModel.createSub(msg.key)
-//                msgModel.receiveMessage(msg)
-//                msgModel.setLatest(msg)
-//
-//                val text = msg.comment
-//                val duration = Toast.LENGTH_SHORT
-//                val toast = Toast.makeText(this, text, duration)
-//                toast.show()
-//            }
-//            msgModel.printMsgMap()
-//        }
-//
-//        syncModel.peers.observe(this) { peers ->
-//            Log.d(MAIN_TAG, "Main-thread peers Observer")
-//
-//            for (p in peers) {
-//                msgModel.dumpQueue(p.key)
-//            }
-//            msgModel.printMsgMap()
-//        }
-
     }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
@@ -282,6 +252,7 @@ class MainActivity : AppCompatActivity() {
                     peers.remove(temp)
                     if (!peers.contains(peer)) {peers.add(0,peer)}
                     syncModel.peers.postValue(peers)
+                    syncModel.buildInfo(peer.key)
                 }
                 "DISCONNECT" ->{
                     //User object

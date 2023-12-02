@@ -26,7 +26,7 @@ class InboxFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Retrieve and inflate the layout for this fragment
         binding = FragmentInboxBinding.inflate(inflater, container, false)
         return binding.root

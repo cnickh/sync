@@ -109,16 +109,15 @@ class PostAdapter(val activity : FragmentActivity, val syncModel: SyncModel) : R
                 }
 
                 binding.timeStamp.text = getDateTime(it.time)
-//                binding.channels.removeAllViews()
-//                val key = post.address().address
-//                Log.i("POST_ADAPTER","does $key have channels \n ${syncModel.postChannelMap}")
-//
-//                for (channel in syncModel.postChannelMap[key]!!){
-//                    Log.i("POST_ADAPTER","HAVE $channel")
-//                    val chip = SingleChipLayoutBinding.inflate(LayoutInflater.from(binding.channels.context), binding.channels, false)
-//                    chip.channel.text = channel
-//                    binding.channels.addView(chip.root)
-//                }
+                binding.channels.removeAllViews()
+                val key = post.address()
+
+                for (c in syncModel.getChannels(key)){
+                    Log.i("POST_ADAPTER","HAVE $c")
+                    val chip = SingleChipLayoutBinding.inflate(LayoutInflater.from(binding.channels.context), binding.channels, false)
+                    chip.channel.text = c
+                    binding.channels.addView(chip.root)
+                }
 
 
                 binding.postCard.setOnClickListener{ _ ->

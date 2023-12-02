@@ -77,22 +77,6 @@ class ServiceLauncher(val context : Context) {
         return running
     }
 
-
-//    fun checkKillMesh() : Boolean{
-//
-//        mBluetoothLeService?. let {
-//            val mIntent = Intent(context, MeshService::class.java)
-//            context.stopService(mIntent)
-//            //it.stopService(mIntent)
-////            Log.i("no jutsu", "$bound")
-////            it.unbindService(mServiceConnection)
-//////          it.kill()
-//            return true
-//        } ?: run {
-//            return false
-//        }
-//
-//    }
     fun checkKillMesh() : Boolean{
         val serviceClass = MeshService::class.java
 

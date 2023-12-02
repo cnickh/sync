@@ -1,9 +1,11 @@
 package daemon.dev.field.data
 
 import android.util.Log
+import androidx.lifecycle.LiveData
 import daemon.dev.field.CHARSET
 import daemon.dev.field.HEX
 import daemon.dev.field.cereal.objects.Address
+import daemon.dev.field.cereal.objects.IndexEntity
 import daemon.dev.field.cereal.objects.Post
 import daemon.dev.field.data.db.PostDao
 import daemon.dev.field.util.CommentMerge
@@ -19,11 +21,23 @@ class PostRepository(private val sync : PostDao) {
 
     //Make all posts available
     val posts = sync.getPosts()
-
     private val crc = CRC32()
-
-    private val addressCache = HashMap<Address,Post>()
     private val staged = mutableListOf<Post>()
+
+    fun getListPostFromChannelQuery(list : List<String>) : LiveData<List<Post>>{
+        return sync.getListPostFromChannelQuery(list)
+    }
+
+    suspend fun addPostToChannel(channel:String, address: Address) : Boolean{
+        val post = sync.getAt(address.key(), address.time())
+        return if(post == null){
+            false
+        } else {
+            val index = post.index
+            sync.addIndex(IndexEntity(channel,index))
+            true
+        }
+    }
 
     fun clear(){
         sync.clear()
@@ -49,6 +63,30 @@ class PostRepository(private val sync : PostDao) {
 
     suspend fun get(key : String) : Int {
         return sync.getKey(key)
+    }
+
+    suspend fun getInChannel(name : String) : List<Int>{
+        return sync.getPostsInChannels(name)
+    }
+
+    suspend fun mapOpenChannels(channels: List<String>): HashMap<String,MutableList<String>>{
+        val ch_map = hashMapOf<String,MutableList<String>>()
+
+        for(c in channels){
+            val content = sync.getPostsInChannels(c)
+
+            ch_map[c] = mutableListOf()
+
+            if(content.isNotEmpty()) {
+                for (p in content) {
+                    val address= sync.get(p).address()
+                    ch_map[c]!!.add(address.toString())
+                }
+            }
+
+        }
+
+        return ch_map
     }
 
     suspend fun hashListCombined(posts: List<String>): String {
@@ -93,18 +131,18 @@ class PostRepository(private val sync : PostDao) {
         return map
     }
 
-//    suspend fun getList(posts : List<String>) : List<Post>{
-//
-//        val list = mutableListOf<Post>()
-//
-//        for(a in posts){
-//            val address = Address(a)
-//            getAt(address)?.let { list.add(it) }
-//        }
-//        Log.d("PostRepository.kt","Got list $list")
-//
-//        return list
-//    }
+    suspend fun getList(posts : List<String>) : List<Post>{
+
+        val list = mutableListOf<Post>()
+
+        for(a in posts){
+            val address = Address(a)
+            getAt(address)?.let { list.add(it) }
+        }
+        Log.d("PostRepository.kt","Got list $list")
+
+        return list
+    }
 //
 //    suspend fun compare(posts : HashMap<String,String>) : List<String> {
 //        val requests = mutableListOf<String>()

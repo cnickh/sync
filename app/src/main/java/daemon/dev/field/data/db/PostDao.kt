@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import daemon.dev.field.cereal.objects.IndexEntity
 import daemon.dev.field.cereal.objects.Post
 
 
@@ -31,6 +32,18 @@ interface PostDao {
 
     @Query("SELECT * FROM post_table ORDER BY time DESC")
     fun getPosts(): LiveData<List<Post>>
+
+    @Query("SELECT * FROM post_table WHERE `key` IN (:list)")
+    fun getLivePosts(list : List<String>) : LiveData<List<Post>>
+
+    @Query("SELECT * FROM post_table WHERE `key` IN ( SELECT `index` FROM index_table WHERE `channel` IN (:list))")
+    fun getListPostFromChannelQuery(list : List<String>) : LiveData<List<Post>>
+
+    @Query("SELECT `index` FROM index_table WHERE `channel` = :channel")
+    suspend fun getPostsInChannels(channel : String) : List<Int>
+
+    @Insert
+    fun addIndex(index : IndexEntity)
 
     @Query("SELECT * from post_table WHERE `key` = :key")
     fun getByKey(key: String): LiveData<List<Post>>

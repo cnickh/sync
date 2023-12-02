@@ -22,7 +22,6 @@ import daemon.dev.field.fragments.model.SyncModel
 class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : SyncModel)  : RecyclerView.Adapter<ChannelAdapter.BinVh>(){
 
     private var itemsList: MutableList<Channel> = arrayListOf()
-    private var openChannels : List<String> = listOf()
 
     override fun getItemCount() = itemsList.size
 
@@ -35,10 +34,6 @@ class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : 
         notifyDataSetChanged()
     }
 
-    fun updateOpenChannels(open : List<String>){
-        openChannels = open
-        notifyDataSetChanged()
-    }
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BinVh {
@@ -80,19 +75,20 @@ class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : 
             binding.binName.text = bin_id
             binding.badge.visibility = View.INVISIBLE
 
-            if(openChannels.contains(bin_id)){
+            if(vm.selected(bin_id)){
                 binding.bin.setBackgroundResource(R.drawable.col_bg)
             }else{
                 binding.bin.setBackgroundResource(R.drawable.wht_bg)
             }
 
             binding.bin.setOnClickListener {
-                vm.selectChannel(bin_id)
-//                if(vm.selectChannel(bin_id)){
-//                    binding.bin.setBackgroundResource(R.drawable.col_bg)
-//                }else{
-//                    binding.bin.setBackgroundResource(R.drawable.wht_bg)
-//                }
+                Log.d("ChannelAdapter,kt","Bin Pressed $bin_id")
+
+                if(vm.selectChannel(bin_id)){
+                    binding.bin.setBackgroundResource(R.drawable.col_bg)
+                }else{
+                    binding.bin.setBackgroundResource(R.drawable.wht_bg)
+                }
             }
         }
 

@@ -5,13 +5,14 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import daemon.dev.field.cereal.objects.Channel
+import daemon.dev.field.cereal.objects.IndexEntity
 import daemon.dev.field.cereal.objects.Post
 import daemon.dev.field.cereal.objects.Resource
 import daemon.dev.field.cereal.objects.User
 
 @Database(entities =
-[Post::class, User::class, Channel::class, Resource::class],
-    version = 2)
+[Post::class, User::class, Channel::class, Resource::class, IndexEntity::class],
+    version = 3)
 abstract class SyncDatabase : RoomDatabase() {
 
     abstract val postDao: PostDao

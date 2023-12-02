@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.cereal.objects.Comment
 import daemon.dev.field.cereal.objects.MeshRaw
+import daemon.dev.field.util.AMSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString

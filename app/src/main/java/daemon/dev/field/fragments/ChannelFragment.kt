@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import daemon.dev.field.R
 import daemon.dev.field.databinding.FragmentChannelBinding
 import daemon.dev.field.fragments.adapter.ChannelAdapter
 import daemon.dev.field.fragments.dialogs.CreateDialog
@@ -83,7 +85,6 @@ class ChannelFragment : Fragment() {
 
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun createBin() {
         activity?.let {
 
@@ -107,8 +108,20 @@ class ChannelFragment : Fragment() {
 
         binding.binName.text = bin_id
 
+        if(syncModel.selected(bin_id)){
+            binding.publicBin.setBackgroundResource(R.drawable.col_bg)
+        } else {
+            binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
+        }
+
         binding.publicBin.setOnClickListener {
-            syncModel.selectChannel(bin_id)
+            Log.d("ChannelAdapter,kt","Bin Pressed $bin_id")
+            val ret = syncModel.selectChannel(bin_id)
+            if (ret){
+                binding.publicBin.setBackgroundResource(R.drawable.col_bg)
+            } else {
+                binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
+            }
         }
     }
 
