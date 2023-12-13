@@ -119,10 +119,9 @@ class PostAdapter(val activity : FragmentActivity, val syncModel: SyncModel) : R
                     binding.channels.addView(chip.root)
                 }
 
-
                 binding.postCard.setOnClickListener{ _ ->
 
-                    val bundle = bundleOf("pid" to position)
+                    val bundle = bundleOf("pid" to it.index, "key" to it.key)
 
                     val postFrag = PostFragment()
 

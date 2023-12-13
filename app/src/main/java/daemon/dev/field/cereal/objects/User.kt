@@ -13,13 +13,17 @@ data class User(
     var alias : String,
     val clout : Int,
     var channels : String,
-    var Status : Int = 0,
+    var status : Int = 0,
 
     ){
 
     override fun equals(other: Any?): Boolean {
         val user = other as User
         return user.key == key
+    }
+
+    fun print() : String{
+        return "$alias $key $status"
     }
 
     fun hash() : String{

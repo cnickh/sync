@@ -7,5 +7,5 @@ import androidx.room.PrimaryKey
 data class IndexEntity(
     val channel : String,
     val index : Int,
-    @PrimaryKey(autoGenerate = false) val key : Int = 0
+    @PrimaryKey(autoGenerate = true) val key : Int = 0
     )

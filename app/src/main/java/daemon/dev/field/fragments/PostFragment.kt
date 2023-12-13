@@ -16,6 +16,7 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import daemon.dev.field.PUBLIC_KEY
 import daemon.dev.field.R
@@ -37,10 +38,11 @@ import kotlin.math.absoluteValue
 class PostFragment : Fragment() {
     private val syncModel : SyncModel by activityViewModels()
     private lateinit var binding: FragmentPostBinding
-    private lateinit var post : Post
+    private lateinit var post : LiveData<Post>
     private lateinit var globalSub : MutableList<Comment>
 
     private var pid : Int = 0
+    private var key : String = "null"
 
     private var commenting : Boolean = false
     private val maxDepth : Int = 4
@@ -48,14 +50,14 @@ class PostFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?){
         super.onCreate(savedInstanceState)
         pid = requireArguments().getInt("pid")
-
+        requireArguments().getString("key")?.let{key = it }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View? {
+    ): View {
         // Retrieve and inflate the layout for this fragment
         binding = FragmentPostBinding.inflate(inflater, container, false)
         return binding.root
@@ -63,39 +65,32 @@ class PostFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Log.d("PostFragment.kt","Have $pid")
-        post = syncModel.get(pid)!!
+        post = syncModel.get(pid)
 
-        binding.hops.text = post.hops.toString()
-        binding.subjectText.text = post.title
-        binding.bodyText.text = post.body
-
-        syncModel.getUser(post.key).observe(viewLifecycleOwner, Observer { user ->
-            if(user != null) {
-                binding.author.text = user.alias
-            }
-        })
-
-        syncModel.posts.observe(viewLifecycleOwner) { _ ->
-            Log.d("PostFragment.kt", "post_list changed signal received")
-            post = syncModel.get(pid)!!
+        post.observe(viewLifecycleOwner) {
+            binding.hops.text = it.hops.toString()
+            binding.subjectText.text = it.title
+            binding.bodyText.text = it.body
             binding.subComment.removeAllViews()
-            Log.d("PostFragment.kt", "Updating thread with ${post.comment}")
-            updateSub()
+            updateSub(it)
+        }
+
+        syncModel.getUser(key).observe(viewLifecycleOwner) {
+            if (it != null) {
+                binding.author.text = it.alias
+            }
         }
 
 //        var mediaPlayer = MediaPlayer.create(context, R.raw.shieldsup)
 //        mediaPlayer.start()
 
-        Log.d("PostFragment.kt", "comments ${post.comment}")
-
         binding.close.setOnClickListener {
             parentFragmentManager.beginTransaction().remove(this).commit()
         }
 
-        updateSub()
     }
 
-    private fun updateSub(){
+    private fun updateSub(post : Post){
         globalSub =
             if(post.comment!="null"){
                 Json.decodeFromString(post.comment)

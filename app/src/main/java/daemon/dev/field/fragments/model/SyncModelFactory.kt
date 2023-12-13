@@ -11,6 +11,7 @@ import daemon.dev.field.cereal.objects.Channel
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
+import daemon.dev.field.data.SyncInterface
 import daemon.dev.field.data.UserBase
 import daemon.dev.field.data.db.SyncDatabase
 import kotlinx.coroutines.*
@@ -36,7 +37,7 @@ class SyncModelFactory (private val context: Context) : ViewModelProvider.Factor
                 val pub = channelDao.getKey("Public")
 
                 if(pub != UNIVERSAL_KEY){
-                    channelDao.insert(Channel("Public", UNIVERSAL_KEY, "null"))
+                    channelDao.insert(Channel("Public", UNIVERSAL_KEY))
                 }
 
                 if(userDao.wait(pub_key) == null){
@@ -51,9 +52,8 @@ class SyncModelFactory (private val context: Context) : ViewModelProvider.Factor
 
             }
 
-            return SyncModel(PostRepository(postDao),
-                UserBase(userDao),
-                ChannelAccess(channelDao)
+            return SyncModel(
+                SyncInterface(postDao,channelDao,userDao)
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

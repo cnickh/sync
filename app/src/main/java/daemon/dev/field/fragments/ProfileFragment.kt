@@ -136,8 +136,9 @@ class ProfileFragment : Fragment() {
 
 
         binding.clearPing.setOnClickListener {
-            loadController.killLoad()
-            userAdapter.notifyDataSetChanged()
+            syncModel.clearDB()
+            //loadController.killLoad()
+            //userAdapter.notifyDataSetChanged()
         }
 
         binding.userList.setOnClickListener {

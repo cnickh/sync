@@ -33,7 +33,7 @@ class NetworkEventDefinition {
                              val device: BluetoothDevice?,
 
                              )
-    data class AppEvent(val key : String, val raw : MeshRaw)
+    data class AppEvent(val key : String, val raw : MeshRaw?)
 
     fun code2String(code : Int) : String{
         return when(code){

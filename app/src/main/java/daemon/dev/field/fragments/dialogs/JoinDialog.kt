@@ -3,6 +3,7 @@ package daemon.dev.field.fragments.dialogs
 import android.app.Activity
 import android.app.Dialog
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import android.view.Window
@@ -15,6 +16,8 @@ import daemon.dev.field.R
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.fragments.model.SyncModel
 import daemon.dev.field.util.Phi
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.math.roundToInt
 
 class JoinDialog(val view : View, var c: Activity, var syncModel : SyncModel, val name : String, val user : LiveData<User>) : Dialog(c), View.OnClickListener {
@@ -39,9 +42,13 @@ class JoinDialog(val view : View, var c: Activity, var syncModel : SyncModel, va
         view.findViewTreeLifecycleOwner()?.let {
             user.observe(it) { user ->
 
+                Log.i("JoinDialog.kt","Join pulled user ${Json.encodeToString(it)}")
+
                 share?.let{ textView ->
                     val start = "Shared by: \n"
-                    textView.text = start + user.alias
+                    user?.let{ prof ->
+                        textView.text = start + prof.alias
+                    }
                 }
 
             }

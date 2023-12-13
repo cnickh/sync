@@ -20,12 +20,41 @@ import java.util.zip.CRC32
 class PostRepository(private val sync : PostDao) {
 
     //Make all posts available
-    val posts = sync.getPosts()
     private val crc = CRC32()
     private val staged = mutableListOf<Post>()
 
     fun getListPostFromChannelQuery(list : List<String>) : LiveData<List<Post>>{
         return sync.getListPostFromChannelQuery(list)
+    }
+
+    suspend fun createDataMap(list : List<String>) : HashMap<String, HashMap<String, String>>{
+        val ret = hashMapOf<String, HashMap<String, String>>()
+        for (c in list){
+            val indexes = sync.postsInChannel(c)
+            ret[c] = hashList(indexes)
+        }
+
+        return ret
+    }
+
+    suspend fun hashSelectChannels(list : List<String>) : HashMap<String,String> {
+        val ret = hashMapOf<String,String>()
+        for (c in list){
+            val indexes = sync.postsInChannel(c)
+            ret[c] = hashListCombined(indexes)
+        }
+
+        return ret
+    }
+
+    suspend fun addressesInChannel(channel : String) : List<String> {
+        val ret = mutableListOf<String>()
+        val indexes = sync.postsInChannel(channel)
+        for (i in indexes){
+            ret.add(sync.get(i).address().address)
+        }
+
+        return ret
     }
 
     suspend fun addPostToChannel(channel:String, address: Address) : Boolean{
@@ -41,6 +70,7 @@ class PostRepository(private val sync : PostDao) {
 
     fun clear(){
         sync.clear()
+        sync.clearIndexes()
     }
 
     suspend fun add(post : Post){
@@ -65,9 +95,13 @@ class PostRepository(private val sync : PostDao) {
         return sync.getKey(key)
     }
 
-    suspend fun getInChannel(name : String) : List<Int>{
-        return sync.getPostsInChannels(name)
+    suspend fun getByIndex(index: Int) : Post {
+        return sync.get(index)
     }
+    fun get(index : Int) : LiveData<Post> {
+        return sync.getLive(index)
+    }
+
 
     suspend fun mapOpenChannels(channels: List<String>): HashMap<String,MutableList<String>>{
         val ch_map = hashMapOf<String,MutableList<String>>()
@@ -80,7 +114,7 @@ class PostRepository(private val sync : PostDao) {
             if(content.isNotEmpty()) {
                 for (p in content) {
                     val address= sync.get(p).address()
-                    ch_map[c]!!.add(address.toString())
+                    ch_map[c]!!.add(address.address)
                 }
             }
 
@@ -89,13 +123,11 @@ class PostRepository(private val sync : PostDao) {
         return ch_map
     }
 
-    suspend fun hashListCombined(posts: List<String>): String {
+    private suspend fun hashListCombined(posts: List<Int>): String {
         var content = ""
         for (a in posts) {
-            val post = getAt(Address(a))
-            if (post != null) {
-                content += post.contentString()
-            }
+            val post = sync.get(a)
+            content += post.contentString()
         }
         if(content == ""){return "null"}
         crc.update(content.toByteArray(CHARSET))
@@ -106,11 +138,11 @@ class PostRepository(private val sync : PostDao) {
         return hash
     }
 
-    suspend fun hashList(posts : List<String>) : HashMap<String,String>{
+    suspend fun hashList(posts : List<Int>) : HashMap<String,String>{
         val map = HashMap<String,String>()
 
         for(a in posts){
-            val post = getAt(Address(a))
+            val post = sync.get(a)
             val json = Json.encodeToString(post)
             Log.i("PostRepository.kt","Got $json")
 
@@ -131,38 +163,6 @@ class PostRepository(private val sync : PostDao) {
         return map
     }
 
-    suspend fun getList(posts : List<String>) : List<Post>{
-
-        val list = mutableListOf<Post>()
-
-        for(a in posts){
-            val address = Address(a)
-            getAt(address)?.let { list.add(it) }
-        }
-        Log.d("PostRepository.kt","Got list $list")
-
-        return list
-    }
-//
-//    suspend fun compare(posts : HashMap<String,String>) : List<String> {
-//        val requests = mutableListOf<String>()
-//
-//        for(a in posts.keys){
-//            val address = Address(a)
-//            val content = getAt(address)?.contentString()
-//            if (content != null) {
-//                crc.update(content.toByteArray(CHARSET))
-//                val hash = crc.value.toString(HEX)
-//
-//                if(hash != posts[a]){
-//                    requests.add(address.address)
-//                }
-//            }
-//
-//        }
-//
-//        return requests
-//    }
 
     suspend fun stage(posts : List<Post>) {
         Log.v("PostRepository.kt","Staging")

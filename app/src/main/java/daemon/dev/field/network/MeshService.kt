@@ -154,10 +154,6 @@ class MeshService : Service() {
         fun getService(): MeshService = this@MeshService
     }
 
-    fun selectChannel(){
-
-    }
-
     private fun enableNotification(){
 
         val notificationIntent = Intent(this, MainActivity::class.java)
@@ -178,6 +174,13 @@ class MeshService : Service() {
         looper.getHandler().obtainMessage(
             NetworkEventDefinition.APP,
             NetworkEventDefinition.AppEvent(user,meshRaw)
+        ).sendToTarget()
+    }
+
+    fun notify(key : String){
+        looper.getHandler().obtainMessage(
+            NetworkEventDefinition.APP,
+            NetworkEventDefinition.AppEvent(key,null,)
         ).sendToTarget()
     }
 

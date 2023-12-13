@@ -49,7 +49,7 @@ class InboxFragment : Fragment() {
 
         binding.postInbox.layoutManager = layoutManager
 
-        sync.posts.observe(viewLifecycleOwner) { new_post_list ->
+        sync.posts().observe(viewLifecycleOwner) { new_post_list ->
             Log.d(INBOX_TAG, "Observe post_list fired on \n $new_post_list")
             //sync.createTagMap()
             //postAdapter.updateView(sync.filter(new_post_list))

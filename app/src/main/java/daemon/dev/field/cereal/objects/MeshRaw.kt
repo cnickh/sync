@@ -27,7 +27,7 @@ class MeshRaw(val type : Int,
         const val CHANNEL = 8
         const val DIRECT = 9
 
-        const val DECODE_ERROR = 10
+        const val BLOCKED = 10
         const val DECODE_ERROR_ = 11
     }
 

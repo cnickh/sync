@@ -36,6 +36,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -56,10 +57,10 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
     private var mHandler: Handler? = null
     private var mLooper: Looper? = null
 
-    private val scannedDevices = mutableListOf<String>()
+    private val blockedDevices = mutableListOf<String>()
 
     private lateinit var switch : MeshService.NetworkSwitch
-    private val op = SyncOperator(context)
+    private val op = SyncOperator(context, this)
     private val pn = PeerNetwork()
 
     private var gattConnectionCount = 0
@@ -88,6 +89,7 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
     override fun run() {
         updateMain(STATE,"READY")
         Looper.prepare()
+        runBlocking { blockedDevices.addAll(op.getBlocked()) }
         mLooper = Looper.myLooper()
         mHandler = Handler(mLooper!!,this)
         Looper.loop()
@@ -106,6 +108,34 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
                 val packer = Packer(raw)
                 it.send(packer)==-1
             }
+        }
+
+    }
+
+    private fun disconnect(key : String){
+        val raw = MeshRaw(MeshRaw.DISCONNECT,null,null,null,null,null)
+
+        for (p in pn.peers()){
+            if(p.AdKey() == key) {
+                pn.gattConnection(p)?.let {
+                    val packer = Packer(raw)
+                    if(it.send(packer) == -1){
+                        Log.i(NETLOOPER_TAG,"send disconnect to $key failed")
+                    }else{
+                        Log.i(NETLOOPER_TAG,"send disconnect to $key success")
+                    }
+                    closeSocket(it)
+                    val intent = Intent("DISCONNECT")
+                    intent.putExtra("extra", Json.encodeToString(it.user))
+                    context.sendBroadcast(intent)
+                }
+                pn.deviceConnection(p)?.let {
+                    closeSocket(it)
+                }
+                //pn.remove(p)
+                return
+            }
+
         }
 
     }
@@ -139,20 +169,36 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
     private fun handleAppEvent(event: AppEvent){
         Log.i(NETLOOPER_TAG,"Handing AppEvent")
 
-        pn.gattConnection(event.key)?.let {
+        if(event.raw==null){
+            Log.i(NETLOOPER_TAG,"BLOCKING ${event.key}")
+            blockedDevices.add(event.key.AdKey())
+            disconnect(event.key.AdKey())
+            return
+        }
+        pn.deviceConnection(event.key)?.let {
             Log.i(NETLOOPER_TAG,"Have GATT for ${event.key}")
 
             val packer = Packer(event.raw)
             if (it.send(packer)==-1){
-
                 closeSocket(it)
-
                 val user = it.user
                 val intent = Intent(netDef.code2String(DISCONNECT))
                 intent.putExtra("extra", Json.encodeToString(user))
                 context.sendBroadcast(intent)
             }
         }
+    }
+
+    private fun checkBlocked(socket : Socket) : Boolean{
+       return if(blockedDevices.contains(socket.key.AdKey())){
+           val raw = MeshRaw(MeshRaw.BLOCKED)
+           val packer = Packer(raw)
+           socket.send(packer)
+           socket.close()
+           false
+        } else {
+            true
+       }
     }
 
 
@@ -169,23 +215,18 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
                     handlerMutex.unlock()
                     return@launch
                 }
-                Log.d(NETLOOPER_TAG, "Blocking on connection")
-
 
                 val key = it.toBase64()
-                //val devRes = getDevice(key)
+                val devRes = !blockedDevices.contains(key)
                 val pnRes = pn.containsAd(key)
                 val state = gattConnectionCount < MAX_PEERS
 
-                Log.i(NETLOOPER_TAG," pnRes: $pnRes state: $state")
-                Log.i(NETLOOPER_TAG,"scannedDevices: $scannedDevices")
-
-                if (pnRes && state) {
+                if (pnRes && state && devRes) {
                     connection.close()
 
                     Log.i(NETLOOPER_TAG, "Have ${it.toBase64()}")
                     Log.i(NETLOOPER_TAG, "Connecting scanning ${event.result.device.address}")
-                    Log.i(NETLOOPER_TAG, "scannedDevices: $scannedDevices")
+                    Log.i(NETLOOPER_TAG, "blockedDevices: $blockedDevices v Key: $key")
                     pn.print_state()
 
                     val gattCallback =
@@ -212,12 +253,21 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
     }
 
 
+    private fun notifyUI(user : User, event : Int){
+        val _user = Json.encodeToString(user)
+        val intent = Intent(netDef.code2String(event))
+        Log.i(NETLOOPER_TAG, "CONNECT broadcasting $_user")
+        intent.putExtra("extra",_user)
+        context.sendBroadcast(intent)
+    }
+
     private fun handleGattEvent(event : GattEvent){
 
         when(event.type){
             CONNECT ->{
-                add(event.socket!!)
-                pn.print_state()
+                if(checkBlocked(event.socket!!)){
+                    add(event.socket)
+                }
             }
             PACKET ->{
                 val socket = event.socket!!
@@ -226,7 +276,6 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
             }
             DISCONNECT->{
                 closeSocket(event.socket!!)
-                pn.print_state()
             }
         }
     }
@@ -236,10 +285,7 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
             CONNECT ->{
                 add(event.socket!!)
                 connection.open()
-                val user = event.socket.user
-                val intent = Intent(netDef.code2String(CONNECT))
-                intent.putExtra("extra", Json.encodeToString(user))
-                context.sendBroadcast(intent)
+                notifyUI(event.socket.user, CONNECT)
             }
             PACKET ->{
                 val socket = event.socket!!
@@ -254,10 +300,7 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
             }
             DISCONNECT->{
                 closeSocket(event.socket!!)
-                val user = event.socket.user
-                val intent = Intent(netDef.code2String(DISCONNECT))
-                intent.putExtra("extra", Json.encodeToString(user))
-                context.sendBroadcast(intent)
+                notifyUI(event.socket.user, DISCONNECT)
             }
         }
 
@@ -265,6 +308,13 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
 
     private fun resHandler(res : MeshRaw, sock : Socket){
         when(res.type){
+            MeshRaw.BLOCKED->{
+                blockedDevices.add(sock.key.AdKey())
+                val intent = Intent("DISCONNECT")
+                intent.putExtra("extra", Json.encodeToString(sock.user))
+                context.sendBroadcast(intent)
+                closeSocket(sock)
+            }
             MeshRaw.INFO->{
                 val intent = Intent("INFO")
                 intent.putExtra("extra", Json.encodeToString(res))
@@ -299,7 +349,6 @@ class NetworkLooper(val context : Context, val profile : User) : Thread(), Handl
     }
 
     private fun closeSocket(socket : Socket){
-
         val tuple = pn.closeSocket(socket)
         gattConnectionCount = tuple.first
         deviceConnectionCount = tuple.second

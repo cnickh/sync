@@ -46,33 +46,22 @@ class ChannelFragment : Fragment() {
         binding.channelList.adapter = channelAdapter
         binding.channelList.layoutManager = GridLayoutManager(requireContext(),2)
 
-//        syncModel.channels.observe(viewLifecycleOwner) { list ->
-//
-//            Log.d("ChannelFrag.kt", "Channel fired on $list")
-//
-//            val mList = list.toMutableList()
-//
-//            val itr = mList.iterator()
-//
-//            while (itr.hasNext())
-//                if (itr.next().name == "Public")
-//                    itr.remove()
-//
-//
-//            channelAdapter.updateView(mList)
-//
-//        }
+        syncModel.channels.observe(viewLifecycleOwner) { list ->
 
-//        syncModel.openChannels.observe(viewLifecycleOwner) { channels ->
-//            channelAdapter.updateOpenChannels(channels)
-//
-//            if(channels.contains("Public")){
-//                binding.publicBin.setBackgroundResource(R.drawable.col_bg)
-//            }else{
-//                binding.publicBin.setBackgroundResource(R.drawable.wht_bg)
-//            }
-//
-//        }
+            Log.d("ChannelFrag.kt", "Channel fired on $list")
+
+            val mList = list.toMutableList()
+
+            val itr = mList.iterator()
+
+            while (itr.hasNext())
+                if (itr.next().name == "Public")
+                    itr.remove()
+
+
+            channelAdapter.updateView(mList)
+
+        }
 
         addPublic()
 

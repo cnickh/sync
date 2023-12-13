@@ -1,8 +1,8 @@
 package daemon.dev.field.network.handler
 
 import android.util.Log
+import daemon.dev.field.cereal.objects.Address
 import daemon.dev.field.cereal.objects.MeshRaw
-import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -11,7 +11,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlin.collections.HashMap
 
-class POST_LISTHandler(val postRepository: PostRepository, val channelAccess: ChannelAccess) {
+class POST_LISTHandler(val postRepository: PostRepository) {
 
     fun handle(raw: MeshRaw){
         CoroutineScope(Dispatchers.IO).launch{
@@ -28,7 +28,7 @@ class POST_LISTHandler(val postRepository: PostRepository, val channelAccess: Ch
                 val meta = Json.decodeFromString<HashMap<String,List<String>>>(json)
 
                 for((c,l) in meta){
-                    for(a in l){channelAccess.addPost(c,a)}
+                    for(a in l){postRepository.addPostToChannel(c, Address(a))}
                 }
 
             }

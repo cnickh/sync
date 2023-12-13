@@ -147,7 +147,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:layout_marginStart="16dp"
-        android:text="Stop Ping"
+        android:text="Clear_DB"
         app:backgroundTint="@color/tertiary"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/base" />

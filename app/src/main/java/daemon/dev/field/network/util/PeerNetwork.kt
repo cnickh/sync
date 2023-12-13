@@ -109,6 +109,14 @@ class PeerNetwork {
         return null
     }
 
+    fun deviceConnection(key : String) : Socket? {
+        active_connections[key]?.let{
+            for (s in it){
+                if(s.type == Socket.BLUETOOTH_DEVICE){return s}
+            }
+        }
+        return null
+    }
     fun print_state() {
 
         var out = ""

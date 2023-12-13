@@ -12,7 +12,7 @@ import daemon.dev.field.cereal.objects.User
 
 @Database(entities =
 [Post::class, User::class, Channel::class, Resource::class, IndexEntity::class],
-    version = 3)
+    version = 4)
 abstract class SyncDatabase : RoomDatabase() {
 
     abstract val postDao: PostDao

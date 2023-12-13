@@ -43,18 +43,13 @@ class BlockDialog(var c: Activity, var dialogModel : DialogModel) : Dialog(c), V
 
     private fun beautify() {
         findViewById<ConstraintLayout>(R.id.profile_header)
-            .viewTreeObserver.addOnGlobalLayoutListener(object :
-            ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-
+            .viewTreeObserver.addOnGlobalLayoutListener {
                 val root = findViewById<ConstraintLayout>(R.id.profile_header)
                 val phi = 1.618033988749895
                 val params = root.layoutParams
                 params.width = (root.height * phi).roundToInt()
                 root.layoutParams = params
-
             }
-        })
     }
 
 }

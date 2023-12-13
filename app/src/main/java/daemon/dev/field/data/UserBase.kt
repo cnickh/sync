@@ -6,10 +6,16 @@ import daemon.dev.field.data.db.UserDao
 
 class UserBase(private val sync : UserDao) {
 
-    val users = sync.getAll()
+    val users = {
+        sync.getAll()
+    }
 
-    suspend fun setUserStatus(key : String, Status : Int){
-        sync.updateStatus(key, Status)
+    suspend fun setUserStatus(key : String, status : Int){
+        sync.updateStatus(key, status)
+    }
+
+    suspend fun getUserWithStatus(status : Int) : List<String>{
+        return sync.getUserWithStatus(status)
     }
 
     fun clear(){

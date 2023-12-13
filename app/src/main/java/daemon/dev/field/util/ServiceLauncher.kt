@@ -47,6 +47,15 @@ class ServiceLauncher(val context : Context) {
 
         mBluetoothLeService?.send(user,meshRaw)
     }
+
+    fun notify(key : String) {
+        if (mBluetoothLeService == null){
+            Log.i("ServiceLauncher.kt" ,"mBluetoothLeService is null (fuckaru - no - jutsu)")
+        }
+
+        mBluetoothLeService?.notify(key)
+    }
+
     fun checkStartMesh(profile : User): Boolean {
 
         val serviceClass = MeshService::class.java
@@ -70,7 +79,7 @@ class ServiceLauncher(val context : Context) {
         if(!running){
             val mIntent = Intent(context, MeshService::class.java)
             mIntent.putExtra("ME", Json.encodeToString(profile))
-            ContextCompat.startForegroundService(context, mIntent!!);
+            ContextCompat.startForegroundService(context, mIntent);
             bound = context.bindService(mIntent, mServiceConnection, BIND_AUTO_CREATE)
         }
 

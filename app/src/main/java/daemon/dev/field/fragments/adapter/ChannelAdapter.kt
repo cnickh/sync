@@ -2,13 +2,11 @@ package daemon.dev.field.fragments.adapter
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.os.Build
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
@@ -100,6 +98,7 @@ class ChannelAdapter(val activity : FragmentActivity, val view : View, val vm : 
             binding.badge.visibility = View.VISIBLE
 
             binding.bin.setOnClickListener {
+                Log.d("ChannelAdapter,kt","fetching user at $key")
                 createBin(bin.name,vm.getUser(key))
             }
 

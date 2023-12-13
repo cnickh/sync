@@ -18,6 +18,9 @@ interface PostDao {
     @Query("SELECT * from post_table WHERE `index` = :index")
     suspend fun get(index: Int): Post
 
+    @Query("SELECT * from post_table WHERE `index` = :index")
+    fun getLive(index: Int): LiveData<Post>
+
     @Query("SELECT * FROM post_table WHERE `key` = :key AND `time` = :time")
     suspend fun getAt(key : String, time : Long) : Post?
 
@@ -26,7 +29,8 @@ interface PostDao {
 
     @Query("DELETE FROM post_table")
     fun clear()
-
+    @Query("DELETE FROM index_table")
+    fun clearIndexes()
     @Query("SELECT * FROM post_table ORDER BY time DESC LIMIT 1")
     suspend fun getMostRecentItem(): Post?
 
@@ -36,8 +40,14 @@ interface PostDao {
     @Query("SELECT * FROM post_table WHERE `key` IN (:list)")
     fun getLivePosts(list : List<String>) : LiveData<List<Post>>
 
-    @Query("SELECT * FROM post_table WHERE `key` IN ( SELECT `index` FROM index_table WHERE `channel` IN (:list))")
+    @Query("SELECT * FROM post_table WHERE `index` IN ( SELECT `index` FROM index_table WHERE `channel` IN (:list))")
     fun getListPostFromChannelQuery(list : List<String>) : LiveData<List<Post>>
+
+    @Query("SELECT `index` FROM index_table WHERE `channel` IN (:list)")
+    fun testListFromChannel(list : List<String>) : LiveData<List<Int>>
+
+    @Query("SELECT `index` FROM index_table WHERE `channel` = :channel")
+    suspend fun postsInChannel(channel : String) : List<Int>
 
     @Query("SELECT `index` FROM index_table WHERE `channel` = :channel")
     suspend fun getPostsInChannels(channel : String) : List<Int>

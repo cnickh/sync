@@ -249,6 +249,8 @@ class MainActivity : AppCompatActivity() {
                     //User object
                     val peer = Json.decodeFromString<User>(it)
                     val temp = User(peer.key.AdKey(),"null",0,"",0)
+                    Log.v("Main","CONNECT called on ${peer.key}")
+
                     peers.remove(temp)
                     if (!peers.contains(peer)) {peers.add(0,peer)}
                     syncModel.peers.postValue(peers)
@@ -261,11 +263,12 @@ class MainActivity : AppCompatActivity() {
                     syncModel.peers.postValue(peers)
                 }
                 "PING" ->{
-                    binding.byteRate.text = "${it.slice(0..4)} -- ${msg++}"
+//                    binding.byteRate.text = "${it.slice(0..4)} -- ${msg++}"
                 }
                 "INFO" ->{
                     val raw = Json.decodeFromString<MeshRaw>(it)
                     val user = raw.nodeInfo!!
+                    syncModel.handleInfo(user)
                 }
 
             }

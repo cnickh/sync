@@ -8,7 +8,9 @@ import daemon.dev.field.cereal.objects.MeshRaw
 import daemon.dev.field.cereal.objects.Post
 import daemon.dev.field.data.ChannelAccess
 import daemon.dev.field.data.PostRepository
+import daemon.dev.field.network.NetworkLooper
 import daemon.dev.field.network.Socket
+import daemon.dev.field.network.util.NetworkEventDefinition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,11 +18,11 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.zip.CRC32
 
-class NEW_DATAHandler(private val postRepository: PostRepository, val channelAccess: ChannelAccess) {
+class NEW_DATAHandler(private val postRepository: PostRepository, val  nl : NetworkLooper) {
 
     private val crc = CRC32()
 
-    fun handle( raw : MeshRaw, socket : Socket) {
+    fun handle(raw : MeshRaw, key : String){
     Log.w("NEW_DATA.kt", "Received NEW_DATA")
 
         raw.newData?.let {
@@ -32,20 +34,20 @@ class NEW_DATAHandler(private val postRepository: PostRepository, val channelAcc
 
                 for ((c, posts) in it) {
 
-                    meta[c] = mutableListOf()
+                    val temp = mutableListOf<String>()
 
-                    for (i in channelAccess.waitContents(c).split(",")) {
+                    for (i in postRepository.addressesInChannel(c)) {
                         if (i == "null") continue
 
                         if (!contents.contains(i)) {
                             contents.add(i)
                         }
-                        meta[c]!!.add(i)
+                        temp.add(i)
 
                     }
 
-                    if (meta[c]!!.isEmpty()) {
-                        meta.remove(c)
+                    if (temp.isNotEmpty()) {
+                        meta[c] = temp
                     }
 
                     for ((address, hash) in posts) {
@@ -97,8 +99,10 @@ class NEW_DATAHandler(private val postRepository: PostRepository, val channelAcc
                         postList,
                         json
                     )
-
-                    //Sync.queue(socket.key, newRaw)
+                    nl.getHandler().obtainMessage(
+                        NetworkEventDefinition.APP,
+                        NetworkEventDefinition.AppEvent(key,newRaw)
+                    ).sendToTarget()
                 }
             }
         }

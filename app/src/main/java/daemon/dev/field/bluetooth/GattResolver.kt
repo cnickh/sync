@@ -135,6 +135,8 @@ class GattResolver(val device : BluetoothDevice, val handler: Handler, val shake
             super.onCharacteristicWrite(gatt, characteristic, status)
             if(die){Log.e(GATT_RESOLVER_TAG,"onCharacteristicWrite called in dead resolver"); gatt?.disconnect();return}
 
+            //TODO make sure shake key matches adKey
+
             Log.d(
                 GATT_RESOLVER_TAG,
                 "onCharacteristicWrite called w/ status[$status] remoteHost: $remoteHost"

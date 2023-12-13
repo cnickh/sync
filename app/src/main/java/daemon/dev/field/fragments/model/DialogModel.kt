@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import daemon.dev.field.cereal.objects.MeshRaw
+import daemon.dev.field.util.ServiceLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -15,10 +16,15 @@ class DialogModel  : ViewModel() {
     private val selectedChannels = mutableListOf<String>()
 
     var key : String? = null
+    var serviceController : ServiceLauncher? = null
 
     fun setUser(key : String){
         Log.d("DialogModel.kt","Setting key $key")
         this.key = key
+    }
+
+    fun setController(serviceController : ServiceLauncher){
+        this.serviceController = serviceController
     }
 
     private fun clearUser(){
@@ -50,11 +56,9 @@ class DialogModel  : ViewModel() {
             MeshRaw(MeshRaw.CHANNEL,
                 null,null,null,null,selected)
 
-        viewModelScope.launch(Dispatchers.IO) {
-            Log.d("DialogModel.kt","Sending channel to $key")
-            //Sync.queue(key!!, raw)
-            clearSelection()
-        }
+        serviceController!!.send(key!!,raw)
+        clearSelection()
+
     }
 
     fun block(){

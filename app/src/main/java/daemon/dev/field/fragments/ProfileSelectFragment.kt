@@ -2,15 +2,12 @@ package daemon.dev.field.fragments
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.net.toUri
-import androidx.core.os.bundleOf
 import androidx.fragment.app.*
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
@@ -19,7 +16,7 @@ import com.bumptech.glide.Glide
 import daemon.dev.field.R
 import daemon.dev.field.cereal.objects.User
 import daemon.dev.field.databinding.FragmentProfileSelectBinding
-import daemon.dev.field.fragments.dialogs.AddDialog
+import daemon.dev.field.fragments.dialogs.ShareDialog
 import daemon.dev.field.fragments.dialogs.BlockDialog
 import daemon.dev.field.fragments.model.DialogModel
 import daemon.dev.field.fragments.model.MessengerModel
@@ -29,7 +26,7 @@ import daemon.dev.field.util.Phi
 import kotlin.math.roundToInt
 
 
-class ProfileSelectFragment : Fragment() {
+class ProfileSelectFragment() : Fragment() {
 
     private val syncModel : SyncModel by activityViewModels()
     private val resModel : ResourceModel by activityViewModels()
@@ -175,6 +172,8 @@ class ProfileSelectFragment : Fragment() {
     private fun add(){
 
         dialogModel.setUser(key)
+        dialogModel.setController(syncModel.getServiceController())
+
 
         activity?.let {
 
@@ -192,7 +191,7 @@ class ProfileSelectFragment : Fragment() {
 
             val array = ArrayList(stringList)
 
-            val dialog = AddDialog(it,dialogModel,array)
+            val dialog = ShareDialog(it,dialogModel,array)
 
             dialog.window?.setBackgroundDrawable(
                 ColorDrawable(
